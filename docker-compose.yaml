@@ -1,0 +1,46 @@
+version: "3.5"
+name: wage-app
+
+services:
+  wage-app-db:
+    image: postgres:16
+    container_name: wage-app-db
+    volumes:
+      - ./data/postgres/data:/var/lib/postgresql/data
+    ports:
+      - 5434:5432
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-q", "-d", "${POSTGRES_DB}", "-U", "${POSTGRES_USER}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:23.0.7
+    container_name: keycloak-server
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: password
+      KC_DB: postgres
+      KC_DB_URL_HOST: wage-app-db
+      KC_DB_URL_PORT: 5432
+      KC_DB_URL_DATABASE: ${POSTGRES_DB}
+      KC_DB_USERNAME: ${POSTGRES_USER}
+      KC_DB_PASSWORD: ${POSTGRES_PASSWORD}
+      KC_DB_SCHEMA: public
+    volumes:
+      - ./config/keycloak:/opt/keycloak/data/import
+    ports:
+      - 8080:8080
+    command: [ "-Dkeycloak.migration.action=import", "-Dkeycloak.migration.provider=dir",
+               "-Dkeycloak.migration.dir=/opt/keycloak/data/import", "-Dkeycloak.migration.strategy=OVERWRITE_EXISTING",
+               "start", "--http-enabled=true", "--hostname-strict=false" ]
+    restart: unless-stopped
+    depends_on:
+      - wage-app-db
