@@ -1,6 +1,7 @@
 plugins {
-    kotlin("jvm") version "1.9.25"
-    kotlin("plugin.spring") version "1.9.25"
+    kotlin("jvm") version "2.1.0"
+    kotlin("plugin.spring") version "2.1.0"
+    kotlin("kapt") version "2.1.0"
     id("org.springframework.boot") version "3.5.7"
     id("io.spring.dependency-management") version "1.1.7"
 }
@@ -19,23 +20,64 @@ repositories {
     mavenCentral()
 }
 
+dependencyManagement {
+    imports {
+        mavenBom("org.springframework.boot:spring-boot-dependencies:3.5.7")
+    }
+}
+
 dependencies {
-    implementation("org.springframework.boot:spring-boot-starter-data-r2dbc")
-    implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
+    // security + oauth
     implementation("org.springframework.boot:spring-boot-starter-security")
+    implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
+
+    // reactor
     implementation("org.springframework.boot:spring-boot-starter-webflux")
+
+    // Kotlin
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
-    implementation("io.projectreactor.kotlin:reactor-kotlin-extensions")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
+
+    // Kotlin Coroutines + WebFlux
+    implementation("io.projectreactor.kotlin:reactor-kotlin-extensions")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactive")
+
+    // validation
+    implementation("org.springframework.boot:spring-boot-starter-validation")
+
+    // Redisson
+//    implementation("org.redisson:redisson-spring-boot-starter") {
+//        exclude(group = "org.springframework.boot", module = "spring-boot-starter-web")
+//        exclude(group = "org.springframework.boot", module = "spring-boot-starter-aop")
+//    }
+
+    // Liquibase / Preliquibase
+    implementation("org.liquibase:liquibase-core")
+    implementation("net.lbruun.springboot:preliquibase-spring-boot-starter:1.6.0")
+
+    // R2DBC / PostgreSQL
+    implementation("org.springframework.boot:spring-boot-starter-data-r2dbc")
     runtimeOnly("org.postgresql:postgresql")
     runtimeOnly("org.postgresql:r2dbc-postgresql")
+
+    // utils
+    developmentOnly("org.springframework.boot:spring-boot-devtools")
+
+    // MapStruct
+    implementation("org.mapstruct:mapstruct:1.5.5.Final")
+    kapt("org.mapstruct:mapstruct-processor:1.5.5.Final")
+
+    // TESTS
     testImplementation("org.springframework.boot:spring-boot-starter-test")
-    testImplementation("io.projectreactor:reactor-test")
-    testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test")
     testImplementation("org.springframework.security:spring-security-test")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    testImplementation("io.projectreactor:reactor-test")
+
+    testImplementation(platform("org.testcontainers:testcontainers-bom:1.20.3"))
+    testImplementation("org.testcontainers:junit-jupiter")
+    testImplementation("org.testcontainers:postgresql")
+    testImplementation("com.redis.testcontainers:testcontainers-redis:1.6.4")
 }
 
 kotlin {

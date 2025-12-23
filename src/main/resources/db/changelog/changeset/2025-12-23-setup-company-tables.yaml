@@ -1,0 +1,14 @@
+databaseChangeLog:
+  - changeSet:
+      id: 2025-12-23-setup-company-tables
+      author: belbek
+      runOnChange: false
+      runAlways: false
+      changes:
+        - sqlFile:
+            path: 2025-12-23-setup-company-tables.sql
+            relativeToChangelogFile: true
+      rollback:
+        - sqlFile:
+            path: 2025-12-23-setup-company-tables-rollback.sql
+            relativeToChangelogFile: true

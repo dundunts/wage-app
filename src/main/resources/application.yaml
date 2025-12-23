@@ -7,6 +7,15 @@ spring:
     username: ${POSTGRES_USER:user}
     password: ${POSTGRES_PASSWORD:password}
 
+  liquibase:
+    default-schema: wage_app
+    enabled: true
+    drop-first: false
+    url: jdbc:postgresql://${POSTGRES_URL:localhost:5434}/${POSTGRES_DB:postgres}
+    user: user
+    password: password
+    change-log: db/changelog/db-changelog-master.yaml
+
   security:
     oauth2:
       resourceserver:
