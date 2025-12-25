@@ -14,6 +14,6 @@ interface CompanyRepository : R2dbcRepository<CompanyDbEntity, UUID>, CustomComp
 
 interface CustomCompanyRepository {
 
-    fun findAllForUserId(userId: UUID): Flux<Company>
+    fun findAllForUserId(userId: String): Flux<Company>
 
 }

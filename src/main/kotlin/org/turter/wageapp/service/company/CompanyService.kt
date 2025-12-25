@@ -2,7 +2,7 @@ package org.turter.wageapp.service.company
 
 import org.turter.wageapp.domain.company.Company
 import org.turter.wageapp.domain.company.CompanyPayload
-import java.util.UUID
+import java.util.*
 
 interface CompanyService {
 
@@ -14,7 +14,6 @@ interface CompanyService {
 
     suspend fun delete(id: UUID)
 
-    suspend fun getUserCompanies(userId: UUID): List<Company>
+    suspend fun getUserCompanies(userId: String): List<Company>
 
-    suspend fun bindUserToCompany(companyId: UUID, userId: UUID)
 }

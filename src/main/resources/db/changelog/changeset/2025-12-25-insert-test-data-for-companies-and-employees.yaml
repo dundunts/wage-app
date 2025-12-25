@@ -1,0 +1,14 @@
+databaseChangeLog:
+  - changeSet:
+      id: 2025-12-25-insert-test-data-for-companies-and-employees
+      author: belbek
+      runAlways: false
+      runOnChange: false
+      changes:
+        - sqlFile:
+            path: 2025-12-25-insert-test-data-for-companies-and-employees.sql
+            relativeToChangelogFile: true
+      rollback:
+        - sqlFile:
+            path: 2025-12-25-insert-test-data-for-companies-and-employees-rollback.sql
+            relativeToChangelogFile: true

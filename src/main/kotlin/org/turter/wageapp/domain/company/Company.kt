@@ -1,10 +1,9 @@
 package org.turter.wageapp.domain.company
 
-import jakarta.validation.constraints.Max
 import jakarta.validation.constraints.NotEmpty
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Pattern
-import java.util.UUID
+import java.util.*
 
 //Data
 data class Company(
@@ -26,9 +25,4 @@ data class CompanyPayload(
     val employeeWageCoefficientFromRevenue: Int,
     @field:Pattern("^([0-1][0-9]|2[0-3]):[0-5][0-9]$")
     val defaultShiftStartTime: String
-)
-
-data class BindUserToCompanyPayload(
-    @field:NotNull(message = "User ID is required")
-    val userId: UUID
 )

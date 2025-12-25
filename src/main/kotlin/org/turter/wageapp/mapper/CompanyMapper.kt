@@ -1,6 +1,8 @@
 package org.turter.wageapp.mapper
 
-import org.mapstruct.*
+import org.mapstruct.Mapper
+import org.mapstruct.Mapping
+import org.mapstruct.MappingTarget
 import org.turter.wageapp.data.company.CompanyDbEntity
 import org.turter.wageapp.domain.company.Company
 import org.turter.wageapp.domain.company.CompanyPayload

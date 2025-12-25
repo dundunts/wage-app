@@ -4,17 +4,20 @@ import org.springframework.r2dbc.core.DatabaseClient
 import org.springframework.stereotype.Repository
 import org.turter.wageapp.domain.company.Company
 import reactor.core.publisher.Flux
-import java.util.UUID
+import java.util.*
 
 @Repository
 class CustomCompanyRepositoryImpl(private val dbClient: DatabaseClient) : CustomCompanyRepository {
 
-    override fun findAllForUserId(userId: UUID): Flux<Company> {
+    override fun findAllForUserId(userId: String): Flux<Company> {
         val sql = """
-            with company_ids as (select uc.company_id from wage_app.user_companies uc where uc.user_id = :userId)
-            select *
+            with emp_id as (select e.id from wage_app.employees e where e.user_id = :userId),
+                 emp_binds as (select *
+                               from wage_app.employees_companies ec
+                                        join emp_id on ec.employee_id = emp_id.id)
+            select c.id, c.title, c.k_from_revenue, c.default_shift_start_time
             from wage_app.companies c
-            where c.id in (select * from company_ids)
+                     join emp_binds on c.id = emp_binds.company_id
         """.trimIndent()
 
         return dbClient.sql(sql)

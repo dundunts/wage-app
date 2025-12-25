@@ -3,7 +3,7 @@ package org.turter.wageapp.data.company
 import org.springframework.data.annotation.Id
 import org.springframework.data.relational.core.mapping.Column
 import org.springframework.data.relational.core.mapping.Table
-import java.util.UUID
+import java.util.*
 
 @Table("wage_app.companies")
 class CompanyDbEntity {
@@ -48,22 +48,3 @@ class CompanyDbEntity {
 
 }
 
-@Table("wage_app.user_companies")
-class UserCompanyDbEntity {
-
-    @Id
-    var id: UUID? = null
-
-    @Column("user_id")
-    var userId: UUID? = null
-
-    @Column("company_id")
-    var companyId: UUID? = null
-
-    constructor(userId: UUID, companyId: UUID) {
-        this.userId = userId
-        this.companyId = companyId
-    }
-
-    constructor()
-}

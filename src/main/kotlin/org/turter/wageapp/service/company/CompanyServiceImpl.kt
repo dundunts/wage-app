@@ -1,25 +1,20 @@
 package org.turter.wageapp.service.company
 
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.turter.wageapp.data.company.CompanyRepository
-import org.turter.wageapp.data.company.UserCompanyDbEntity
-import org.turter.wageapp.data.company.UserCompanyRepository
 import org.turter.wageapp.domain.company.Company
 import org.turter.wageapp.domain.company.CompanyPayload
 import org.turter.wageapp.domain.shared.EntityNotFoundException
-import org.turter.wageapp.domain.shared.NotUniqueValue
+import org.turter.wageapp.domain.shared.NotUniqueValueException
 import org.turter.wageapp.mapper.CompanyMapper
-import java.util.UUID
+import java.util.*
 
 @Service
 class CompanyServiceImpl(
     private val companyRepository: CompanyRepository,
-    private val userCompanyRepository: UserCompanyRepository,
     private val mapper: CompanyMapper
 ) : CompanyService {
 
@@ -31,7 +26,7 @@ class CompanyServiceImpl(
     @Transactional
     override suspend fun create(payload: CompanyPayload): Company {
         if (companyRepository.existsByTitle(payload.title).awaitSingle()) {
-            throw NotUniqueValue("Company with title '${payload.title}' already exists")
+            throw NotUniqueValueException("Company with title '${payload.title}' already exists")
         }
 
         val saved = companyRepository.save(
@@ -57,11 +52,6 @@ class CompanyServiceImpl(
         companyRepository.deleteById(id).awaitSingleOrNull()
     }
 
-    override suspend fun getUserCompanies(userId: UUID): List<Company> =
+    override suspend fun getUserCompanies(userId: String): List<Company> =
         companyRepository.findAllForUserId(userId).collectList().awaitSingle()
-
-    override suspend fun bindUserToCompany(companyId: UUID, userId: UUID) {
-        userCompanyRepository.save(UserCompanyDbEntity(userId = userId, companyId = companyId))
-            .awaitSingleOrNull()
-    }
 }
