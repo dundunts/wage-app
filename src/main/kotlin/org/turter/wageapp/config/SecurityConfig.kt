@@ -21,6 +21,7 @@ class SecurityConfig {
                     .pathMatchers(HttpMethod.OPTIONS).permitAll()
                     .pathMatchers(HttpMethod.GET, "/test/private").authenticated()
                     .pathMatchers("/test/public").permitAll()
+                    .pathMatchers("/actuator/**").permitAll()
                     .anyExchange().permitAll()
             }
             .csrf(ServerHttpSecurity.CsrfSpec::disable)
