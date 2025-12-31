@@ -36,6 +36,7 @@ dependencies {
 
     // metrics
     implementation("org.springframework.boot:spring-boot-starter-actuator")
+    implementation("io.micrometer:micrometer-registry-prometheus")
 
     // Kotlin
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
