@@ -1,0 +1,10 @@
+package org.turter.wageapp.domain.shift
+
+import org.turter.wageapp.domain.shared.ConflictDataException
+import org.turter.wageapp.domain.shared.NotConsistenceDataException
+
+class WrongCompanyIdException(message: String) : ConflictDataException(message)
+
+class ShiftSessionClosedException(message: String) : ConflictDataException(message)
+
+class SeveralSessionsOpenedException(message: String) : NotConsistenceDataException(message)

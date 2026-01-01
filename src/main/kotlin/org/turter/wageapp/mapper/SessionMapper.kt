@@ -1,0 +1,16 @@
+package org.turter.wageapp.mapper
+
+import org.mapstruct.Mapper
+import org.turter.wageapp.data.shift.ShiftSessionDbEntity
+import org.turter.wageapp.domain.shift.ShiftCheckpoint
+import org.turter.wageapp.domain.shift.ShiftSession
+
+@Mapper(
+    componentModel = "spring",
+    uses = [CheckpointMapper::class]
+)
+interface SessionMapper {
+
+    fun toShiftSession(entity: ShiftSessionDbEntity, checkpoints: List<ShiftCheckpoint>): ShiftSession
+
+}
