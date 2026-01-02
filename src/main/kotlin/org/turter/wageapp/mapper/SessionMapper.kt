@@ -2,7 +2,7 @@ package org.turter.wageapp.mapper
 
 import org.mapstruct.Mapper
 import org.turter.wageapp.data.shift.ShiftSessionDbEntity
-import org.turter.wageapp.domain.shift.ShiftCheckpoint
+import org.turter.wageapp.domain.shift.Checkpoint
 import org.turter.wageapp.domain.shift.ShiftSession
 
 @Mapper(
@@ -11,6 +11,6 @@ import org.turter.wageapp.domain.shift.ShiftSession
 )
 interface SessionMapper {
 
-    fun toShiftSession(entity: ShiftSessionDbEntity, checkpoints: List<ShiftCheckpoint>): ShiftSession
+    fun toShiftSession(entity: ShiftSessionDbEntity, checkpoints: List<Checkpoint>): ShiftSession
 
 }

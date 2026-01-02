@@ -18,26 +18,26 @@ interface ShiftSessionRepository : R2dbcRepository<ShiftSessionDbEntity, UUID> {
 }
 
 @Repository
-interface ShiftSessionCheckpointRepository : R2dbcRepository<ShiftSessionCheckpointDbEntity, UUID> {
+interface ShiftSessionCheckpointRepository : R2dbcRepository<CheckpointDbEntity, UUID> {
 
-    fun findAllByShiftSessionId(shiftSessionId: UUID): Flux<ShiftSessionCheckpointDbEntity>
-
-}
-
-@Repository
-interface ShiftSessionCheckpointEmployeeRepository : R2dbcRepository<ShiftSessionCheckpointEmployeeDbEntity, UUID> {
-
-    fun findAllByShiftSessionCheckpointId(shiftSessionCheckpointId: UUID): Flux<ShiftSessionCheckpointEmployeeDbEntity>
-
-    fun deleteAllByShiftSessionCheckpointId(checkpointId: UUID): Mono<Void>
+    fun findAllByShiftSessionId(shiftSessionId: UUID): Flux<CheckpointDbEntity>
 
 }
 
 @Repository
-interface ShiftSessionCheckpointMetricRecordRepository : R2dbcRepository<ShiftSessionCheckpointMetricRecordDbEntity, UUID> {
+interface ShiftSessionCheckpointEmployeeRepository : R2dbcRepository<CheckpointEmployeeDbEntity, UUID> {
 
-    fun findAllByShiftSessionCheckpointId(shiftSessionCheckpointId: UUID): Flux<ShiftSessionCheckpointMetricRecordDbEntity>
+    fun findAllByCheckpointId(shiftSessionCheckpointId: UUID): Flux<CheckpointEmployeeDbEntity>
 
-    fun deleteAllByShiftSessionCheckpointId(checkpointId: UUID): Mono<Void>
+    fun deleteAllByCheckpointId(checkpointId: UUID): Mono<Void>
+
+}
+
+@Repository
+interface ShiftSessionCheckpointMetricRecordRepository : R2dbcRepository<CheckpointMetricRecordDbEntity, UUID> {
+
+    fun findAllByCheckpointId(shiftSessionCheckpointId: UUID): Flux<CheckpointMetricRecordDbEntity>
+
+    fun deleteAllByCheckpointId(checkpointId: UUID): Mono<Void>
 
 }

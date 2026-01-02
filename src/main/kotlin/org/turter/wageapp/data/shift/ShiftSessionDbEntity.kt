@@ -21,6 +21,9 @@ class ShiftSessionDbEntity {
     @Column("status")
     var status: ShiftSession.Status? = null
 
+    @Column("start_work_at")
+    var startWorkAt: LocalDateTime? = null
+
     constructor(companyId: UUID?, status: ShiftSession.Status?) {
         this.companyId = companyId
         this.status = status
@@ -61,8 +64,8 @@ class ShiftSessionDbEntity {
 
 }
 
-@Table("wage_app.shift_session_checkpoints")
-class ShiftSessionCheckpointDbEntity {
+@Table("wage_app.checkpoints")
+class CheckpointDbEntity {
 
     @Id
     var id: UUID? = null
@@ -98,7 +101,7 @@ class ShiftSessionCheckpointDbEntity {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
 
-        other as ShiftSessionCheckpointDbEntity
+        other as CheckpointDbEntity
 
         if (tips != other.tips) return false
         if (revenue != other.revenue) return false
@@ -134,14 +137,14 @@ class ShiftSessionCheckpointDbEntity {
 
 }
 
-@Table("wage_app.shift_session_checkpoints_employees")
-class ShiftSessionCheckpointEmployeeDbEntity {
+@Table("wage_app.checkpoints_employees")
+class CheckpointEmployeeDbEntity {
 
     @Id
     var id: UUID? = null
 
-    @Column("shift_session_checkpoint_id")
-    var shiftSessionCheckpointId: UUID? = null
+    @Column("checkpoint_id")
+    var checkpointId: UUID? = null
 
     @Column("employee_id")
     var employeeId: UUID? = null
@@ -150,10 +153,10 @@ class ShiftSessionCheckpointEmployeeDbEntity {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
 
-        other as ShiftSessionCheckpointEmployeeDbEntity
+        other as CheckpointEmployeeDbEntity
 
         if (id != other.id) return false
-        if (shiftSessionCheckpointId != other.shiftSessionCheckpointId) return false
+        if (checkpointId != other.checkpointId) return false
         if (employeeId != other.employeeId) return false
 
         return true
@@ -161,25 +164,25 @@ class ShiftSessionCheckpointEmployeeDbEntity {
 
     override fun hashCode(): Int {
         var result = id?.hashCode() ?: 0
-        result = 31 * result + (shiftSessionCheckpointId?.hashCode() ?: 0)
+        result = 31 * result + (checkpointId?.hashCode() ?: 0)
         result = 31 * result + (employeeId?.hashCode() ?: 0)
         return result
     }
 
     override fun toString(): String {
-        return "ShiftSessionCheckpointEmployeeDbEntity(id=$id, shiftSessionCheckpointId=$shiftSessionCheckpointId, employeeId=$employeeId)"
+        return "ShiftSessionCheckpointEmployeeDbEntity(id=$id, shiftSessionCheckpointId=$checkpointId, employeeId=$employeeId)"
     }
 
 }
 
-@Table("wage_app.shift_session_checkpoint_metric_records")
-class ShiftSessionCheckpointMetricRecordDbEntity {
+@Table("wage_app.checkpoint_metric_records")
+class CheckpointMetricRecordDbEntity {
 
     @Id
     var id: UUID? = null
 
-    @Column("shift_session_checkpoint_id")
-    var shiftSessionCheckpointId: UUID? = null
+    @Column("checkpoint_id")
+    var checkpointId: UUID? = null
 
     @Column("label")
     var label: String? = null
@@ -194,11 +197,11 @@ class ShiftSessionCheckpointMetricRecordDbEntity {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
 
-        other as ShiftSessionCheckpointMetricRecordDbEntity
+        other as CheckpointMetricRecordDbEntity
 
         if (value != other.value) return false
         if (id != other.id) return false
-        if (shiftSessionCheckpointId != other.shiftSessionCheckpointId) return false
+        if (checkpointId != other.checkpointId) return false
         if (label != other.label) return false
         if (destination != other.destination) return false
 
@@ -208,14 +211,14 @@ class ShiftSessionCheckpointMetricRecordDbEntity {
     override fun hashCode(): Int {
         var result = value
         result = 31 * result + (id?.hashCode() ?: 0)
-        result = 31 * result + (shiftSessionCheckpointId?.hashCode() ?: 0)
+        result = 31 * result + (checkpointId?.hashCode() ?: 0)
         result = 31 * result + (label?.hashCode() ?: 0)
         result = 31 * result + (destination?.hashCode() ?: 0)
         return result
     }
 
     override fun toString(): String {
-        return "ShiftSessionCheckpointFieldRecordDbEntity(id=$id, shiftSessionCheckpointId=$shiftSessionCheckpointId, label=$label, destination=$destination, value=$value)"
+        return "ShiftSessionCheckpointFieldRecordDbEntity(id=$id, shiftSessionCheckpointId=$checkpointId, label=$label, destination=$destination, value=$value)"
     }
 
 }

@@ -4,8 +4,8 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
-import org.turter.wageapp.domain.shift.CreateFirstShiftCheckpointPayload
-import org.turter.wageapp.domain.shift.CreateRegularShiftCheckpointPayload
+import org.turter.wageapp.domain.shift.Checkpoint
+import org.turter.wageapp.domain.shift.CreateRegularCheckpointPayload
 import org.turter.wageapp.domain.shift.ShiftSession
 import org.turter.wageapp.domain.shift.UpdateShiftCheckpointPayload
 import org.turter.wageapp.service.shift.CheckpointService
@@ -17,20 +17,20 @@ class CheckpointController(
     private val calculatingShiftService: CheckpointService
 ) {
 
-    @PostMapping("/create/first")
-    suspend fun createFirstForSessionCheckpoint(
-        payload: CreateFirstShiftCheckpointPayload,
-        principal: Principal
-    ): ResponseEntity<ShiftSession> {
-        return ResponseEntity.status(201)
-            .body(calculatingShiftService.createFirstCheckpoint(payload, principal.name))
-    }
+//    @PostMapping("/create/first")
+//    suspend fun createFirstForSessionCheckpoint(
+//        payload: CreateFirstShiftCheckpointPayload,
+//        principal: Principal
+//    ): ResponseEntity<ShiftSession> {
+//        return ResponseEntity.status(201)
+//            .body(calculatingShiftService.createFirstCheckpoint(payload, principal.name))
+//    }
 
     @PostMapping("/create")
     suspend fun createCheckpointForSession(
-        payload: CreateRegularShiftCheckpointPayload,
+        payload: CreateRegularCheckpointPayload,
         principal: Principal
-    ): ResponseEntity<ShiftSession> {
+    ): ResponseEntity<Checkpoint> {
         return ResponseEntity.status(201)
             .body(calculatingShiftService.createCheckpoint(payload, principal.name))
     }
@@ -39,7 +39,7 @@ class CheckpointController(
     suspend fun updateCheckpoint(
         payload: UpdateShiftCheckpointPayload,
         principal: Principal
-    ): ResponseEntity<ShiftSession> {
+    ): ResponseEntity<Checkpoint> {
         return ResponseEntity.ok(calculatingShiftService.updateCheckpoint(payload, principal.name))
     }
 

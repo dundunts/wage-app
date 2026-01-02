@@ -5,7 +5,7 @@ import java.time.LocalDateTime
 import java.util.*
 
 // Data
-data class ShiftCheckpoint(
+data class Checkpoint(
     val id: UUID,
     val tips: Int,
     val revenue: Int,
@@ -65,7 +65,7 @@ data class CreateFirstShiftCheckpointPayload(
     override val fieldRecords: List<CheckpointMetricRecordPayload>
 ) : ShiftCheckpointPayload
 
-data class CreateRegularShiftCheckpointPayload(
+data class CreateRegularCheckpointPayload(
     val sessionId: UUID,
     override val revenue: Int,
     override val tips: Int,
