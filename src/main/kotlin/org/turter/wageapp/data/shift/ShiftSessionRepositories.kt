@@ -15,6 +15,15 @@ interface ShiftSessionRepository : R2dbcRepository<ShiftSessionDbEntity, UUID> {
         status: ShiftSession.Status
     ): Flux<ShiftSessionDbEntity>
 
+    fun findAllByCompanyIdAndStatusIn(
+        companyId: UUID,
+        status: List<ShiftSession.Status>
+    ): Flux<ShiftSessionDbEntity>
+
+    fun findByIdAndStatus(id: UUID, status: ShiftSession.Status): Mono<ShiftSessionDbEntity>
+
+    fun findByIdAndStatusIn(id: UUID, status: List<ShiftSession.Status>): Mono<ShiftSessionDbEntity>
+
 }
 
 @Repository

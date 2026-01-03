@@ -6,7 +6,9 @@ import org.springframework.data.relational.core.mapping.Table
 import org.turter.wageapp.domain.shift.CheckpointCalcDestination
 import org.turter.wageapp.domain.shift.CheckpointType
 import org.turter.wageapp.domain.shift.ShiftSession
+import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.LocalTime
 import java.util.*
 
 @Table("wage_app.shift_sessions")
@@ -21,20 +23,28 @@ class ShiftSessionDbEntity {
     @Column("status")
     var status: ShiftSession.Status? = null
 
-    @Column("start_work_at")
-    var startWorkAt: LocalDateTime? = null
+    @Column("start_work_time")
+    var startWorkTime: LocalTime? = null
 
-    constructor(companyId: UUID?, status: ShiftSession.Status?) {
+    @Column("date")
+    var date: LocalDate? = null
+
+    constructor(companyId: UUID, status: ShiftSession.Status, startWorkTime: LocalTime, date: LocalDate) {
         this.companyId = companyId
         this.status = status
+        this.startWorkTime = startWorkTime
+        this.date = date
     }
 
     constructor()
 
     companion object {
 
-        fun getNewOpened(companyId: UUID): ShiftSessionDbEntity =
-            ShiftSessionDbEntity(companyId, ShiftSession.Status.OPENED)
+        fun getNewOpened(companyId: UUID, startWorkTime: LocalTime, date: LocalDate): ShiftSessionDbEntity =
+            ShiftSessionDbEntity(companyId, ShiftSession.Status.OPENED, startWorkTime, date)
+
+        fun getRecalculating(companyId: UUID, startWorkTime: LocalTime, date: LocalDate): ShiftSessionDbEntity =
+            ShiftSessionDbEntity(companyId, ShiftSession.Status.RECALCULATING, startWorkTime, date)
 
     }
 
