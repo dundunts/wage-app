@@ -5,6 +5,7 @@ import org.turter.wageapp.domain.shared.CompanyBindData
 import java.util.*
 
 // Data
+//TODO добавить поле active
 data class Employee(
     val id: UUID,
     val companyIds: List<UUID>,
