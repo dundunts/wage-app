@@ -14,6 +14,7 @@ class CompanyDbEntity {
     @Column("title")
     var title: String = ""
 
+    //TODO сделать отдельный класс для коэффициента и написать соответствующий r2dbc converter
     @Column("k_from_revenue")
     var employeeWageCoefficientFromRevenue: Int = 0
 
