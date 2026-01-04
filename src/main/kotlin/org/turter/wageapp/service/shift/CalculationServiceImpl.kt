@@ -78,7 +78,7 @@ class CalculationServiceImpl(
 
         session.validateSessionIsAvailableToConfirm()
 
-        val shiftResult = ShiftResultFromDraft(draft.convertToShiftResultDraft())
+        val shiftResult = ShiftResultFromDraft(draft.convertToShiftResultDraft(), session.companyId!!)
 
         val savedShiftResult = shiftResultRepository.save(shiftResultMapper.toShiftResultDbEntity(shiftResult))
             .awaitSingle()

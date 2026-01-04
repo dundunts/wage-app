@@ -8,11 +8,12 @@ import java.util.*
 // Data
 class ShiftResultFromDraft {
     val payments: List<Payment>
+    val companyId: UUID
     val date: LocalDate
     val sessionId: UUID
     val calculationSource: CalculationSource
 
-    constructor(draft: ShiftResultDraft) {
+    constructor(draft: ShiftResultDraft, companyId: UUID) {
         this.payments = draft.payments.map { paymentDraft ->
             Payment(
                 paymentDraft.employee.id,
@@ -21,6 +22,7 @@ class ShiftResultFromDraft {
                 paymentDraft.workSeconds
             )
         }
+        this.companyId = companyId
         this.date = draft.date
         this.sessionId = draft.sessionId
         this.calculationSource = CalculationSource.CHECKPOINTS

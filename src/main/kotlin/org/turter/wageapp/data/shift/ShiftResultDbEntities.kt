@@ -13,6 +13,9 @@ class ShiftResultDbEntity {
     @Id
     var id: UUID? = null
 
+    @Column("company_id")
+    var companyId: UUID? = null
+
     @Column("date")
     var date: LocalDate? = null
 
