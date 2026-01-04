@@ -1,6 +1,5 @@
 package org.turter.wageapp.domain.shift
 
-import org.turter.wageapp.domain.employee.Employee
 import java.time.LocalDateTime
 import java.util.*
 
@@ -9,14 +8,10 @@ data class Checkpoint(
     val id: UUID,
     val tips: Int,
     val revenue: Int,
-    val employees: List<Employee>,
+    val employees: List<EmployeeInfo>,
     val dateTime: LocalDateTime,
     val type: CheckpointType,
     val metricRecords: List<CheckpointMetricRecord>,
-    val creatorUserId: String,
-    val createdAt: LocalDateTime,
-    val updaterUserId: String,
-    val updatedAt: LocalDateTime
 ) {
     data class EmployeeInfo(
         val id: UUID,

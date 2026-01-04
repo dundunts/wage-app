@@ -10,6 +10,7 @@ import org.turter.wageapp.data.shift.CheckpointMetricRecordDbEntity
 import org.turter.wageapp.domain.shift.CheckpointMetricRecord
 import org.turter.wageapp.domain.shift.CheckpointMetricRecordPayload
 import org.turter.wageapp.domain.shift.Checkpoint
+import org.turter.wageapp.domain.calculator.CheckpointInfo
 import org.turter.wageapp.domain.shift.ShiftCheckpointPayload
 import java.util.*
 
@@ -21,6 +22,8 @@ interface CheckpointMapper {
         metricRecords: List<CheckpointMetricRecordDbEntity>,
         employees: List<EmployeeDbEntity>
     ): Checkpoint
+
+    fun toCheckpointInfo(entity: CheckpointDbEntity, employeeIds: List<UUID>): CheckpointInfo
 
     fun toShiftCheckpointEmployeeInfo(entity: EmployeeDbEntity): Checkpoint.EmployeeInfo
 

@@ -9,17 +9,14 @@ import org.turter.wageapp.data.employee.EmployeeRepository
 import org.turter.wageapp.data.shift.CheckpointDbEntity
 import org.turter.wageapp.data.shift.CheckpointEmployeeDbEntity
 import org.turter.wageapp.data.shift.CheckpointMetricRecordDbEntity
-import org.turter.wageapp.data.shift.ShiftSessionCheckpointEmployeeRepository
-import org.turter.wageapp.data.shift.ShiftSessionCheckpointMetricRecordRepository
-import org.turter.wageapp.data.shift.ShiftSessionCheckpointRepository
-import org.turter.wageapp.data.shift.ShiftSessionDbEntity
+import org.turter.wageapp.data.shift.CheckpointEmployeeRepository
+import org.turter.wageapp.data.shift.CheckpointMetricRecordRepository
+import org.turter.wageapp.data.shift.CheckpointRepository
 import org.turter.wageapp.data.shift.ShiftSessionRepository
 import org.turter.wageapp.domain.shared.EntityNotFoundException
 import org.turter.wageapp.domain.shift.CreateRegularCheckpointPayload
 import org.turter.wageapp.domain.shift.Checkpoint
 import org.turter.wageapp.domain.shift.ShiftCheckpointPayload
-import org.turter.wageapp.domain.shift.ShiftSession
-import org.turter.wageapp.domain.shift.ShiftSessionClosedException
 import org.turter.wageapp.domain.shift.UpdateShiftCheckpointPayload
 import org.turter.wageapp.mapper.CheckpointMapper
 import org.turter.wageapp.mapper.SessionMapper
@@ -28,9 +25,9 @@ import java.util.UUID
 @Service
 class CheckpointServiceImpl(
     private val sessionRepository: ShiftSessionRepository,
-    private val checkpointRepository: ShiftSessionCheckpointRepository,
-    private val checkpointEmployeeRepository: ShiftSessionCheckpointEmployeeRepository,
-    private val metricRecordRepository: ShiftSessionCheckpointMetricRecordRepository,
+    private val checkpointRepository: CheckpointRepository,
+    private val checkpointEmployeeRepository: CheckpointEmployeeRepository,
+    private val metricRecordRepository: CheckpointMetricRecordRepository,
     private val employeeRepository: EmployeeRepository,
     private val companyRepository: CompanyRepository,
     private val checkpointMapper: CheckpointMapper,
@@ -66,7 +63,7 @@ class CheckpointServiceImpl(
 
         validateUserCompanyBind(userId, session.companyId!!, companyRepository)
 
-        validateSessionIsAvailableModifying(session)
+        session.validateSessionIsAvailableModifying()
 
         return saveCheckpoint(
             checkpointMapper.toNewCheckpointDbEntity(payload, session.id!!),
@@ -84,7 +81,7 @@ class CheckpointServiceImpl(
 
         validateUserCompanyBind(userId, session.companyId!!, companyRepository)
 
-        validateSessionIsAvailableModifying(session)
+        session.validateSessionIsAvailableModifying()
 
         removeEmployeeBindsAndMetricsForCheckpoint(checkpointFromDb.id!!)
 
@@ -97,13 +94,6 @@ class CheckpointServiceImpl(
 
         metricRecordRepository.deleteAllByCheckpointId(checkpointId)
             .awaitSingleOrNull()
-    }
-
-    private fun validateSessionIsAvailableModifying(session: ShiftSessionDbEntity) {
-        when(session.status) {
-            ShiftSession.Status.OPENED, ShiftSession.Status.RECALCULATING -> {}
-            else -> throw ShiftSessionClosedException("Session with id {${session.id}} is unable to modify")
-        }
     }
 
     private suspend fun saveCheckpoint(

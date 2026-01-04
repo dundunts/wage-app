@@ -27,14 +27,16 @@ interface ShiftSessionRepository : R2dbcRepository<ShiftSessionDbEntity, UUID> {
 }
 
 @Repository
-interface ShiftSessionCheckpointRepository : R2dbcRepository<CheckpointDbEntity, UUID> {
+interface CheckpointRepository : R2dbcRepository<CheckpointDbEntity, UUID> {
 
     fun findAllByShiftSessionId(shiftSessionId: UUID): Flux<CheckpointDbEntity>
+
+    fun findAllByShiftSessionIdOrderByDateTimeAsc(shiftSessionId: UUID): Flux<CheckpointDbEntity>
 
 }
 
 @Repository
-interface ShiftSessionCheckpointEmployeeRepository : R2dbcRepository<CheckpointEmployeeDbEntity, UUID> {
+interface CheckpointEmployeeRepository : R2dbcRepository<CheckpointEmployeeDbEntity, UUID> {
 
     fun findAllByCheckpointId(shiftSessionCheckpointId: UUID): Flux<CheckpointEmployeeDbEntity>
 
@@ -43,7 +45,7 @@ interface ShiftSessionCheckpointEmployeeRepository : R2dbcRepository<CheckpointE
 }
 
 @Repository
-interface ShiftSessionCheckpointMetricRecordRepository : R2dbcRepository<CheckpointMetricRecordDbEntity, UUID> {
+interface CheckpointMetricRecordRepository : R2dbcRepository<CheckpointMetricRecordDbEntity, UUID> {
 
     fun findAllByCheckpointId(shiftSessionCheckpointId: UUID): Flux<CheckpointMetricRecordDbEntity>
 

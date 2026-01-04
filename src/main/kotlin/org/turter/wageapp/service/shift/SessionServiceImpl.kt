@@ -17,9 +17,9 @@ import java.util.*
 @Service
 class SessionServiceImpl(
     private val sessionRepository: ShiftSessionRepository,
-    private val checkpointRepository: ShiftSessionCheckpointRepository,
-    private val checkpointEmployeeRepository: ShiftSessionCheckpointEmployeeRepository,
-    private val metricRecordRepository: ShiftSessionCheckpointMetricRecordRepository,
+    private val checkpointRepository: CheckpointRepository,
+    private val checkpointEmployeeRepository: CheckpointEmployeeRepository,
+    private val metricRecordRepository: CheckpointMetricRecordRepository,
     private val employeeRepository: EmployeeRepository,
     private val companyRepository: CompanyRepository,
     private val checkpointMapper: CheckpointMapper,
