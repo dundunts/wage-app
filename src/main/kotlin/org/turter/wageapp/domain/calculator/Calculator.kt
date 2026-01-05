@@ -22,7 +22,6 @@ data class CheckpointInfo(
     val employeeIds: List<UUID>,
     val dateTime: LocalDateTime,
     val type: CheckpointType,
-    val metricRecords: List<CheckpointMetricRecord>,
 )
 
 data class CoefficientFromRevenue(
