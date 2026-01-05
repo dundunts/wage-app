@@ -1,11 +1,11 @@
 package org.turter.wageapp.domain.employee
 
 import jakarta.validation.constraints.NotBlank
+import org.turter.wageapp.domain.employee.Employee.Position
 import org.turter.wageapp.domain.shared.CompanyBindData
 import java.util.*
 
 // Data
-//TODO добавить поле active
 data class Employee(
     val id: UUID,
     val companyIds: List<UUID>,
@@ -13,8 +13,13 @@ data class Employee(
     val firstName: String,
     val lastName: String,
     val patronymic: String,
-    val simpleName: String?
-)
+    val simpleName: String?,
+    val position: Position
+) {
+    enum class Position {
+        MANAGER, WAITER_ACTIVE, WAITER_INACTIVE
+    }
+}
 
 data class CompanyEmployeesResponse(
     override val companyId: UUID,
@@ -27,7 +32,8 @@ data class CompanyEmployeeInfo(
     val firstName: String,
     val lastName: String,
     val patronymic: String,
-    val simpleName: String?
+    val simpleName: String?,
+    val position: Position
 )
 
 // Create

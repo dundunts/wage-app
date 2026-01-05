@@ -1,5 +1,6 @@
 package org.turter.wageapp.data.employee.entity
 
+import org.turter.wageapp.domain.employee.Employee
 import java.util.*
 
 data class EmployeeWithCompanyRow(
@@ -9,5 +10,6 @@ data class EmployeeWithCompanyRow(
     val firstName: String,
     val lastName: String,
     val patronymic: String,
-    val simpleName: String?
+    val simpleName: String?,
+    val position: Employee.Position
 )

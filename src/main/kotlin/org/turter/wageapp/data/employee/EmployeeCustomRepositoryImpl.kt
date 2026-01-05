@@ -4,6 +4,7 @@ import org.springframework.r2dbc.core.DatabaseClient
 import org.springframework.r2dbc.core.RowsFetchSpec
 import org.springframework.stereotype.Repository
 import org.turter.wageapp.data.employee.entity.EmployeeWithCompanyRow
+import org.turter.wageapp.domain.employee.Employee
 import reactor.core.publisher.Flux
 import java.util.*
 
@@ -42,6 +43,7 @@ class EmployeeCustomRepositoryImpl(
                     emps.patronymic,
                     emps.simple_name,
                     emps.user_id,
+                    emps.position,
                     company_binds.company_id
                 from wage_app.employees emps
                          join company_binds on emps.id = company_binds.employee_id;
@@ -60,7 +62,8 @@ class EmployeeCustomRepositoryImpl(
                 firstName = row.get("first_name", String::class.java)!!,
                 lastName = row.get("last_name", String::class.java)!!,
                 patronymic = row.get("patronymic", String::class.java)!!,
-                simpleName = row.get("simple_name", String::class.java)
+                simpleName = row.get("simple_name", String::class.java),
+                position = Employee.Position.valueOf(row.get("position", String::class.java)!!)
             )
         }
 }

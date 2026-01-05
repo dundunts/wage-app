@@ -128,7 +128,8 @@ class EmployeeServiceImpl(
                             firstName = it.firstName,
                             lastName = it.lastName,
                             patronymic = it.patronymic,
-                            simpleName = it.simpleName
+                            simpleName = it.simpleName,
+                            position = it.position
                         )
                     }
                 )

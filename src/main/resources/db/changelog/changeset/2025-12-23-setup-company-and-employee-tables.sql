@@ -13,12 +13,13 @@ create table employees
     first_name  varchar(255) not null,
     last_name   varchar(255) not null,
     patronymic  varchar(255) not null,
-    simple_name varchar(255)
+    simple_name varchar(255),
+    position    varchar(255) not null
 );
 
 create table employees_companies
 (
     id          uuid primary key default gen_random_uuid(),
-    employee_id uuid not null references employees(id) on delete cascade,
-    company_id  uuid not null references companies(id) on delete cascade
+    employee_id uuid not null references employees (id) on delete cascade,
+    company_id  uuid not null references companies (id) on delete cascade
 );

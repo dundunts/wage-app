@@ -3,6 +3,7 @@ package org.turter.wageapp.data.employee.entity
 import org.springframework.data.annotation.Id
 import org.springframework.data.relational.core.mapping.Column
 import org.springframework.data.relational.core.mapping.Table
+import org.turter.wageapp.domain.employee.Employee
 import java.util.*
 
 @Table(name = "wage_app.employees")
@@ -27,6 +28,9 @@ class EmployeeDbEntity {
     @Column("simple_name")
     var simpleName: String? = null
 
+    @Column("position")
+    var position: Employee.Position? = null
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -39,6 +43,7 @@ class EmployeeDbEntity {
         if (lastName != other.lastName) return false
         if (patronymic != other.patronymic) return false
         if (simpleName != other.simpleName) return false
+        if (position != other.position) return false
 
         return true
     }
@@ -50,11 +55,12 @@ class EmployeeDbEntity {
         result = 31 * result + (lastName?.hashCode() ?: 0)
         result = 31 * result + (patronymic?.hashCode() ?: 0)
         result = 31 * result + (simpleName?.hashCode() ?: 0)
+        result = 31 * result + (position?.hashCode() ?: 0)
         return result
     }
 
     override fun toString(): String {
-        return "EmployeeDbEntity(id=$id, userId=$userId, firstName=$firstName, lastName=$lastName, patronymic=$patronymic, simpleName=$simpleName)"
+        return "EmployeeDbEntity(id=$id, userId=$userId, firstName=$firstName, lastName=$lastName, patronymic=$patronymic, simpleName=$simpleName, position=$position)"
     }
 
 }
