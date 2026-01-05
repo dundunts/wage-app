@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
+import org.turter.wageapp.controller.validation.PeriodRequestParamsValidator
 import org.turter.wageapp.domain.salary.Payroll
 import org.turter.wageapp.domain.salary.Period
 import org.turter.wageapp.domain.salary.PeriodType
@@ -16,7 +17,8 @@ import java.util.UUID
 @RestController
 @RequestMapping("/api/v1/salary")
 class SalaryController(
-    private val salaryService: SalaryService
+    private val salaryService: SalaryService,
+    private val periodValidator: PeriodRequestParamsValidator
 ) {
 
     @GetMapping("/own/get")
@@ -28,7 +30,7 @@ class SalaryController(
         @RequestParam(required = false) now: LocalDate,
         principal: Principal
     ): ResponseEntity<Payroll> {
-        val period = validateAndBuildPeriod(periodType, start, end, now)
+        val period = periodValidator.validateAndBuildPeriod(periodType, start, end, now)
 
         return ResponseEntity.ok(salaryService.getOwnPayroll(period, companyId, principal.name))
     }
@@ -42,31 +44,9 @@ class SalaryController(
         @RequestParam(required = false) now: LocalDate?,
         principal: Principal
     ): ResponseEntity<Payroll> {
-        val period = validateAndBuildPeriod(periodType, start, end, now)
+        val period = periodValidator.validateAndBuildPeriod(periodType, start, end, now)
 
         return ResponseEntity.ok(salaryService.getStaffPayroll(period, companyId, principal.name))
-    }
-
-    private fun validateAndBuildPeriod(
-        periodType: PeriodType,
-        start: LocalDate?,
-        end: LocalDate?,
-        now: LocalDate?
-    ): Period {
-        return when(periodType) {
-            PeriodType.CUSTOM -> {
-                if (start == null || end == null) throw IllegalArgumentException("Start and end are required")
-                Period.of(start, end)
-            }
-            PeriodType.CURRENT -> {
-                if (now == null) throw IllegalArgumentException("Now is required")
-                Period.current(now)
-            }
-            PeriodType.PREVIOUS -> {
-                if (now == null) throw IllegalArgumentException("Now is required")
-                Period.previous(now)
-            }
-        }
     }
 
 }
