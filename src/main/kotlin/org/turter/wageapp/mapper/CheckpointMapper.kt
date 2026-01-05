@@ -15,35 +15,53 @@ import org.turter.wageapp.domain.shift.ShiftCheckpointPayload
 import java.util.*
 
 @Mapper(componentModel = "spring")
-interface CheckpointMapper {
+abstract class CheckpointMapper {
 
-    fun toShiftCheckpoint(
+    abstract fun toShiftCheckpoint(
         entity: CheckpointDbEntity,
         metricRecords: List<CheckpointMetricRecordDbEntity>,
         employees: List<EmployeeDbEntity>
     ): Checkpoint
 
-    fun toCheckpointInfo(entity: CheckpointDbEntity, employeeIds: List<UUID>): CheckpointInfo
+    abstract fun toCheckpointInfo(entity: CheckpointDbEntity, employeeIds: List<UUID>): CheckpointInfo
 
-    fun toShiftCheckpointEmployeeInfo(entity: EmployeeDbEntity): Checkpoint.EmployeeInfo
+    abstract fun toShiftCheckpointEmployeeInfo(entity: EmployeeDbEntity): Checkpoint.EmployeeInfo
 
-    fun toShiftCheckpointEmployeeInfoList(entity: List<EmployeeDbEntity>): List<Checkpoint.EmployeeInfo>
-
-    fun toNewCheckpointDbEntity(payload: ShiftCheckpointPayload, shiftSessionId: UUID): CheckpointDbEntity
+    abstract fun toShiftCheckpointEmployeeInfoList(entity: List<EmployeeDbEntity>): List<Checkpoint.EmployeeInfo>
 
     @Mapping(target = "id", ignore = true)
-    fun mergeToCheckpointDbEntity(payload: ShiftCheckpointPayload, @MappingTarget entity: CheckpointDbEntity): CheckpointDbEntity
+    abstract fun toNewCheckpointDbEntity(payload: ShiftCheckpointPayload, shiftSessionId: UUID): CheckpointDbEntity
 
-    fun toNewCheckpointEmployeeDbEntity(shiftSessionCheckpointId: UUID, employeeId: UUID): CheckpointEmployeeDbEntity
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "shiftSessionId", ignore = true)
+    abstract fun mergeToCheckpointDbEntity(
+        payload: ShiftCheckpointPayload,
+        @MappingTarget entity: CheckpointDbEntity
+    ): CheckpointDbEntity
 
-    fun toNewCheckpointEmployeeDbEntityList(shiftSessionCheckpointId: UUID, employeeId: List<UUID>): List<CheckpointEmployeeDbEntity>
+    @Mapping(target = "id", ignore = true)
+    abstract fun toNewCheckpointEmployeeDbEntity(checkpointId: UUID, employeeId: UUID): CheckpointEmployeeDbEntity
 
-    fun toCheckpointMetricRecord(entity: CheckpointMetricRecordDbEntity): CheckpointMetricRecord
+    fun toNewCheckpointEmployeeDbEntityList(
+        shiftSessionCheckpointId: UUID,
+        employeeIds: List<UUID>
+    ): List<CheckpointEmployeeDbEntity> =
+        employeeIds.map { empId -> toNewCheckpointEmployeeDbEntity(shiftSessionCheckpointId, empId) }
 
-    fun toCheckpointMetricRecordList(entity: List<CheckpointMetricRecordDbEntity>): List<CheckpointMetricRecord>
+    abstract fun toCheckpointMetricRecord(entity: CheckpointMetricRecordDbEntity): CheckpointMetricRecord
 
-    fun toNewCheckpointMetricRecord(payload: CheckpointMetricRecordPayload, shiftSessionCheckpointId: UUID): CheckpointMetricRecordDbEntity
+    abstract fun toCheckpointMetricRecordList(entity: List<CheckpointMetricRecordDbEntity>): List<CheckpointMetricRecord>
 
-    fun toNewCheckpointMetricRecordList(payloads: List<CheckpointMetricRecordPayload>, shiftSessionCheckpointId: UUID): List<CheckpointMetricRecordDbEntity>
+    @Mapping(target = "id", ignore = true)
+    abstract fun toNewCheckpointMetricRecord(
+        payload: CheckpointMetricRecordPayload,
+        checkpointId: UUID
+    ): CheckpointMetricRecordDbEntity
+
+    fun toNewCheckpointMetricRecordList(
+        payloads: List<CheckpointMetricRecordPayload>,
+        checkpointId: UUID
+    ): List<CheckpointMetricRecordDbEntity> =
+        payloads.map { payload -> toNewCheckpointMetricRecord(payload, checkpointId) }
 
 }

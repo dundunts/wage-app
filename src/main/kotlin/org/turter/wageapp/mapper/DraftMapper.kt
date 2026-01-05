@@ -1,6 +1,7 @@
 package org.turter.wageapp.mapper
 
 import org.mapstruct.Mapper
+import org.mapstruct.Mapping
 import org.turter.wageapp.data.employee.entity.EmployeeDbEntity
 import org.turter.wageapp.data.shift.PaymentDraftDbEntity
 import org.turter.wageapp.data.shift.ShiftResultDraftDbEntity
@@ -14,10 +15,12 @@ interface DraftMapper {
 
     fun toShiftResultDraft(entity: ShiftResultDraftDbEntity, payments: List<PaymentDraft>): ShiftResultDraft
 
+    @Mapping(target = "id", source = "entity.id")
     fun toPaymentDraft(entity: PaymentDraftDbEntity, employee: EmployeeDbEntity): PaymentDraft
 
     fun toEmployeeInfo(entity: EmployeeDbEntity): PaymentDraft.EmployeeInfo
 
-    fun toPaymentDraftDbEntity(payment: PaymentDraftCalculation, shiftResultDraftId: UUID): PaymentDraftDbEntity
+    @Mapping(target = "id", ignore = true)
+    fun toNewPaymentDraftDbEntity(payment: PaymentDraftCalculation, shiftResultDraftId: UUID): PaymentDraftDbEntity
 
 }

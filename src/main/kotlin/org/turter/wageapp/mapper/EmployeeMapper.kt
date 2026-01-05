@@ -13,8 +13,10 @@ import java.util.*
 interface EmployeeMapper {
 
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "userId", ignore = true)
     fun toNewEmployeeDbEntity(payload: CreateEmployeePayload): EmployeeDbEntity
 
+    @Mapping(target = "id", ignore = true)
     fun mergeToEmployeeDbEntity(
         payload: UpdateEmployeePayload,
         @MappingTarget entity: EmployeeDbEntity

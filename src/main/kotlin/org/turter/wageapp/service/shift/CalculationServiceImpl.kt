@@ -149,7 +149,7 @@ class CalculationServiceImpl(
         }).awaitSingle()
 
         val dbEntities = calculator.calculate().values.map { payment ->
-            draftMapper.toPaymentDraftDbEntity(payment, savedResultDraft.id!!)
+            draftMapper.toNewPaymentDraftDbEntity(payment, savedResultDraft.id!!)
         }
 
         val savedPayments = paymentDraftRepository.saveAll(dbEntities).toPaymentDraftList()

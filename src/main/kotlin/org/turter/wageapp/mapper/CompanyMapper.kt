@@ -10,6 +10,7 @@ import org.turter.wageapp.domain.company.CompanyPayload
 @Mapper(componentModel = "spring")
 interface CompanyMapper {
 
+    @Mapping(target = "id", ignore = true)
     fun toNewCompanyDbEntity(payload: CompanyPayload): CompanyDbEntity
 
     @Mapping(target = "id", ignore = true)
