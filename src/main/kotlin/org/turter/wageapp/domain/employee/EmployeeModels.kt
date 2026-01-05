@@ -1,6 +1,7 @@
 package org.turter.wageapp.domain.employee
 
 import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.NotNull
 import org.turter.wageapp.domain.employee.Employee.Position
 import org.turter.wageapp.domain.shared.CompanyBindData
 import java.util.*
@@ -49,7 +50,10 @@ data class CreateEmployeePayload(
     @field:NotBlank(message = "Patronymic is required")
     val patronymic: String,
 
-    val simpleName: String?
+    val simpleName: String?,
+
+    @field:NotNull(message = "Position is required")
+    val position: Position
 )
 
 // Update
@@ -67,6 +71,9 @@ data class UpdateEmployeePayload(
     @field:NotBlank(message = "Patronymic is required")
     val patronymic: String,
 
-    val simpleName: String?
+    val simpleName: String?,
+
+    @field:NotNull(message = "Position is required")
+    val position: Position
 )
 
