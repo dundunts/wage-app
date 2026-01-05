@@ -80,12 +80,12 @@ class CalculationServiceImpl(
 
         val shiftResult = ShiftResultFromDraft(draft.convertToShiftResultDraft(), session.companyId!!)
 
-        val savedShiftResult = shiftResultRepository.save(shiftResultMapper.toShiftResultDbEntity(shiftResult))
+        val savedShiftResult = shiftResultRepository.save(shiftResultMapper.toNewShiftResultDbEntityFromDraft(shiftResult))
             .awaitSingle()
 
         paymentRepository.saveAll(
             shiftResult.payments.map { payment ->
-                shiftResultMapper.toPaymentDbEntity(payment, savedShiftResult.id!!)
+                shiftResultMapper.toNewPaymentDbEntityFromDraft(payment, savedShiftResult.id!!)
             }
         ).collectList().awaitSingle()
 
