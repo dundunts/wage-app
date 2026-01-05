@@ -93,19 +93,7 @@ class CheckpointDbEntity {
     var dateTime: LocalDateTime? = null
 
     @Column("tips")
-    var type: CheckpointType? = null
-
-    @Column("creator_user_id")
-    var creatorUserId: String? = null
-
-    @Column("created_at")
-    var createdAt: LocalDateTime? = null
-
-    @Column("updater_user_id")
-    var updaterUserId: String? = null
-
-    @Column("update_at")
-    var updatedAt: LocalDateTime? = null
+    var type: CheckpointType? = null // not null
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -119,10 +107,6 @@ class CheckpointDbEntity {
         if (shiftSessionId != other.shiftSessionId) return false
         if (dateTime != other.dateTime) return false
         if (type != other.type) return false
-        if (creatorUserId != other.creatorUserId) return false
-        if (createdAt != other.createdAt) return false
-        if (updaterUserId != other.updaterUserId) return false
-        if (updatedAt != other.updatedAt) return false
 
         return true
     }
@@ -134,15 +118,11 @@ class CheckpointDbEntity {
         result = 31 * result + (shiftSessionId?.hashCode() ?: 0)
         result = 31 * result + (dateTime?.hashCode() ?: 0)
         result = 31 * result + (type?.hashCode() ?: 0)
-        result = 31 * result + (creatorUserId?.hashCode() ?: 0)
-        result = 31 * result + (createdAt?.hashCode() ?: 0)
-        result = 31 * result + (updaterUserId?.hashCode() ?: 0)
-        result = 31 * result + (updatedAt?.hashCode() ?: 0)
         return result
     }
 
     override fun toString(): String {
-        return "ShiftSessionCheckpointDbEntity(id=$id, shiftSessionId=$shiftSessionId, tips=$tips, revenue=$revenue, dateTime=$dateTime, type=$type, creatorUserId=$creatorUserId, createdAt=$createdAt, updaterUserId=$updaterUserId, updatedAt=$updatedAt)"
+        return "ShiftSessionCheckpointDbEntity(id=$id, shiftSessionId=$shiftSessionId, tips=$tips, revenue=$revenue, dateTime=$dateTime, type=$type)"
     }
 
 }

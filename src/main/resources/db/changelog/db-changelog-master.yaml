@@ -3,3 +3,13 @@ databaseChangeLog:
       file: db/changelog/changeset/2025-12-23-setup-company-and-employee-tables.yaml
   - include:
       file: db/changelog/changeset/2025-12-25-insert-test-data-for-companies-and-employees.yaml
+  - include:
+      file: db/changelog/changeset/2026-01-05-setup-shift-sessions.yaml
+  - include:
+      file: db/changelog/changeset/2026-01-05-setup-shift-result-drafts.yaml
+  - include:
+      file: db/changelog/changeset/2026-01-05-setup-shift-results.yaml
+  - include:
+      file: db/changelog/changeset/2026-01-06-insert-test-data-for-shift-sessions.yaml
+  - include:
+      file: db/changelog/changeset/2026-01-06-insert-test-data-for-shift-results.yaml

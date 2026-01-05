@@ -1,0 +1,14 @@
+databaseChangeLog:
+  - changeSet:
+      id: 2026-01-05-setup-shift-results
+      author: belbek
+      runOnChange: false
+      runAlways: false
+      changes:
+        - sqlFile:
+            path: 2026-01-05-setup-shift-results.sql
+            relativeToChangelogFile: true
+      rollback:
+        - sqlFile:
+            path: 2026-01-05-setup-shift-results-rollback.sql
+            relativeToChangelogFile: true

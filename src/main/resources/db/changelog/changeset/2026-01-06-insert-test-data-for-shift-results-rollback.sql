@@ -1,0 +1,5 @@
+DELETE FROM payments
+WHERE id LIKE '35000000-%';
+
+DELETE FROM shift_results
+WHERE id LIKE '34000000-%';

@@ -1,0 +1,14 @@
+databaseChangeLog:
+  - changeSet:
+      id: 2026-01-06-insert-test-data-for-shift-sessions
+      author: belbek
+      runAlways: false
+      runOnChange: false
+      changes:
+        - sqlFile:
+            path: 2026-01-06-insert-test-data-for-shift-sessions.sql
+            relativeToChangelogFile: true
+      rollback:
+        - sqlFile:
+            path: 2026-01-06-insert-test-data-for-shift-sessions-rollback.sql
+            relativeToChangelogFile: true
