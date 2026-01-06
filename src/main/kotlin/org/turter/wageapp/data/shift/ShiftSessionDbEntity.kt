@@ -18,16 +18,16 @@ class ShiftSessionDbEntity {
     var id: UUID? = null
 
     @Column("company_id")
-    var companyId: UUID? = null
+    var companyId: UUID? = null // not null
 
     @Column("status")
-    var status: ShiftSession.Status? = null
+    var status: ShiftSession.Status? = null // not null
 
     @Column("start_work_time")
-    var startWorkTime: LocalTime? = null
+    var startWorkTime: LocalTime? = null // not null
 
     @Column("date")
-    var date: LocalDate? = null
+    var date: LocalDate? = null // not null
 
     constructor(companyId: UUID, status: ShiftSession.Status, startWorkTime: LocalTime, date: LocalDate) {
         this.companyId = companyId
@@ -81,18 +81,18 @@ class CheckpointDbEntity {
     var id: UUID? = null
 
     @Column("shift_session_id")
-    var shiftSessionId: UUID? = null
+    var shiftSessionId: UUID? = null // not null
 
     @Column("tips")
-    var tips: Int = 0
+    var tips: Int = 0 // not null
 
     @Column("revenue")
-    var revenue: Int = 0
+    var revenue: Int = 0 // not null
 
     @Column("date_time")
-    var dateTime: LocalDateTime? = null
+    var dateTime: LocalDateTime? = null // not null
 
-    @Column("tips")
+    @Column("type")
     var type: CheckpointType? = null // not null
 
     override fun equals(other: Any?): Boolean {
@@ -134,10 +134,10 @@ class CheckpointEmployeeDbEntity {
     var id: UUID? = null
 
     @Column("checkpoint_id")
-    var checkpointId: UUID? = null
+    var checkpointId: UUID? = null // not null
 
     @Column("employee_id")
-    var employeeId: UUID? = null
+    var employeeId: UUID? = null // not null
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -163,6 +163,8 @@ class CheckpointEmployeeDbEntity {
         return "ShiftSessionCheckpointEmployeeDbEntity(id=$id, shiftSessionCheckpointId=$checkpointId, employeeId=$employeeId)"
     }
 
+    // unique(checkpointId,employeeId)
+
 }
 
 @Table("wage_app.checkpoint_metric_records")
@@ -172,16 +174,16 @@ class CheckpointMetricRecordDbEntity {
     var id: UUID? = null
 
     @Column("checkpoint_id")
-    var checkpointId: UUID? = null
+    var checkpointId: UUID? = null // not null
 
     @Column("label")
-    var label: String? = null
+    var label: String? = null // not null
 
     @Column("destination")
-    var destination: CheckpointCalcDestination? = null
+    var destination: CheckpointCalcDestination? = null // not null
 
     @Column("value")
-    var value: Int = 0
+    var value: Int = 0 // not null
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

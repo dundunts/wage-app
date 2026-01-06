@@ -6,17 +6,17 @@ import org.springframework.data.relational.core.mapping.Table
 import java.time.LocalDate
 import java.util.UUID
 
-@Table("wage_app.shift_sessions")
+@Table("wage_app.shift_result_drafts")
 class ShiftResultDraftDbEntity {
 
     @Id
     var id: UUID? = null
 
     @Column("session_id")
-    var sessionId: UUID? = null
+    var sessionId: UUID? = null // unique not null
 
     @Column("date")
-    var date: LocalDate? = null
+    var date: LocalDate? = null // not null
 
 }
 
@@ -27,18 +27,20 @@ class PaymentDraftDbEntity {
     var id: UUID? = null
 
     @Column("shift_result_draft_id")
-    var shiftResultDraftId: UUID? = null
+    var shiftResultDraftId: UUID? = null // not null
 
     @Column("employee_id")
-    var employeeId: UUID? = null
+    var employeeId: UUID? = null // not null
 
     @Column("percent_from_revenue")
-    var percentFromRevenue: Int? = null
+    var percentFromRevenue: Int? = null // not null
 
     @Column("tips")
-    var tips: Int? = null
+    var tips: Int? = null // not null
 
     @Column("work_seconds")
-    var workSeconds: Long = 0
+    var workSeconds: Long = 0 // not null
+
+    // unique(shiftResultDraftId, employeeId)
 
 }

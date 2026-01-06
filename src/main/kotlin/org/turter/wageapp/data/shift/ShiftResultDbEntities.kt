@@ -14,16 +14,18 @@ class ShiftResultDbEntity {
     var id: UUID? = null
 
     @Column("company_id")
-    var companyId: UUID? = null
+    var companyId: UUID? = null // not null
 
     @Column("date")
-    var date: LocalDate? = null
+    var date: LocalDate? = null // not null
 
     @Column("session_id")
     var sessionId: UUID? = null
 
     @Column("calculation_source")
-    var calculationSource: CalculationSource? = null
+    var calculationSource: CalculationSource? = null // not null
+
+    // unique(companyId, date)
 
 }
 
@@ -34,18 +36,20 @@ class PaymentDbEntity {
     var id: UUID? = null
 
     @Column("shift_result_id")
-    var shiftResultId: UUID? = null
+    var shiftResultId: UUID? = null // not null
 
     @Column("employee_id")
-    var employeeId: UUID? = null
+    var employeeId: UUID? = null // not null
 
     @Column("percent_from_revenue")
-    var percentFromRevenue: Int? = null
+    var percentFromRevenue: Int? = null // not null
 
     @Column("tips")
-    var tips: Int? = null
+    var tips: Int? = null // not null
 
     @Column("work_seconds")
-    var workSeconds: Long? = null
+    var workSeconds: Long? = null // not null
+
+    // unique(shiftResultId, employeeId)
 
 }
