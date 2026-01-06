@@ -10,7 +10,7 @@ spring:
   liquibase:
     default-schema: wage_app
     enabled: true
-    drop-first: true
+    drop-first: false
     url: jdbc:postgresql://${POSTGRES_URL:localhost:5434}/${POSTGRES_DB:postgres}
     user: user
     password: password
