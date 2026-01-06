@@ -13,9 +13,11 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import org.turter.wageapp.controller.validation.PeriodRequestParamsValidator
 import org.turter.wageapp.domain.salary.PeriodType
+import org.turter.wageapp.domain.shift.ShiftResultExtendedResponse
 import org.turter.wageapp.domain.shift.SaveShiftResultPayload
 import org.turter.wageapp.domain.shift.SaveShiftResultResponse
 import org.turter.wageapp.domain.shift.ShiftResultDetailed
+import org.turter.wageapp.service.shift.SessionService
 import org.turter.wageapp.service.shift.ShiftResultService
 import java.security.Principal
 import java.time.LocalDate
@@ -25,6 +27,7 @@ import java.util.UUID
 @RequestMapping("/api/v1/shift-result")
 class ShiftResultController(
     private val shiftResultService: ShiftResultService,
+    private val sessionService: SessionService,
     private val periodValidator: PeriodRequestParamsValidator
 ) {
 
@@ -32,8 +35,11 @@ class ShiftResultController(
     suspend fun getResult(
         @PathVariable resultId: UUID,
         principal: Principal
-    ): ResponseEntity<ShiftResultDetailed> {
-        return ResponseEntity.ok(shiftResultService.getDetailed(resultId, principal.name))
+    ): ResponseEntity<ShiftResultExtendedResponse> {
+        val shiftResult = shiftResultService.getDetailed(resultId, principal.name)
+        val session = shiftResult.sessionId?.let { sessionId -> sessionService.getById(sessionId) }
+
+        return ResponseEntity.ok(ShiftResultExtendedResponse(shiftResult, session))
     }
 
     @GetMapping("/get/detailed/by-period/page")

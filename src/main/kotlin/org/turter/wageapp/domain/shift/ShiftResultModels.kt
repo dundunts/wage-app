@@ -38,7 +38,7 @@ data class ShiftResultDetailed(
     val id: UUID,
     val payments: List<Payment>,
     val date: LocalDate,
-    val session: ShiftSession?,
+    val sessionId: UUID?,
     val calculationSource: CalculationSource,
 ) {
     data class Payment(
@@ -81,3 +81,5 @@ data class SaveShiftResultPayload(
 }
 
 data class SaveShiftResultResponse(val resultId: UUID)
+
+data class ShiftResultExtendedResponse(val shiftResult: ShiftResultDetailed, val session: ShiftSession?)

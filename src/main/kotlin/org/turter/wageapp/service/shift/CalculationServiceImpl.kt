@@ -55,7 +55,7 @@ class CalculationServiceImpl(
         val session = sessionRepository.findById(sessionId).awaitSingleOrNull()
             ?: throw EntityNotFoundException("Session not found for id: {$sessionId}")
 
-        validateUserCompanyBind(userId, session.id!!, companyRepository)
+        validateUserCompanyBind(userId, session.companyId!!, companyRepository)
 
         val isExists = draftRepository.existsBySessionId(sessionId).awaitSingle()
 
@@ -74,7 +74,7 @@ class CalculationServiceImpl(
 
         val session = sessionRepository.findById(draft.sessionId!!).awaitSingle()
 
-        validateUserCompanyBind(userId, session.id!!, companyRepository)
+        validateUserCompanyBind(userId, session.companyId!!, companyRepository)
 
         session.validateSessionIsAvailableToConfirm()
 
@@ -96,25 +96,25 @@ class CalculationServiceImpl(
         return ConfirmDraftResponse(savedShiftResult.id!!)
     }
 
-    suspend fun ShiftResultDraftDbEntity.convertToShiftResultDraft(): ShiftResultDraft {
-        val payments = paymentDraftRepository.findAllByShiftResultDraftId(id!!)
-            .toPaymentDraftList()
-
-        return draftMapper.toShiftResultDraft(this, payments)
-    }
-
     override suspend fun deleteDraft(draftId: UUID, userId: String) {
         val draft = draftRepository.findById(draftId).awaitSingleOrNull() ?: return
 
         val session = sessionRepository.findById(draft.sessionId!!).awaitSingle()
 
-        validateUserCompanyBind(userId, session.id!!, companyRepository)
+        validateUserCompanyBind(userId, session.companyId!!, companyRepository)
 
         session.status = session.status?.cancelDraft()
 
         sessionRepository.save(session).awaitSingle()
 
         draftRepository.deleteById(draftId).awaitSingleOrNull()
+    }
+
+    private suspend fun ShiftResultDraftDbEntity.convertToShiftResultDraft(): ShiftResultDraft {
+        val payments = paymentDraftRepository.findAllByShiftResultDraftId(id!!)
+            .toPaymentDraftList()
+
+        return draftMapper.toShiftResultDraft(this, payments)
     }
 
     private suspend fun calculateAndSaveResultsDraft(

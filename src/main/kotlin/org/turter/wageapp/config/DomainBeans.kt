@@ -8,6 +8,6 @@ import org.turter.wageapp.domain.salary.PayrollAggregator
 class DomainBeans {
 
     @Bean
-    fun PayrollAggregator(): PayrollAggregator = PayrollAggregator()
+    fun payrollAggregator(): PayrollAggregator = PayrollAggregator()
 
 }

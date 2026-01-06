@@ -8,6 +8,8 @@ import java.util.UUID
 
 interface SessionService {
 
+    suspend fun getById(sessionId: UUID): ShiftSession
+
     suspend fun getOpenedSessionForCompany(companyId: UUID, userId: String): ShiftSession
 
     suspend fun getAllAvailableSessions(companyId: UUID, userId: String): List<ShiftSession>

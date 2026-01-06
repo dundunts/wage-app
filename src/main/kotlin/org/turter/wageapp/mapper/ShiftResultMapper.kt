@@ -18,8 +18,7 @@ interface ShiftResultMapper {
     @Mapping(target = "date", source = "shiftResult.date")
     fun toDetailed(
         shiftResult: ShiftResultDbEntity,
-        payments: List<ShiftResultDetailed.Payment>,
-        session: ShiftSession?
+        payments: List<ShiftResultDetailed.Payment>
     ): ShiftResultDetailed
 
     @Mapping(target = "id", source = "payment.id")

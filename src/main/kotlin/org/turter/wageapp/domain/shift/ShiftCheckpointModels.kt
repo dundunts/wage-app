@@ -44,7 +44,7 @@ enum class CheckpointCalcDestination {
 interface ShiftCheckpointPayload {
     val revenue: Int
     val tips: Int
-    val employeeIds: List<UUID>
+    val employeeIds: Set<UUID>
     val dateTime: LocalDateTime
     val type: CheckpointType
     val fieldRecords: List<CheckpointMetricRecordPayload>
@@ -54,7 +54,7 @@ data class CreateFirstShiftCheckpointPayload(
     val companyId: UUID,
     override val revenue: Int,
     override val tips: Int,
-    override val employeeIds: List<UUID>,
+    override val employeeIds: Set<UUID>,
     override val dateTime: LocalDateTime,
     override val type: CheckpointType,
     override val fieldRecords: List<CheckpointMetricRecordPayload>
@@ -64,7 +64,7 @@ data class CreateRegularCheckpointPayload(
     val sessionId: UUID,
     override val revenue: Int,
     override val tips: Int,
-    override val employeeIds: List<UUID>,
+    override val employeeIds: Set<UUID>,
     override val dateTime: LocalDateTime,
     override val type: CheckpointType,
     override val fieldRecords: List<CheckpointMetricRecordPayload>
@@ -75,7 +75,7 @@ data class UpdateShiftCheckpointPayload(
     val id: UUID,
     override val revenue: Int,
     override val tips: Int,
-    override val employeeIds: List<UUID>,
+    override val employeeIds: Set<UUID>,
     override val dateTime: LocalDateTime,
     override val type: CheckpointType,
     override val fieldRecords: List<CheckpointMetricRecordPayload>

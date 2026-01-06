@@ -2,6 +2,7 @@ package org.turter.wageapp.controller
 
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import org.turter.wageapp.domain.shift.Checkpoint
@@ -13,22 +14,14 @@ import java.security.Principal
 
 @RestController
 @RequestMapping("/api/v1/checkpoint")
+//TODO add endpoint for delete by id
 class CheckpointController(
     private val calculatingShiftService: CheckpointService
 ) {
 
-//    @PostMapping("/create/first")
-//    suspend fun createFirstForSessionCheckpoint(
-//        payload: CreateFirstShiftCheckpointPayload,
-//        principal: Principal
-//    ): ResponseEntity<ShiftSession> {
-//        return ResponseEntity.status(201)
-//            .body(calculatingShiftService.createFirstCheckpoint(payload, principal.name))
-//    }
-
     @PostMapping("/create")
     suspend fun createCheckpointForSession(
-        payload: CreateRegularCheckpointPayload,
+        @RequestBody payload: CreateRegularCheckpointPayload,
         principal: Principal
     ): ResponseEntity<Checkpoint> {
         return ResponseEntity.status(201)
@@ -37,7 +30,7 @@ class CheckpointController(
 
     @PostMapping("/update")
     suspend fun updateCheckpoint(
-        payload: UpdateShiftCheckpointPayload,
+        @RequestBody payload: UpdateShiftCheckpointPayload,
         principal: Principal
     ): ResponseEntity<Checkpoint> {
         return ResponseEntity.ok(calculatingShiftService.updateCheckpoint(payload, principal.name))

@@ -116,7 +116,7 @@ class CheckpointServiceImpl(
         payload: ShiftCheckpointPayload
     ): Pair<List<CheckpointEmployeeDbEntity>, List<CheckpointMetricRecordDbEntity>> {
         val employeeBinds = checkpointEmployeeRepository.saveAll(
-            checkpointMapper.toNewCheckpointEmployeeDbEntityList(checkpointId, payload.employeeIds)
+            checkpointMapper.toNewCheckpointEmployeeDbEntityList(checkpointId, payload.employeeIds.toList())
         ).collectList().awaitSingle()
 
         val metricRecords = metricRecordRepository.saveAll(

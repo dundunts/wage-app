@@ -25,6 +25,13 @@ class SessionServiceImpl(
     private val checkpointMapper: CheckpointMapper,
     private val sessionMapper: SessionMapper
 ) : SessionService {
+    override suspend fun getById(sessionId: UUID): ShiftSession {
+        val session = sessionRepository.findById(sessionId).awaitSingleOrNull()
+            ?: throw EntityNotFoundException("Session not found for id: {$sessionId}")
+
+        return convertToShiftSession(session)
+    }
+
     override suspend fun getOpenedSessionForCompany(
         companyId: UUID,
         userId: String
@@ -32,7 +39,10 @@ class SessionServiceImpl(
         validateUserCompanyBind(userId, companyId, companyRepository)
 
         val openedSessions =
-            sessionRepository.findAllByCompanyIdAndStatus(companyId, ShiftSession.Status.OPENED)
+            sessionRepository.findAllByCompanyIdAndStatusIn(
+                companyId,
+                listOf(ShiftSession.Status.OPENED, ShiftSession.Status.OPENED_DRAFT)
+            )
                 .collectList()
                 .awaitSingle()
 

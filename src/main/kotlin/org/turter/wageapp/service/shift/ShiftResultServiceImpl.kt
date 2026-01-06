@@ -48,8 +48,7 @@ class ShiftResultServiceImpl(
             }
             .collectList()
             .awaitSingle()
-        //TODO отправлять актуальный session в маппинг
-        return shiftResultMapper.toDetailed(result, payments, null)
+        return shiftResultMapper.toDetailed(result, payments)
     }
 
     override suspend fun getDetailedPage(
@@ -72,8 +71,7 @@ class ShiftResultServiceImpl(
                     }
                     .collectList()
                     .map { payments ->
-                        //TODO отправлять актуальный session в маппинг
-                        shiftResultMapper.toDetailed(result, payments, null)
+                        shiftResultMapper.toDetailed(result, payments)
                     }
             }
             .collectList()
