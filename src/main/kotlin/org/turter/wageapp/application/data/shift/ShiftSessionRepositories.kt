@@ -1,0 +1,54 @@
+package org.turter.wageapp.application.data.shift
+
+import org.springframework.data.r2dbc.repository.R2dbcRepository
+import org.springframework.stereotype.Repository
+import org.turter.wageapp.domain.shift.ShiftSession
+import reactor.core.publisher.Flux
+import reactor.core.publisher.Mono
+import java.util.UUID
+
+@Repository
+interface ShiftSessionRepository : R2dbcRepository<ShiftSessionDbEntity, UUID> {
+
+    fun findAllByCompanyIdAndStatus(
+        companyId: UUID,
+        status: ShiftSession.Status
+    ): Flux<ShiftSessionDbEntity>
+
+    fun findAllByCompanyIdAndStatusIn(
+        companyId: UUID,
+        status: List<ShiftSession.Status>
+    ): Flux<ShiftSessionDbEntity>
+
+    fun findByIdAndStatus(id: UUID, status: ShiftSession.Status): Mono<ShiftSessionDbEntity>
+
+    fun findByIdAndStatusIn(id: UUID, status: List<ShiftSession.Status>): Mono<ShiftSessionDbEntity>
+
+}
+
+@Repository
+interface CheckpointRepository : R2dbcRepository<CheckpointDbEntity, UUID> {
+
+    fun findAllByShiftSessionId(shiftSessionId: UUID): Flux<CheckpointDbEntity>
+
+    fun findAllByShiftSessionIdOrderByDateTimeAsc(shiftSessionId: UUID): Flux<CheckpointDbEntity>
+
+}
+
+@Repository
+interface CheckpointEmployeeRepository : R2dbcRepository<CheckpointEmployeeDbEntity, UUID> {
+
+    fun findAllByCheckpointId(shiftSessionCheckpointId: UUID): Flux<CheckpointEmployeeDbEntity>
+
+    fun deleteAllByCheckpointId(checkpointId: UUID): Mono<Void>
+
+}
+
+@Repository
+interface CheckpointMetricRecordRepository : R2dbcRepository<CheckpointMetricRecordDbEntity, UUID> {
+
+    fun findAllByCheckpointId(shiftSessionCheckpointId: UUID): Flux<CheckpointMetricRecordDbEntity>
+
+    fun deleteAllByCheckpointId(checkpointId: UUID): Mono<Void>
+
+}

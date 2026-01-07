@@ -1,6 +1,5 @@
 package org.turter.wageapp.domain.calculator
 
-import org.turter.wageapp.domain.shift.CheckpointMetricRecord
 import org.turter.wageapp.domain.shift.CheckpointType
 import java.time.Duration
 import java.time.LocalDateTime
