@@ -88,6 +88,27 @@ class CheckpointServiceImpl(
         return checkpoint
     }
 
+    override suspend fun deleteById(checkpointId: UUID, userId: String) {
+        val checkpointFromDb = checkpointRepository.findById(checkpointId).awaitSingleOrNull()
+            ?: return
+
+        val session = sessionRepository.findById(checkpointFromDb.shiftSessionId!!).awaitSingleOrNull()
+            ?: throw EntityNotFoundException("Session not found for id: {${checkpointFromDb.shiftSessionId}}")
+
+        validateUserCompanyBind(userId, session.companyId!!, companyRepository)
+
+        session.validateSessionIsAvailableModifying()
+
+        checkpointRepository.deleteById(checkpointId).awaitSingleOrNull()
+
+        notificationEventPublisher.publish(
+            checkpointMapper.toCheckpointDeletedNotificationEvent(
+                checkpointId,
+                session.companyId!!
+            )
+        )
+    }
+
     private suspend fun removeEmployeeBindsAndMetricsForCheckpoint(checkpointId: UUID) {
         checkpointEmployeeRepository.deleteAllByCheckpointId(checkpointId)
             .awaitSingleOrNull()
