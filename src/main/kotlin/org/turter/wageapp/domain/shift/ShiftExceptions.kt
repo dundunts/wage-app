@@ -11,4 +11,6 @@ class ShiftResultConflictException(message: String) : ConflictDataException(mess
 
 class ShiftSessionClosedException(message: String) : ConflictDataException(message)
 
+class ShiftSessionNotAvailableForModifyException(message: String) : ConflictDataException(message)
+
 class SeveralSessionsOpenedException(message: String) : NotConsistenceDataException(message)

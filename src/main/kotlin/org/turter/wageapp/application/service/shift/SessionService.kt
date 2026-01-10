@@ -10,6 +10,8 @@ interface SessionService {
 
     suspend fun getById(sessionId: UUID): ShiftSession
 
+    suspend fun getAvailableById(sessionId: UUID, userId: String): ShiftSession
+
     suspend fun getOpenedSessionForCompany(companyId: UUID, userId: String): ShiftSession
 
     suspend fun getAllAvailableSessions(companyId: UUID, userId: String): List<ShiftSession>

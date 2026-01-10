@@ -19,7 +19,6 @@ import java.util.UUID
 
 @RestController
 @RequestMapping("/api/v1/session")
-//TODO add endpoint for getSessionByIdForModifying (will return only when session is not closed) otherwise 404
 class SessionController(
     private val sessionService: SessionService
 ) {
@@ -30,6 +29,14 @@ class SessionController(
         principal: Principal
     ): ResponseEntity<ShiftSession> {
         return ResponseEntity.ok(sessionService.getOpenedSessionForCompany(companyId, principal.name))
+    }
+
+    @GetMapping("/get/available/{sessionId}")
+    suspend fun getAvailableById(
+        @PathVariable sessionId: UUID,
+        principal: Principal
+    ): ResponseEntity<ShiftSession> {
+        return ResponseEntity.ok(sessionService.getAvailableById(sessionId, principal.name))
     }
 
     @GetMapping("/get/available/all")

@@ -6,24 +6,13 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.turter.wageapp.application.data.company.CompanyRepository
 import org.turter.wageapp.application.data.employee.EmployeeRepository
-import org.turter.wageapp.application.data.shift.CheckpointEmployeeRepository
-import org.turter.wageapp.application.data.shift.CheckpointMetricRecordRepository
-import org.turter.wageapp.application.data.shift.CheckpointRepository
-import org.turter.wageapp.application.data.shift.ShiftSessionDbEntity
-import org.turter.wageapp.application.data.shift.ShiftSessionRepository
-import org.turter.wageapp.domain.shared.EntityNotFoundException
-import org.turter.wageapp.domain.shift.Checkpoint
-import org.turter.wageapp.domain.shift.CreateRecalculatingShiftSessionPayload
-import org.turter.wageapp.domain.shift.OpenNewShiftSessionPayload
-import org.turter.wageapp.domain.shift.SeveralSessionsOpenedException
-import org.turter.wageapp.domain.shift.ShiftSession
-import org.turter.wageapp.domain.shift.UpdateShiftSessionStartWorkTimePayload
+import org.turter.wageapp.application.data.shift.*
 import org.turter.wageapp.application.mapper.CheckpointMapper
 import org.turter.wageapp.application.mapper.SessionMapper
-import org.turter.wageapp.domain.notification.NotificationEvent
 import org.turter.wageapp.domain.notification.NotificationEventPublisher
+import org.turter.wageapp.domain.shared.EntityNotFoundException
+import org.turter.wageapp.domain.shift.*
 import reactor.core.publisher.Mono
-import java.time.Instant
 import java.util.*
 
 @Service
@@ -43,6 +32,27 @@ class SessionServiceImpl(
             ?: throw EntityNotFoundException("Session not found for id: {$sessionId}")
 
         return convertToShiftSession(session)
+    }
+
+    override suspend fun getAvailableById(
+        sessionId: UUID,
+        userId: String
+    ): ShiftSession {
+        val session = sessionRepository.findById(sessionId).awaitSingleOrNull()
+            ?: throw EntityNotFoundException("Session not found for id: {$sessionId}")
+
+        validateUserCompanyBind(userId, session.companyId!!, companyRepository)
+
+        when (session.status) {
+            ShiftSession.Status.OPENED, ShiftSession.Status.OPENED_DRAFT,
+            ShiftSession.Status.RECALCULATING, ShiftSession.Status.RECALCULATING_DRAFT -> return convertToShiftSession(
+                session
+            )
+
+            else -> throw ShiftSessionNotAvailableForModifyException(
+                "Session not available for modify for id: {$sessionId}"
+            )
+        }
     }
 
     override suspend fun getOpenedSessionForCompany(
@@ -74,7 +84,12 @@ class SessionServiceImpl(
     ): List<ShiftSession> {
         val sessions = sessionRepository.findAllByCompanyIdAndStatusIn(
             companyId,
-            listOf(ShiftSession.Status.OPENED, ShiftSession.Status.RECALCULATING)
+            listOf(
+                ShiftSession.Status.OPENED,
+                ShiftSession.Status.OPENED_DRAFT,
+                ShiftSession.Status.RECALCULATING,
+                ShiftSession.Status.RECALCULATING_DRAFT
+            )
         )
             .collectList()
             .awaitSingle()
