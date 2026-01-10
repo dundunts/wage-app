@@ -20,6 +20,9 @@ import org.turter.wageapp.domain.shift.ShiftCheckpointPayload
 import org.turter.wageapp.domain.shift.UpdateShiftCheckpointPayload
 import org.turter.wageapp.application.mapper.CheckpointMapper
 import org.turter.wageapp.application.mapper.SessionMapper
+import org.turter.wageapp.domain.notification.NotificationEvent
+import org.turter.wageapp.domain.notification.NotificationEventPublisher
+import java.time.Instant
 import java.util.UUID
 
 @Service
@@ -31,30 +34,8 @@ class CheckpointServiceImpl(
     private val employeeRepository: EmployeeRepository,
     private val companyRepository: CompanyRepository,
     private val checkpointMapper: CheckpointMapper,
-    private val sessionMapper: SessionMapper
+    private val notificationEventPublisher: NotificationEventPublisher
 ) : CheckpointService {
-
-//    @Transactional
-//    override suspend fun createFirstCheckpoint(payload: CreateFirstShiftCheckpointPayload, userId: String): Checkpoint {
-//        validateUserCompanyBind(userId, payload.companyId)
-//
-//        // get or create opened session
-//        val openedSessions = sessionRepository.findAllByCompanyIdAndStatus(payload.companyId, ShiftSession.Status.OPENED)
-//            .collectList()
-//            .awaitSingle()
-//
-//        val session: ShiftSessionDbEntity = when(openedSessions.size) {
-//            1 -> openedSessions.first()
-//            0 -> sessionRepository.save(ShiftSessionDbEntity.Companion.getNewOpened(payload.companyId)).awaitSingle()
-//            else -> throw SeveralSessionsOpenedException("Several sessions opened for company. $openedSessions")
-//        }
-//
-//        // save checkpoint
-//        saveNewCheckpoint(payload, session.id!!)
-//
-//        // get actual ShiftSession
-//        return convertToShiftSession(session)
-//    }
 
     @Transactional
     override suspend fun createCheckpoint(payload: CreateRegularCheckpointPayload, userId: String): Checkpoint {
@@ -65,10 +46,19 @@ class CheckpointServiceImpl(
 
         session.validateSessionIsAvailableModifying()
 
-        return saveCheckpoint(
+        val checkpoint = saveCheckpoint(
             checkpointMapper.toNewCheckpointDbEntity(payload, session.id!!),
             payload
         )
+
+        notificationEventPublisher.publish(
+            checkpointMapper.toCheckpointSavedNotificationEvent(
+                checkpoint,
+                session.companyId!!
+            )
+        )
+
+        return checkpoint
     }
 
     @Transactional
@@ -85,7 +75,17 @@ class CheckpointServiceImpl(
 
         removeEmployeeBindsAndMetricsForCheckpoint(checkpointFromDb.id!!)
 
-        return saveCheckpoint(checkpointMapper.mergeToCheckpointDbEntity(payload, checkpointFromDb), payload)
+        val checkpoint = saveCheckpoint(checkpointMapper.mergeToCheckpointDbEntity(payload, checkpointFromDb), payload)
+
+        notificationEventPublisher.publish(
+            checkpointMapper.toCheckpointReplacedNotificationEvent(
+                checkpoint,
+                checkpointFromDb.id!!,
+                session.companyId!!
+            )
+        )
+
+        return checkpoint
     }
 
     private suspend fun removeEmployeeBindsAndMetricsForCheckpoint(checkpointId: UUID) {

@@ -21,9 +21,20 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: ${KEYCLOAK_URL:http://localhost:8080}/realms/${KEYCLOAK_REALM:WageApp}
+      client:
+        provider:
+          keycloak:
+            issuer-uri: ${KEYCLOAK_URL:http://localhost:8080}/realms/${KEYCLOAK_REALM:WageApp}
+        registration:
+          keycloak:
+            provider: keycloak
+            client-id: backend-core
+            client-secret: a79VFySQIX0oZ7YycmkbfC9ciXuJfJKD
+            authorization-grant-type: client_credentials
 
 server:
   port: 8085
+
 
 management:
   endpoints:
@@ -33,3 +44,8 @@ management:
   endpoint:
     health:
       show-details: always
+
+notification:
+  telegram:
+    bot:
+      url: ${TELEGRAM_BOT_URL:http://localhost:8095}

@@ -20,7 +20,10 @@ import org.turter.wageapp.domain.shift.ShiftSession
 import org.turter.wageapp.domain.shift.UpdateShiftSessionStartWorkTimePayload
 import org.turter.wageapp.application.mapper.CheckpointMapper
 import org.turter.wageapp.application.mapper.SessionMapper
+import org.turter.wageapp.domain.notification.NotificationEvent
+import org.turter.wageapp.domain.notification.NotificationEventPublisher
 import reactor.core.publisher.Mono
+import java.time.Instant
 import java.util.*
 
 @Service
@@ -32,7 +35,8 @@ class SessionServiceImpl(
     private val employeeRepository: EmployeeRepository,
     private val companyRepository: CompanyRepository,
     private val checkpointMapper: CheckpointMapper,
-    private val sessionMapper: SessionMapper
+    private val sessionMapper: SessionMapper,
+    private val notificationEventPublisher: NotificationEventPublisher
 ) : SessionService {
     override suspend fun getById(sessionId: UUID): ShiftSession {
         val session = sessionRepository.findById(sessionId).awaitSingleOrNull()
@@ -102,6 +106,8 @@ class SessionServiceImpl(
                 )
             )
             .awaitSingle()
+
+        notificationEventPublisher.publish(sessionMapper.toOpenedSessionNotificationEvent(session))
 
         return convertToShiftSession(session)
     }

@@ -11,7 +11,9 @@ import org.turter.wageapp.domain.shift.CheckpointMetricRecord
 import org.turter.wageapp.domain.shift.CheckpointMetricRecordPayload
 import org.turter.wageapp.domain.shift.Checkpoint
 import org.turter.wageapp.domain.calculator.CheckpointInfo
+import org.turter.wageapp.domain.notification.NotificationEvent
 import org.turter.wageapp.domain.shift.ShiftCheckpointPayload
+import java.time.Instant
 import java.util.*
 
 @Mapper(componentModel = "spring")
@@ -63,5 +65,34 @@ abstract class CheckpointMapper {
         checkpointId: UUID
     ): List<CheckpointMetricRecordDbEntity> =
         payloads.map { payload -> toNewCheckpointMetricRecord(payload, checkpointId) }
+
+    fun toCheckpointReplacedNotificationEvent(
+        checkpoint: Checkpoint,
+        replacedCheckpointId: UUID,
+        companyId: UUID
+    ): NotificationEvent.CheckpointReplaced =
+        NotificationEvent.CheckpointReplaced(
+            meta = NotificationEvent.Meta(companyId = companyId, Instant.now()),
+            replacedCheckpointId = replacedCheckpointId,
+            checkpoint = checkpoint
+        )
+
+    fun toCheckpointSavedNotificationEvent(
+        checkpoint: Checkpoint,
+        companyId: UUID
+    ): NotificationEvent.CheckpointSaved =
+        NotificationEvent.CheckpointSaved(
+            meta = NotificationEvent.Meta(companyId = companyId, Instant.now()),
+            checkpoint = checkpoint
+        )
+
+    fun toCheckpointDeletedNotificationEvent(
+        deletedId: UUID,
+        companyId: UUID
+    ): NotificationEvent.CheckpointDeleted =
+        NotificationEvent.CheckpointDeleted(
+            meta = NotificationEvent.Meta(companyId = companyId, Instant.now()),
+            deletedId = deletedId
+        )
 
 }

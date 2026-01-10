@@ -14,6 +14,7 @@ import org.turter.wageapp.application.data.shift.CheckpointRepository
 import org.turter.wageapp.application.data.shift.PaymentDraftDbEntity
 import org.turter.wageapp.application.data.shift.PaymentRepository
 import org.turter.wageapp.application.data.shift.ShiftResultRepository
+import org.turter.wageapp.application.data.shift.ShiftResultRepositoryDecorator
 import org.turter.wageapp.application.data.shift.ShiftSessionDbEntity
 import org.turter.wageapp.application.data.shift.ShiftSessionRepository
 import org.turter.wageapp.domain.calculator.CoefficientFromRevenue
@@ -27,8 +28,12 @@ import org.turter.wageapp.domain.shift.ShiftSession
 import org.turter.wageapp.application.mapper.CheckpointMapper
 import org.turter.wageapp.application.mapper.DraftMapper
 import org.turter.wageapp.application.mapper.ShiftResultMapper
+import org.turter.wageapp.domain.notification.NotificationEvent
+import org.turter.wageapp.domain.notification.NotificationEventPublisher
+import org.turter.wageapp.domain.shift.ShiftResultDetailed
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
+import java.time.Instant
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -46,7 +51,9 @@ class CalculationServiceImpl(
     private val paymentRepository: PaymentRepository,
     private val draftMapper: DraftMapper,
     private val checkpointMapper: CheckpointMapper,
-    private val shiftResultMapper: ShiftResultMapper
+    private val shiftResultMapper: ShiftResultMapper,
+    private val notificationEventPublisher: NotificationEventPublisher,
+    private val shiftResultRepositoryDecorator: ShiftResultRepositoryDecorator
 ) : CalculationService {
     override suspend fun getOrCalculateDraft(
         sessionId: UUID,
@@ -78,13 +85,14 @@ class CalculationServiceImpl(
 
         session.validateSessionIsAvailableToConfirm()
 
-        val shiftResult = ShiftResultFromDraft(draft.convertToShiftResultDraft(), session.companyId!!)
+        val shiftResultFromDraft = ShiftResultFromDraft(draft.convertToShiftResultDraft(), session.companyId!!)
 
-        val savedShiftResult = shiftResultRepository.save(shiftResultMapper.toNewShiftResultDbEntityFromDraft(shiftResult))
-            .awaitSingle()
+        val savedShiftResult =
+            shiftResultRepository.save(shiftResultMapper.toNewShiftResultDbEntityFromDraft(shiftResultFromDraft))
+                .awaitSingle()
 
         paymentRepository.saveAll(
-            shiftResult.payments.map { payment ->
+            shiftResultFromDraft.payments.map { payment ->
                 shiftResultMapper.toNewPaymentDbEntityFromDraft(payment, savedShiftResult.id!!)
             }
         ).collectList().awaitSingle()
@@ -92,6 +100,16 @@ class CalculationServiceImpl(
         session.status = ShiftSession.Status.CLOSED
 
         sessionRepository.save(session).awaitSingle()
+
+        val shiftResult = shiftResultRepositoryDecorator.findDetailedById(savedShiftResult.id!!)
+            ?: throw EntityNotFoundException("Shift result not found for id: {${savedShiftResult.id!!}}")
+
+        notificationEventPublisher.publish(
+            shiftResultMapper.toShiftResultCreatedNotificationEvent(
+                session.companyId!!,
+                shiftResult
+            )
+        )
 
         return ConfirmDraftResponse(savedShiftResult.id!!)
     }

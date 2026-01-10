@@ -30,6 +30,7 @@ dependencies {
     // security + oauth
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
+    implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
 
     // reactor
     implementation("org.springframework.boot:spring-boot-starter-webflux")
