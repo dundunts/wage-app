@@ -2,9 +2,9 @@ package org.turter.wageapp
 
 import org.junit.jupiter.api.Test
 import org.springframework.boot.test.context.SpringBootTest
+import org.turter.wageapp.config.CommonWageAppIT
 
-@SpringBootTest
-class WageAppApplicationTests {
+class WageAppApplicationTests : CommonWageAppIT() {
 
     @Test
     fun contextLoads() {

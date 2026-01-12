@@ -1,0 +1,9 @@
+spring:
+  liquibase:
+    default-schema: wage_app
+    enabled: true
+    change-log: db/changelog/db-changelog-test-it.yaml
+
+logging:
+  level:
+    org.turter.wageapp: DEBUG

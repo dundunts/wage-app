@@ -83,6 +83,9 @@ dependencies {
     testImplementation("org.testcontainers:junit-jupiter")
     testImplementation("org.testcontainers:postgresql")
     testImplementation("com.redis.testcontainers:testcontainers-redis:1.6.4")
+
+    // WireMock
+    testImplementation("org.wiremock:wiremock-standalone:3.9.1")
 }
 
 kotlin {
