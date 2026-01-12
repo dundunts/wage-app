@@ -5,7 +5,7 @@ import java.util.UUID
 
 object EmployeeCompanyEntityFactory {
 
-    fun getBind(employeeId: UUID, companyId: UUID): EmployeeCompanyDbEntity =
+    fun create(employeeId: UUID, companyId: UUID): EmployeeCompanyDbEntity =
         EmployeeCompanyDbEntity().apply {
             this.employeeId = employeeId
             this.companyId = companyId

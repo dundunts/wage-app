@@ -7,19 +7,26 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.turter.wageapp.application.data.company.CompanyRepository
 import org.turter.wageapp.application.data.employee.EmployeeCompanyRepository
+import org.turter.wageapp.application.data.employee.EmployeeRepository
 import org.turter.wageapp.config.CommonWageAppIT
+import org.turter.wageapp.config.USER_ID
 import org.turter.wageapp.config.withUser
 import org.turter.wageapp.utils.CompanyEntityFactory
 import org.turter.wageapp.utils.CompanyPayloadDtoSupplier
+import org.turter.wageapp.utils.EmployeeCompanyEntityFactory
+import org.turter.wageapp.utils.EmployeeEntityFactory
 import java.util.*
 
-class CompanyControllerIT : CommonWageAppIT() {
+class CompanyControllerIT() : CommonWageAppIT() {
 
     @Autowired
     private lateinit var companyRepository: CompanyRepository
 
     @Autowired
     private lateinit var employeeCompanyRepository: EmployeeCompanyRepository
+
+    @Autowired
+    private lateinit var employeeRepository: EmployeeRepository
 
     @BeforeEach
     fun setup() {
@@ -67,12 +74,15 @@ class CompanyControllerIT : CommonWageAppIT() {
     @Test
     @DisplayName("GET /company/get/for-user — возвращает список компаний пользователя")
     fun shouldReturnUserCompanies() {
-        val company1 = CompanyEntityFactory.create(title = "Company 1")
-        val company2 = CompanyEntityFactory.create(title = "Company 2")
+        val company1 = companyRepository.save(CompanyEntityFactory.create(title = "Company 1")).block()!!
+        val company2 = companyRepository.save(CompanyEntityFactory.create(title = "Company 2")).block()!!
 
-        val bind1 =
+        val employee = employeeRepository.save(EmployeeEntityFactory.create(userId = USER_ID)).block()!!
 
-        companyRepository.saveAll(listOf(company1, company2)).collectList().block()
+        val bind1 = EmployeeCompanyEntityFactory.create(employee.id!!, company1.id!!)
+        val bind2 = EmployeeCompanyEntityFactory.create(employee.id!!, company2.id!!)
+
+        employeeCompanyRepository.saveAll(listOf(bind1, bind2)).blockLast()
 
         client.withUser()
             .get()

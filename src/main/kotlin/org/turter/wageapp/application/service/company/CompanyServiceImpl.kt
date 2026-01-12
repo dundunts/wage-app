@@ -26,9 +26,7 @@ class CompanyServiceImpl(
 
     @Transactional
     override suspend fun create(payload: CompanyPayload): Company {
-        if (companyRepository.existsByTitle(payload.title).awaitSingle()) {
-            throw NotUniqueValueException("Company with title '${payload.title}' already exists")
-        }
+        validateCompanyTitle(payload.title)
 
         val saved = companyRepository.save(
             mapper.toNewCompanyDbEntity(payload)
@@ -41,6 +39,8 @@ class CompanyServiceImpl(
     override suspend fun update(id: UUID, payload: CompanyPayload): Company {
         val saved = companyRepository.findById(id).awaitSingleOrNull()
             ?: throw EntityNotFoundException("Company $id not found")
+
+        validateCompanyTitle(payload.title)
 
         val updated = companyRepository.save(
             mapper.mergeToCompanyDbEntity(payload, saved)
@@ -55,4 +55,10 @@ class CompanyServiceImpl(
 
     override suspend fun getUserCompanies(userId: String): List<Company> =
         companyRepository.findAllForUserId(userId).collectList().awaitSingle()
+
+    private suspend fun validateCompanyTitle(title: String) {
+        if (companyRepository.existsByTitle(title).awaitSingle()) {
+            throw NotUniqueValueException("Company with title '${title}' already exists")
+        }
+    }
 }
