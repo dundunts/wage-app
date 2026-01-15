@@ -82,6 +82,8 @@ class SessionServiceImpl(
         companyId: UUID,
         userId: String
     ): List<ShiftSession> {
+        validateUserCompanyBind(userId, companyId, companyRepository)
+
         val sessions = sessionRepository.findAllByCompanyIdAndStatusIn(
             companyId,
             listOf(
@@ -132,13 +134,17 @@ class SessionServiceImpl(
         payload: CreateRecalculatingShiftSessionPayload,
         userId: String
     ): ShiftSession {
-        val session = sessionRepository.findByIdAndStatus(payload.closedSessionId, ShiftSession.Status.CLOSED)
+        val session = sessionRepository.findById(payload.closedSessionId)
             .awaitSingleOrNull()
-            ?: throw EntityNotFoundException("Session with status CLOSED not found for id: {${payload.closedSessionId}}")
+            ?: throw EntityNotFoundException("Session not found for id: {${payload.closedSessionId}}")
 
         validateUserCompanyBind(userId, session.companyId!!, companyRepository)
 
-        session.status = ShiftSession.Status.RECALCULATING
+        if (!(session.status?.recalculatingAvailable() ?: false)) {
+            throw ShiftSessionNotClosedException("Session not closed for id: {${payload.closedSessionId}}")
+        }
+
+        session.status = session.status?.recalculating()
 
         return convertToShiftSession(sessionRepository.save(session).awaitSingle())
     }
@@ -150,7 +156,7 @@ class SessionServiceImpl(
 
         validateUserCompanyBind(userId, session.companyId!!, companyRepository)
 
-        session.status = ShiftSession.Status.CLOSED
+        session.status = session.status?.close()
 
         sessionRepository.save(session).awaitSingle()
     }
@@ -164,6 +170,12 @@ class SessionServiceImpl(
             ?: throw EntityNotFoundException("Session not found for id: {${payload.sessionId}}")
 
         validateUserCompanyBind(userId, session.companyId!!, companyRepository)
+
+        if (!(session.status?.modifyAvailable() ?: false)) {
+            throw ShiftSessionNotAvailableForModifyException(
+                "Session not available for modify. Current status: {${session.status}}. Session ID: {${payload.sessionId}}"
+            )
+        }
 
         session.startWorkTime = payload.startWorkTime
 

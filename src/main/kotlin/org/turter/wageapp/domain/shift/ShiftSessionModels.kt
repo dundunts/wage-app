@@ -16,6 +16,8 @@ data class ShiftSession(
     enum class Status {
         OPENED, CLOSED, RECALCULATING, OPENED_DRAFT, RECALCULATING_DRAFT;
 
+        fun close(): Status = CLOSED
+
         fun draft(): Status =
             when (this) {
                 OPENED -> OPENED_DRAFT
@@ -28,6 +30,20 @@ data class ShiftSession(
                 OPENED_DRAFT -> OPENED
                 RECALCULATING_DRAFT -> RECALCULATING
                 else -> this
+            }
+
+        fun recalculating(): Status =
+            when (this) {
+                CLOSED -> RECALCULATING
+                else -> this
+            }
+
+        fun recalculatingAvailable(): Boolean = this == CLOSED
+
+        fun modifyAvailable(): Boolean =
+            when (this) {
+                OPENED, RECALCULATING -> true
+                else -> false
             }
     }
 }
