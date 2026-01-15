@@ -13,6 +13,7 @@ import org.turter.wageapp.domain.shared.EntityNotFoundException
 import org.turter.wageapp.domain.shift.Checkpoint
 import org.turter.wageapp.domain.shift.CreateRegularCheckpointPayload
 import org.turter.wageapp.domain.shift.ShiftCheckpointPayload
+import org.turter.wageapp.domain.shift.ShiftSession
 import org.turter.wageapp.domain.shift.UpdateShiftCheckpointPayload
 import java.util.*
 
@@ -42,12 +43,14 @@ class CheckpointServiceImpl(
             payload
         )
 
-        notificationEventPublisher.publish(
-            checkpointMapper.toCheckpointSavedNotificationEvent(
-                checkpoint,
-                session.companyId
+        if (session.status == ShiftSession.Status.OPENED) {
+            notificationEventPublisher.publish(
+                checkpointMapper.toCheckpointSavedNotificationEvent(
+                    checkpoint,
+                    session.companyId
+                )
             )
-        )
+        }
 
         return checkpoint
     }
