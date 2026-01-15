@@ -3,11 +3,7 @@ package org.turter.wageapp.controller
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
-import org.turter.wageapp.application.data.company.CompanyRepository
-import org.turter.wageapp.application.data.employee.EmployeeCompanyRepository
-import org.turter.wageapp.application.data.employee.EmployeeRepository
 import org.turter.wageapp.config.CommonWageAppIT
 import org.turter.wageapp.config.USER_ID
 import org.turter.wageapp.config.withUser
@@ -18,15 +14,6 @@ import org.turter.wageapp.utils.EmployeeEntityFactory
 import java.util.*
 
 class CompanyControllerIT() : CommonWageAppIT() {
-
-    @Autowired
-    private lateinit var companyRepository: CompanyRepository
-
-    @Autowired
-    private lateinit var employeeCompanyRepository: EmployeeCompanyRepository
-
-    @Autowired
-    private lateinit var employeeRepository: EmployeeRepository
 
     @BeforeEach
     fun setup() {
