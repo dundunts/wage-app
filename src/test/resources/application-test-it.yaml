@@ -7,3 +7,4 @@ spring:
 logging:
   level:
     org.turter.wageapp: DEBUG
+    reactor.netty.http.client.HttpClient: DEBUG

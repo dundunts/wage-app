@@ -1,5 +1,6 @@
 package org.turter.wageapp.config
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.redis.testcontainers.RedisContainer
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient
@@ -20,6 +21,9 @@ import org.turter.wageapp.application.data.employee.EmployeeRepository
 import org.turter.wageapp.application.data.employee.entity.EmployeeCompanyDbEntity
 import org.turter.wageapp.application.data.employee.entity.EmployeeDbEntity
 import org.turter.wageapp.domain.employee.Employee
+import org.turter.wageapp.domain.notification.NotificationEvent
+import org.turter.wageapp.messaging.model.TelegramNotificationEvent
+import org.turter.wageapp.messaging.service.NotificationEventTextMessageFactory
 import org.turter.wageapp.utils.CompanyEntityFactory
 import org.turter.wageapp.utils.EmployeeCompanyEntityFactory
 import org.turter.wageapp.utils.EmployeeEntityFactory
@@ -44,6 +48,12 @@ open class CommonWageAppIT {
 
     @Autowired
     protected lateinit var employeeCompanyRepository: EmployeeCompanyRepository
+
+    @Autowired
+    protected lateinit var notificationEventTextMessageFactory: NotificationEventTextMessageFactory
+
+    @Autowired
+    protected lateinit var objectMapper: ObjectMapper
 
     companion object {
         @JvmStatic
@@ -77,6 +87,15 @@ open class CommonWageAppIT {
             "r2dbc:postgresql://${POSTGRES_SQL_CONTAINER.host}:" +
                     "${POSTGRES_SQL_CONTAINER.getMappedPort(PostgreSQLContainer.POSTGRESQL_PORT)}/" +
                     POSTGRES_SQL_CONTAINER.databaseName
+    }
+
+    protected fun getExpectedEventJsonString(event: NotificationEvent): String {
+        return objectMapper.writeValueAsString(getExpectedEvent(event))
+    }
+
+    protected fun getExpectedEvent(event: NotificationEvent): TelegramNotificationEvent {
+        val text = notificationEventTextMessageFactory.getTextMessage(event)
+        return TelegramNotificationEvent(event.meta.companyId, text)
     }
 
     protected fun CompanyDbEntity.addEmployee(firstName: String = "first_name"): EmployeeDbEntity {
