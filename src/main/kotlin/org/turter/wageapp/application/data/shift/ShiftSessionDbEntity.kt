@@ -18,16 +18,16 @@ class ShiftSessionDbEntity {
     var id: UUID? = null
 
     @Column("company_id")
-    var companyId: UUID? = null // not null
+    lateinit var companyId: UUID // not null
 
     @Column("status")
-    var status: ShiftSession.Status? = null // not null
+    lateinit var status: ShiftSession.Status // not null
 
     @Column("start_work_time")
-    var startWorkTime: LocalTime? = null // not null
+    lateinit var startWorkTime: LocalTime // not null
 
     @Column("date")
-    var date: LocalDate? = null // not null
+    lateinit var date: LocalDate // not null
 
     constructor(companyId: UUID, status: ShiftSession.Status, startWorkTime: LocalTime, date: LocalDate) {
         this.companyId = companyId

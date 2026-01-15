@@ -138,13 +138,13 @@ class SessionServiceImpl(
             .awaitSingleOrNull()
             ?: throw EntityNotFoundException("Session not found for id: {${payload.closedSessionId}}")
 
-        validateUserCompanyBind(userId, session.companyId!!, companyRepository)
+        validateUserCompanyBind(userId, session.companyId, companyRepository)
 
-        if (!(session.status?.recalculatingAvailable() ?: false)) {
+        if (!session.status.recalculatingAvailable()) {
             throw ShiftSessionNotClosedException("Session not closed for id: {${payload.closedSessionId}}")
         }
 
-        session.status = session.status?.recalculating()
+        session.status = session.status.recalculating()
 
         return convertToShiftSession(sessionRepository.save(session).awaitSingle())
     }
@@ -154,9 +154,9 @@ class SessionServiceImpl(
         val session = sessionRepository.findById(sessionId).awaitSingleOrNull()
             ?: throw EntityNotFoundException("Session not found for id: {$sessionId}")
 
-        validateUserCompanyBind(userId, session.companyId!!, companyRepository)
+        validateUserCompanyBind(userId, session.companyId, companyRepository)
 
-        session.status = session.status?.close()
+        session.status = session.status.close()
 
         sessionRepository.save(session).awaitSingle()
     }
@@ -169,9 +169,9 @@ class SessionServiceImpl(
         val session = sessionRepository.findById(payload.sessionId).awaitSingleOrNull()
             ?: throw EntityNotFoundException("Session not found for id: {${payload.sessionId}}")
 
-        validateUserCompanyBind(userId, session.companyId!!, companyRepository)
+        validateUserCompanyBind(userId, session.companyId, companyRepository)
 
-        if (!(session.status?.modifyAvailable() ?: false)) {
+        if (!session.status.modifyAvailable()) {
             throw ShiftSessionNotAvailableForModifyException(
                 "Session not available for modify. Current status: {${session.status}}. Session ID: {${payload.sessionId}}"
             )

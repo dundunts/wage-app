@@ -6,36 +6,19 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.turter.wageapp.application.data.company.CompanyRepository
 import org.turter.wageapp.application.data.employee.EmployeeRepository
-import org.turter.wageapp.application.data.shift.CheckpointEmployeeRepository
-import org.turter.wageapp.application.data.shift.PaymentDraftRepository
-import org.turter.wageapp.application.data.shift.ShiftResultDraftDbEntity
-import org.turter.wageapp.application.data.shift.ShiftResultDraftRepository
-import org.turter.wageapp.application.data.shift.CheckpointRepository
-import org.turter.wageapp.application.data.shift.PaymentDraftDbEntity
-import org.turter.wageapp.application.data.shift.PaymentRepository
-import org.turter.wageapp.application.data.shift.ShiftResultRepository
-import org.turter.wageapp.application.data.shift.ShiftResultRepositoryDecorator
-import org.turter.wageapp.application.data.shift.ShiftSessionDbEntity
-import org.turter.wageapp.application.data.shift.ShiftSessionRepository
-import org.turter.wageapp.domain.calculator.CoefficientFromRevenue
-import org.turter.wageapp.domain.shared.EntityNotFoundException
-import org.turter.wageapp.domain.shift.ConfirmDraftResponse
-import org.turter.wageapp.domain.calculator.PaymentDraftCalculator
-import org.turter.wageapp.domain.shift.PaymentDraft
-import org.turter.wageapp.domain.shift.ShiftResultDraft
-import org.turter.wageapp.domain.shift.ShiftResultFromDraft
-import org.turter.wageapp.domain.shift.ShiftSession
+import org.turter.wageapp.application.data.shift.*
 import org.turter.wageapp.application.mapper.CheckpointMapper
 import org.turter.wageapp.application.mapper.DraftMapper
 import org.turter.wageapp.application.mapper.ShiftResultMapper
-import org.turter.wageapp.domain.notification.NotificationEvent
+import org.turter.wageapp.domain.calculator.CoefficientFromRevenue
+import org.turter.wageapp.domain.calculator.PaymentDraftCalculator
 import org.turter.wageapp.domain.notification.NotificationEventPublisher
-import org.turter.wageapp.domain.shift.ShiftResultDetailed
+import org.turter.wageapp.domain.shared.EntityNotFoundException
+import org.turter.wageapp.domain.shift.*
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
-import java.time.Instant
 import java.time.LocalDateTime
-import java.util.UUID
+import java.util.*
 
 @Service
 @Transactional
@@ -62,7 +45,7 @@ class CalculationServiceImpl(
         val session = sessionRepository.findById(sessionId).awaitSingleOrNull()
             ?: throw EntityNotFoundException("Session not found for id: {$sessionId}")
 
-        validateUserCompanyBind(userId, session.companyId!!, companyRepository)
+        validateUserCompanyBind(userId, session.companyId, companyRepository)
 
         val isExists = draftRepository.existsBySessionId(sessionId).awaitSingle()
 
@@ -81,11 +64,11 @@ class CalculationServiceImpl(
 
         val session = sessionRepository.findById(draft.sessionId!!).awaitSingle()
 
-        validateUserCompanyBind(userId, session.companyId!!, companyRepository)
+        validateUserCompanyBind(userId, session.companyId, companyRepository)
 
         session.validateSessionIsAvailableToConfirm()
 
-        val shiftResultFromDraft = ShiftResultFromDraft(draft.convertToShiftResultDraft(), session.companyId!!)
+        val shiftResultFromDraft = ShiftResultFromDraft(draft.convertToShiftResultDraft(), session.companyId)
 
         val savedShiftResult =
             shiftResultRepository.save(shiftResultMapper.toNewShiftResultDbEntityFromDraft(shiftResultFromDraft))
@@ -121,7 +104,7 @@ class CalculationServiceImpl(
 
         validateUserCompanyBind(userId, session.companyId!!, companyRepository)
 
-        session.status = session.status?.cancelDraft()
+        session.status = session.status.cancelDraft()
 
         sessionRepository.save(session).awaitSingle()
 
@@ -172,7 +155,7 @@ class CalculationServiceImpl(
 
         val savedPayments = paymentDraftRepository.saveAll(dbEntities).toPaymentDraftList()
 
-        session.status = session.status?.draft()
+        session.status = session.status.draft()
 
         sessionRepository.save(session).awaitSingle()
 
