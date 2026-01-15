@@ -1,9 +1,6 @@
 package org.turter.wageapp.controller
 
-import com.github.tomakehurst.wiremock.client.WireMock.*
 import com.github.tomakehurst.wiremock.junit5.WireMockTest
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.BeforeEach
@@ -12,6 +9,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.core.ParameterizedTypeReference
 import org.springframework.http.MediaType
+import org.springframework.http.ProblemDetail
 import org.turter.wageapp.application.data.shift.ShiftSessionRepository
 import org.turter.wageapp.config.CommonWageAppIT
 import org.turter.wageapp.config.withUser
@@ -113,8 +111,7 @@ class SessionControllerIT : CommonWageAppIT() {
             }
             .exchange()
             .expectStatus().isNotFound
-            .expectBody()
-            .jsonPath("$.type").exists()
+            .expectBody(ProblemDetail::class.java)
     }
 
     @Test
@@ -142,8 +139,7 @@ class SessionControllerIT : CommonWageAppIT() {
             }
             .exchange()
             .expectStatus().isEqualTo(409)
-            .expectBody()
-            .jsonPath("$.type").exists()
+            .expectBody(ProblemDetail::class.java)
     }
 
     @Test
@@ -164,8 +160,7 @@ class SessionControllerIT : CommonWageAppIT() {
             }
             .exchange()
             .expectStatus().isEqualTo(409)
-            .expectBody()
-            .jsonPath("$.type").exists()
+            .expectBody(ProblemDetail::class.java)
     }
 
     @Test
@@ -205,8 +200,7 @@ class SessionControllerIT : CommonWageAppIT() {
             .uri("/api/v1/session/get/available/{id}", session.id)
             .exchange()
             .expectStatus().isEqualTo(409)
-            .expectBody()
-            .jsonPath("$.type").exists()
+            .expectBody(ProblemDetail::class.java)
     }
 
     @Test
@@ -223,8 +217,7 @@ class SessionControllerIT : CommonWageAppIT() {
             .uri("/api/v1/session/get/available/{id}", session.id)
             .exchange()
             .expectStatus().isEqualTo(409)
-            .expectBody()
-            .jsonPath("$.type").exists()
+            .expectBody(ProblemDetail::class.java)
     }
 
     @Test
@@ -235,8 +228,7 @@ class SessionControllerIT : CommonWageAppIT() {
             .uri("/api/v1/session/get/available/{id}", UUID.randomUUID())
             .exchange()
             .expectStatus().isNotFound
-            .expectBody()
-            .jsonPath("$.type").exists()
+            .expectBody(ProblemDetail::class.java)
     }
 
     @Test
@@ -289,8 +281,7 @@ class SessionControllerIT : CommonWageAppIT() {
             }
             .exchange()
             .expectStatus().isEqualTo(409)
-            .expectBody()
-            .jsonPath("$.type").exists()
+            .expectBody(ProblemDetail::class.java)
     }
 
     @Test
@@ -348,10 +339,7 @@ class SessionControllerIT : CommonWageAppIT() {
         assertEquals(company.id, response.companyId)
         assertEquals(ShiftSession.Status.OPENED, response.status)
 
-        runBlocking {
-            delay(3000)
-            verifyRequestedStubTgBot(notificationEvent)
-        }
+        awaitVerifyRequestedStubTgBot(notificationEvent)
     }
 
     @Test
@@ -371,8 +359,7 @@ class SessionControllerIT : CommonWageAppIT() {
             .bodyValue(payload)
             .exchange()
             .expectStatus().isEqualTo(409)
-            .expectBody()
-            .jsonPath("$.type").exists()
+            .expectBody(ProblemDetail::class.java)
     }
 
     @Test
@@ -388,8 +375,7 @@ class SessionControllerIT : CommonWageAppIT() {
             .bodyValue(payload)
             .exchange()
             .expectStatus().isEqualTo(409)
-            .expectBody()
-            .jsonPath("$.type").exists()
+            .expectBody(ProblemDetail::class.java)
     }
 
     @Test
@@ -433,8 +419,7 @@ class SessionControllerIT : CommonWageAppIT() {
             .bodyValue(payload)
             .exchange()
             .expectStatus().isEqualTo(409)
-            .expectBody()
-            .jsonPath("$.type").exists()
+            .expectBody(ProblemDetail::class.java)
     }
 
     @Test
@@ -454,8 +439,7 @@ class SessionControllerIT : CommonWageAppIT() {
             .bodyValue(payload)
             .exchange()
             .expectStatus().isEqualTo(409)
-            .expectBody()
-            .jsonPath("$.type").exists()
+            .expectBody(ProblemDetail::class.java)
     }
 
     @Test
@@ -531,8 +515,7 @@ class SessionControllerIT : CommonWageAppIT() {
             .uri("/api/v1/session/{id}/close", session.id)
             .exchange()
             .expectStatus().isEqualTo(409)
-            .expectBody()
-            .jsonPath("$.type").exists()
+            .expectBody(ProblemDetail::class.java)
     }
 
     @Test
@@ -543,8 +526,7 @@ class SessionControllerIT : CommonWageAppIT() {
             .uri("/api/v1/session/{id}/close", UUID.randomUUID())
             .exchange()
             .expectStatus().isNotFound
-            .expectBody()
-            .jsonPath("$.type").exists()
+            .expectBody(ProblemDetail::class.java)
     }
 
     @Test
@@ -589,8 +571,7 @@ class SessionControllerIT : CommonWageAppIT() {
             .bodyValue(payload)
             .exchange()
             .expectStatus().isEqualTo(409)
-            .expectBody()
-            .jsonPath("$.type").exists()
+            .expectBody(ProblemDetail::class.java)
     }
 
     @Test
@@ -610,8 +591,7 @@ class SessionControllerIT : CommonWageAppIT() {
             .bodyValue(payload)
             .exchange()
             .expectStatus().isEqualTo(409)
-            .expectBody()
-            .jsonPath("$.type").exists()
+            .expectBody(ProblemDetail::class.java)
     }
 
     @Test
@@ -625,28 +605,7 @@ class SessionControllerIT : CommonWageAppIT() {
             .bodyValue(payload)
             .exchange()
             .expectStatus().isNotFound
-            .expectBody()
-            .jsonPath("$.type").exists()
+            .expectBody(ProblemDetail::class.java)
     }
 
-
-    private fun setupStubAndVerifyTgBotAPI(event: NotificationEvent) {
-        stubFor(
-            post(urlPathEqualTo("/api/notifications"))
-                .withRequestBody(
-                    matchingJsonPath("$.companyId", equalTo(event.meta.companyId.toString()))
-                )
-                .willReturn(aResponse().withStatus(202))
-        )
-    }
-
-    private fun verifyRequestedStubTgBot(event: NotificationEvent) {
-        verify(
-            exactly(1),
-            postRequestedFor(urlPathEqualTo("/api/notifications"))
-                .withRequestBody(
-                    matchingJsonPath("$.companyId", equalTo(event.meta.companyId.toString()))
-                )
-        )
-    }
 }

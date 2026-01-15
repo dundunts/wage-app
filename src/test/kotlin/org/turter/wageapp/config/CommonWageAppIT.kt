@@ -1,6 +1,17 @@
 package org.turter.wageapp.config
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.github.tomakehurst.wiremock.client.WireMock.aResponse
+import com.github.tomakehurst.wiremock.client.WireMock.equalTo
+import com.github.tomakehurst.wiremock.client.WireMock.exactly
+import com.github.tomakehurst.wiremock.client.WireMock.matchingJsonPath
+import com.github.tomakehurst.wiremock.client.WireMock.post
+import com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor
+import com.github.tomakehurst.wiremock.client.WireMock.stubFor
+import com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo
+import com.github.tomakehurst.wiremock.client.WireMock.verify
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient
 import org.springframework.boot.test.context.SpringBootTest
@@ -26,6 +37,9 @@ import org.turter.wageapp.utils.company.CompanyEntityFactory
 import org.turter.wageapp.utils.employee.EmployeeCompanyEntityFactory
 import org.turter.wageapp.utils.employee.EmployeeEntityFactory
 import java.util.UUID
+import kotlin.time.Duration
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 
 @SpringBootTest
 @DirtiesContext
@@ -84,6 +98,34 @@ open class CommonWageAppIT {
             "r2dbc:postgresql://${POSTGRES_SQL_CONTAINER.host}:" +
                     "${POSTGRES_SQL_CONTAINER.getMappedPort(PostgreSQLContainer.POSTGRESQL_PORT)}/" +
                     POSTGRES_SQL_CONTAINER.databaseName
+    }
+
+    protected fun setupStubAndVerifyTgBotAPI(event: NotificationEvent) {
+        stubFor(
+            post(urlPathEqualTo("/api/notifications"))
+                .withRequestBody(
+                    matchingJsonPath("$.companyId", equalTo(event.meta.companyId.toString())),
+                )
+                .withRequestBody(matchingJsonPath("$.messageText"))
+                .willReturn(aResponse().withStatus(202))
+        )
+    }
+
+    protected fun awaitVerifyRequestedStubTgBot(
+        event: NotificationEvent,
+        delayDuration: Duration = 2.toDuration(DurationUnit.SECONDS)
+    ) {
+        runBlocking {
+            delay(delayDuration)
+            verify(
+                exactly(1),
+                postRequestedFor(urlPathEqualTo("/api/notifications"))
+                    .withRequestBody(
+                        matchingJsonPath("$.companyId", equalTo(event.meta.companyId.toString()))
+                    )
+                    .withRequestBody(matchingJsonPath("$.messageText"))
+            )
+        }
     }
 
     protected fun getExpectedEventJsonString(event: NotificationEvent): String {
