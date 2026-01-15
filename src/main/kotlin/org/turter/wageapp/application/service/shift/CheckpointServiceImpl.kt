@@ -6,24 +6,15 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.turter.wageapp.application.data.company.CompanyRepository
 import org.turter.wageapp.application.data.employee.EmployeeRepository
-import org.turter.wageapp.application.data.shift.CheckpointDbEntity
-import org.turter.wageapp.application.data.shift.CheckpointEmployeeDbEntity
-import org.turter.wageapp.application.data.shift.CheckpointMetricRecordDbEntity
-import org.turter.wageapp.application.data.shift.CheckpointEmployeeRepository
-import org.turter.wageapp.application.data.shift.CheckpointMetricRecordRepository
-import org.turter.wageapp.application.data.shift.CheckpointRepository
-import org.turter.wageapp.application.data.shift.ShiftSessionRepository
+import org.turter.wageapp.application.data.shift.*
+import org.turter.wageapp.application.mapper.CheckpointMapper
+import org.turter.wageapp.domain.notification.NotificationEventPublisher
 import org.turter.wageapp.domain.shared.EntityNotFoundException
-import org.turter.wageapp.domain.shift.CreateRegularCheckpointPayload
 import org.turter.wageapp.domain.shift.Checkpoint
+import org.turter.wageapp.domain.shift.CreateRegularCheckpointPayload
 import org.turter.wageapp.domain.shift.ShiftCheckpointPayload
 import org.turter.wageapp.domain.shift.UpdateShiftCheckpointPayload
-import org.turter.wageapp.application.mapper.CheckpointMapper
-import org.turter.wageapp.application.mapper.SessionMapper
-import org.turter.wageapp.domain.notification.NotificationEvent
-import org.turter.wageapp.domain.notification.NotificationEventPublisher
-import java.time.Instant
-import java.util.UUID
+import java.util.*
 
 @Service
 class CheckpointServiceImpl(
@@ -42,7 +33,7 @@ class CheckpointServiceImpl(
         val session = sessionRepository.findById(payload.sessionId).awaitSingleOrNull()
             ?: throw EntityNotFoundException("Session not found for id: {${payload.sessionId}}")
 
-        validateUserCompanyBind(userId, session.companyId!!, companyRepository)
+        validateUserCompanyBind(userId, session.companyId, companyRepository)
 
         session.validateSessionIsAvailableModifying()
 
@@ -54,7 +45,7 @@ class CheckpointServiceImpl(
         notificationEventPublisher.publish(
             checkpointMapper.toCheckpointSavedNotificationEvent(
                 checkpoint,
-                session.companyId!!
+                session.companyId
             )
         )
 
@@ -69,7 +60,7 @@ class CheckpointServiceImpl(
         val session = sessionRepository.findById(checkpointFromDb.shiftSessionId!!).awaitSingleOrNull()
             ?: throw EntityNotFoundException("Session not found for id: {${checkpointFromDb.shiftSessionId}}")
 
-        validateUserCompanyBind(userId, session.companyId!!, companyRepository)
+        validateUserCompanyBind(userId, session.companyId, companyRepository)
 
         session.validateSessionIsAvailableModifying()
 
@@ -81,7 +72,7 @@ class CheckpointServiceImpl(
             checkpointMapper.toCheckpointReplacedNotificationEvent(
                 checkpoint,
                 checkpointFromDb.id!!,
-                session.companyId!!
+                session.companyId
             )
         )
 
@@ -95,7 +86,7 @@ class CheckpointServiceImpl(
         val session = sessionRepository.findById(checkpointFromDb.shiftSessionId!!).awaitSingleOrNull()
             ?: throw EntityNotFoundException("Session not found for id: {${checkpointFromDb.shiftSessionId}}")
 
-        validateUserCompanyBind(userId, session.companyId!!, companyRepository)
+        validateUserCompanyBind(userId, session.companyId, companyRepository)
 
         session.validateSessionIsAvailableModifying()
 
@@ -104,7 +95,7 @@ class CheckpointServiceImpl(
         notificationEventPublisher.publish(
             checkpointMapper.toCheckpointDeletedNotificationEvent(
                 checkpointId,
-                session.companyId!!
+                session.companyId
             )
         )
     }
