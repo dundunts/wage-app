@@ -1,4 +1,4 @@
-package org.turter.wageapp.utils
+package org.turter.wageapp.utils.employee
 
 import org.turter.wageapp.application.data.employee.entity.EmployeeDbEntity
 import org.turter.wageapp.domain.employee.Employee

@@ -1,4 +1,4 @@
-package org.turter.wageapp.utils
+package org.turter.wageapp.utils.company
 
 import org.turter.wageapp.domain.company.CompanyPayload
 

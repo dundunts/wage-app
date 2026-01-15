@@ -7,10 +7,10 @@ import org.springframework.http.MediaType
 import org.turter.wageapp.config.CommonWageAppIT
 import org.turter.wageapp.config.USER_ID
 import org.turter.wageapp.config.withUser
-import org.turter.wageapp.utils.CompanyEntityFactory
-import org.turter.wageapp.utils.CompanyPayloadDtoSupplier
-import org.turter.wageapp.utils.EmployeeCompanyEntityFactory
-import org.turter.wageapp.utils.EmployeeEntityFactory
+import org.turter.wageapp.utils.company.CompanyEntityFactory
+import org.turter.wageapp.utils.company.CompanyPayloadDtoSupplier
+import org.turter.wageapp.utils.employee.EmployeeCompanyEntityFactory
+import org.turter.wageapp.utils.employee.EmployeeEntityFactory
 import java.util.*
 
 class CompanyControllerIT() : CommonWageAppIT() {

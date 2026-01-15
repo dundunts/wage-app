@@ -1,7 +1,6 @@
-package org.turter.wageapp.utils
+package org.turter.wageapp.utils.company
 
 import org.turter.wageapp.application.data.company.CompanyDbEntity
-import java.util.*
 
 object CompanyEntityFactory {
 

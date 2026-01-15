@@ -17,10 +17,10 @@ import org.turter.wageapp.config.CommonWageAppIT
 import org.turter.wageapp.config.withUser
 import org.turter.wageapp.domain.notification.NotificationEvent
 import org.turter.wageapp.domain.shift.ShiftSession
-import org.turter.wageapp.utils.CreateRecalculatingShiftSessionPayloadSupplier
-import org.turter.wageapp.utils.OpenNewShiftSessionPayloadSupplier
-import org.turter.wageapp.utils.ShiftSessionEntityFactory
-import org.turter.wageapp.utils.UpdateShiftSessionStartWorkTimePayloadSupplier
+import org.turter.wageapp.utils.session.CreateRecalculatingShiftSessionPayloadSupplier
+import org.turter.wageapp.utils.session.OpenNewShiftSessionPayloadSupplier
+import org.turter.wageapp.utils.session.ShiftSessionEntityFactory
+import org.turter.wageapp.utils.session.UpdateShiftSessionStartWorkTimePayloadSupplier
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime

@@ -9,7 +9,7 @@ import org.turter.wageapp.config.CommonWageAppIT
 import org.turter.wageapp.config.withUser
 import org.turter.wageapp.domain.employee.CompanyEmployeesResponse
 import org.turter.wageapp.domain.employee.Employee
-import org.turter.wageapp.utils.EmployeePayloadDtoSupplier
+import org.turter.wageapp.utils.employee.EmployeePayloadDtoSupplier
 import java.util.*
 
 class EmployeeControllerIT : CommonWageAppIT() {

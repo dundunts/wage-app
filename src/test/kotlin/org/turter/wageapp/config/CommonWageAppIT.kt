@@ -1,7 +1,6 @@
 package org.turter.wageapp.config
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.redis.testcontainers.RedisContainer
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient
 import org.springframework.boot.test.context.SpringBootTest
@@ -13,7 +12,6 @@ import org.springframework.test.web.reactive.server.WebTestClient
 import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
-import org.testcontainers.utility.DockerImageName
 import org.turter.wageapp.application.data.company.CompanyDbEntity
 import org.turter.wageapp.application.data.company.CompanyRepository
 import org.turter.wageapp.application.data.employee.EmployeeCompanyRepository
@@ -24,11 +22,10 @@ import org.turter.wageapp.domain.employee.Employee
 import org.turter.wageapp.domain.notification.NotificationEvent
 import org.turter.wageapp.messaging.model.TelegramNotificationEvent
 import org.turter.wageapp.messaging.service.NotificationEventTextMessageFactory
-import org.turter.wageapp.utils.CompanyEntityFactory
-import org.turter.wageapp.utils.EmployeeCompanyEntityFactory
-import org.turter.wageapp.utils.EmployeeEntityFactory
+import org.turter.wageapp.utils.company.CompanyEntityFactory
+import org.turter.wageapp.utils.employee.EmployeeCompanyEntityFactory
+import org.turter.wageapp.utils.employee.EmployeeEntityFactory
 import java.util.UUID
-import java.util.function.Supplier
 
 @SpringBootTest
 @DirtiesContext

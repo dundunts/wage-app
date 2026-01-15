@@ -1,4 +1,4 @@
-package org.turter.wageapp.utils
+package org.turter.wageapp.utils.session
 
 import org.turter.wageapp.application.data.shift.ShiftSessionDbEntity
 import org.turter.wageapp.domain.shift.ShiftSession
