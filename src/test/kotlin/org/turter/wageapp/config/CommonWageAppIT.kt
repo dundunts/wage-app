@@ -1,6 +1,7 @@
 package org.turter.wageapp.config
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock.aResponse
 import com.github.tomakehurst.wiremock.client.WireMock.equalTo
 import com.github.tomakehurst.wiremock.client.WireMock.exactly
@@ -36,6 +37,9 @@ import org.turter.wageapp.messaging.service.NotificationEventTextMessageFactory
 import org.turter.wageapp.utils.company.CompanyEntityFactory
 import org.turter.wageapp.utils.employee.EmployeeCompanyEntityFactory
 import org.turter.wageapp.utils.employee.EmployeeEntityFactory
+import org.wiremock.spring.ConfigureWireMock
+import org.wiremock.spring.EnableWireMock
+import org.wiremock.spring.InjectWireMock
 import java.util.UUID
 import kotlin.time.Duration
 import kotlin.time.DurationUnit
@@ -46,6 +50,9 @@ import kotlin.time.toDuration
 @AutoConfigureWebTestClient
 @ActiveProfiles(profiles = ["test-it"])
 @Testcontainers
+@EnableWireMock(
+    ConfigureWireMock(port = 12345)
+)
 open class CommonWageAppIT {
 
     @Autowired
@@ -65,6 +72,9 @@ open class CommonWageAppIT {
 
     @Autowired
     protected lateinit var objectMapper: ObjectMapper
+
+    @InjectWireMock
+    protected lateinit var wireMockServer: WireMockServer
 
     companion object {
         @JvmStatic
@@ -100,32 +110,47 @@ open class CommonWageAppIT {
                     POSTGRES_SQL_CONTAINER.databaseName
     }
 
-    protected fun setupStubAndVerifyTgBotAPI(event: NotificationEvent) {
-        stubFor(
+    protected fun setupStubTgBotAPI(event: NotificationEvent) = setupStubTgBotAPI(event.meta.companyId)
+
+    protected fun setupStubTgBotAPI(companyId: UUID, messageText: String? = null) {
+        val messageTextPattern = messageText?.let { text ->
+            matchingJsonPath("$.messageText", equalTo(text))
+        } ?: matchingJsonPath("$.messageText")
+
+        wireMockServer.stubFor(
             post(urlPathEqualTo("/api/notifications"))
                 .withRequestBody(
-                    matchingJsonPath("$.companyId", equalTo(event.meta.companyId.toString())),
+                    matchingJsonPath("$.companyId", equalTo(companyId.toString())),
                 )
-                .withRequestBody(matchingJsonPath("$.messageText"))
+                .withRequestBody(messageTextPattern)
                 .willReturn(aResponse().withStatus(202))
         )
     }
 
     protected fun awaitVerifyRequestedStubTgBot(
         event: NotificationEvent,
-        delayDuration: Duration = 2.toDuration(DurationUnit.SECONDS)
-    ) {
-        runBlocking {
-            delay(delayDuration)
-            verify(
-                exactly(1),
-                postRequestedFor(urlPathEqualTo("/api/notifications"))
-                    .withRequestBody(
-                        matchingJsonPath("$.companyId", equalTo(event.meta.companyId.toString()))
-                    )
-                    .withRequestBody(matchingJsonPath("$.messageText"))
-            )
-        }
+        delayDuration: Duration = 3.toDuration(DurationUnit.SECONDS)
+    ) = awaitVerifyRequestedStubTgBot(companyId = event.meta.companyId, delayDuration = delayDuration)
+
+    protected fun awaitVerifyRequestedStubTgBot(
+        companyId: UUID,
+        messageText: String? = null,
+        delayDuration: Duration = 3.toDuration(DurationUnit.SECONDS)
+    ) = runBlocking {
+        val messageTextPattern = messageText?.let { text ->
+            matchingJsonPath("$.messageText", equalTo(text))
+        } ?: matchingJsonPath("$.messageText")
+
+        delay(delayDuration)
+
+        wireMockServer.verify(
+            exactly(1),
+            postRequestedFor(urlPathEqualTo("/api/notifications"))
+                .withRequestBody(
+                    matchingJsonPath("$.companyId", equalTo(companyId.toString()))
+                )
+                .withRequestBody(messageTextPattern)
+        )
     }
 
     protected fun getExpectedEventJsonString(event: NotificationEvent): String {
@@ -150,7 +175,10 @@ open class CommonWageAppIT {
         return employee to company
     }
 
-    protected fun saveNewUserEmployeeAndCompanies(userId: String = USER_ID, companiesCount: Int = 1): Pair<EmployeeDbEntity, List<CompanyDbEntity>> {
+    protected fun saveNewUserEmployeeAndCompanies(
+        userId: String = USER_ID,
+        companiesCount: Int = 1
+    ): Pair<EmployeeDbEntity, List<CompanyDbEntity>> {
         val employee = saveNewUserEmployee(userId)
 
         val companyList = mutableListOf<CompanyDbEntity>()

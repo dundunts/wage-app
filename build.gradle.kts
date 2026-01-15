@@ -85,7 +85,8 @@ dependencies {
     testImplementation("com.redis.testcontainers:testcontainers-redis:1.6.4")
 
     // WireMock
-    testImplementation("org.wiremock:wiremock-standalone:3.9.1")
+    testImplementation("org.wiremock:wiremock-standalone:3.13.2")
+    testImplementation("org.wiremock.integrations:wiremock-spring-boot:3.10.0")
 }
 
 kotlin {

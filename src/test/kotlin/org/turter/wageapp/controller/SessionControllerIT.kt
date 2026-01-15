@@ -1,6 +1,5 @@
 package org.turter.wageapp.controller
 
-import com.github.tomakehurst.wiremock.junit5.WireMockTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.BeforeEach
@@ -25,7 +24,6 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 import java.util.*
 
-@WireMockTest(httpPort = 12345)
 class SessionControllerIT : CommonWageAppIT() {
 
     @Autowired
@@ -324,7 +322,7 @@ class SessionControllerIT : CommonWageAppIT() {
             date = payload.startWorkAt.toLocalDate()
         )
 
-        setupStubAndVerifyTgBotAPI(notificationEvent)
+        setupStubTgBotAPI(notificationEvent)
 
         val response = client.withUser()
             .post()

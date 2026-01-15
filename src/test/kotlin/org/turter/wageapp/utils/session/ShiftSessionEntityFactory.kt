@@ -8,6 +8,21 @@ import java.util.UUID
 
 object ShiftSessionEntityFactory {
 
+    fun create(
+        id: UUID? = null,
+        companyId: UUID,
+        status: ShiftSession.Status,
+        startWorkTime: LocalTime = LocalTime.of(9, 0),
+        date: LocalDate = LocalDate.now()
+    ): ShiftSessionDbEntity =
+        ShiftSessionDbEntity().apply {
+            this.id = id
+            this.companyId = companyId
+            this.status = status
+            this.startWorkTime = startWorkTime
+            this.date = date
+        }
+
     fun opened(
         companyId: UUID,
         startWorkTime: LocalTime = LocalTime.of(9, 0),
