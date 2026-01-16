@@ -47,6 +47,9 @@ class CalculationServiceImpl(
 
         validateUserCompanyBind(userId, session.companyId, companyRepository)
 
+        if (!session.status.isDraftAvailableOrPresent())
+            throw ShiftSessionClosedException("Session with id {$sessionId} is unable to modify")
+
         val isExists = draftRepository.existsBySessionId(sessionId).awaitSingle()
 
         return if (isExists)
@@ -89,10 +92,12 @@ class CalculationServiceImpl(
 
         notificationEventPublisher.publish(
             shiftResultMapper.toShiftResultCreatedNotificationEvent(
-                session.companyId!!,
+                session.companyId,
                 shiftResult
             )
         )
+
+        draftRepository.deleteById(draftId).awaitSingleOrNull()
 
         return ConfirmDraftResponse(savedShiftResult.id!!)
     }
@@ -102,7 +107,7 @@ class CalculationServiceImpl(
 
         val session = sessionRepository.findById(draft.sessionId!!).awaitSingle()
 
-        validateUserCompanyBind(userId, session.companyId!!, companyRepository)
+        validateUserCompanyBind(userId, session.companyId, companyRepository)
 
         session.status = session.status.cancelDraft()
 

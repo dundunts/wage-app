@@ -18,6 +18,12 @@ data class ShiftSession(
 
         fun close(): Status = CLOSED
 
+        fun isDraftAvailableOrPresent(): Boolean =
+            when (this) {
+                OPENED, OPENED_DRAFT, RECALCULATING, RECALCULATING_DRAFT -> true
+                else -> false
+            }
+
         fun draft(): Status =
             when (this) {
                 OPENED -> OPENED_DRAFT
