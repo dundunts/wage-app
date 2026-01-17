@@ -3,6 +3,7 @@ package org.turter.wageapp.application.service.shift
 import kotlinx.coroutines.reactor.awaitSingle
 import org.turter.wageapp.application.data.company.CompanyRepository
 import org.turter.wageapp.application.data.shift.ShiftSessionDbEntity
+import org.turter.wageapp.domain.shared.EntityNotFoundException
 import org.turter.wageapp.domain.shift.ShiftSession
 import org.turter.wageapp.domain.shift.ShiftSessionClosedException
 import org.turter.wageapp.domain.shift.ShiftSessionNotDraftException
@@ -10,6 +11,10 @@ import org.turter.wageapp.domain.shift.WrongCompanyIdException
 import java.util.UUID
 
 suspend fun validateUserCompanyBind(userId: String, companyId: UUID, repo: CompanyRepository) {
+    val isCompanyExists = repo.existsById(companyId).awaitSingle()
+
+    if (!isCompanyExists) throw EntityNotFoundException("Company not found for ID: {$companyId}")
+
     val companies = repo.findAllForUserId(userId).collectList().awaitSingle()
 
     if (companies.none { c -> c.id == companyId })

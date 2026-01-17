@@ -1,4 +1,4 @@
-package org.turter.wageapp.service.salary
+package org.turter.wageapp.application.service.salary
 
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
@@ -12,7 +12,6 @@ import org.turter.wageapp.domain.salary.PayrollAggregator
 import org.turter.wageapp.domain.salary.Period
 import org.turter.wageapp.domain.shared.EntityNotFoundException
 import org.turter.wageapp.application.mapper.PayrollMapper
-import org.turter.wageapp.application.service.salary.SalaryService
 import org.turter.wageapp.application.service.shift.validateUserCompanyBind
 import reactor.core.publisher.Mono
 import java.util.*
