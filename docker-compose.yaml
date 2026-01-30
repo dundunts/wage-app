@@ -45,6 +45,25 @@ services:
     depends_on:
       - wage-app-db
 
+  wage-app-backend:
+    build:
+      dockerfile: Dockerfile
+    container_name: wage-app-backend
+    environment:
+      POSTGRES_URL: ${POSTGRES_URL}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      KEYCLOAK_URL: ${KEYCLOAK_URL}
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM}
+      TELEGRAM_BOT_URL: ${TELEGRAM_BOT_URL}
+    ports:
+      - 8085:8085
+    depends_on:
+      - wage-app-db
+      - keycloak
+    restart: unless-stopped
+
   prometheus:
     image: prom/prometheus
     container_name: prometheus
