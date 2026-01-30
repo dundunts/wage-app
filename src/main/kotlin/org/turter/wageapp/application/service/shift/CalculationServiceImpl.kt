@@ -1,8 +1,11 @@
 package org.turter.wageapp.application.service.shift
 
+import io.r2dbc.spi.R2dbcDataIntegrityViolationException
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
+import org.springframework.dao.DuplicateKeyException
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Isolation
 import org.springframework.transaction.annotation.Transactional
 import org.turter.wageapp.application.data.company.CompanyRepository
 import org.turter.wageapp.application.data.employee.EmployeeRepository
@@ -21,7 +24,6 @@ import java.time.LocalDateTime
 import java.util.*
 
 @Service
-@Transactional
 class CalculationServiceImpl(
     private val companyRepository: CompanyRepository,
     private val draftRepository: ShiftResultDraftRepository,
@@ -38,6 +40,8 @@ class CalculationServiceImpl(
     private val notificationEventPublisher: NotificationEventPublisher,
     private val shiftResultRepositoryDecorator: ShiftResultRepositoryDecorator
 ) : CalculationService {
+
+    //TODO move DB logic to repository
     override suspend fun getOrCalculateDraft(
         sessionId: UUID,
         userId: String
@@ -50,14 +54,16 @@ class CalculationServiceImpl(
         if (!session.status.isDraftAvailableOrPresent())
             throw ShiftSessionClosedException("Session with id {$sessionId} is unable to modify")
 
-        val isExists = draftRepository.existsBySessionId(sessionId).awaitSingle()
-
-        return if (isExists)
-            draftRepository.findBySessionId(sessionId).awaitSingle().convertToShiftResultDraft()
-        else
+        return try {
             calculateAndSaveResultsDraft(sessionId, session)
+        } catch (e: DuplicateKeyException) {
+            draftRepository.findBySessionId(sessionId)
+                .awaitSingle()
+                .convertToShiftResultDraft()
+        }
     }
 
+    @Transactional
     override suspend fun confirmDraft(
         draftId: UUID,
         userId: String
@@ -102,6 +108,7 @@ class CalculationServiceImpl(
         return ConfirmDraftResponse(savedShiftResult.id!!)
     }
 
+    @Transactional
     override suspend fun deleteDraft(draftId: UUID, userId: String) {
         val draft = draftRepository.findById(draftId).awaitSingleOrNull() ?: return
 
@@ -123,7 +130,8 @@ class CalculationServiceImpl(
         return draftMapper.toShiftResultDraft(this, payments)
     }
 
-    private suspend fun calculateAndSaveResultsDraft(
+    @Transactional
+    suspend fun calculateAndSaveResultsDraft(
         sessionId: UUID,
         session: ShiftSessionDbEntity
     ): ShiftResultDraft {
