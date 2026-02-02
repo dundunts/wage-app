@@ -1,6 +1,8 @@
 package org.turter.wageapp.application.controller
 
 import jakarta.validation.Valid
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import org.turter.wageapp.domain.company.Company
@@ -25,6 +27,10 @@ class CompanyController(
         ResponseEntity.ok(
             UserCompaniesResponse(companyService.getUserCompanies(principal.name))
         )
+
+    @GetMapping("/get/page")
+    suspend fun getCompaniesPage(pageable: Pageable): ResponseEntity<Page<Company>> =
+        ResponseEntity.ok(companyService.getCompaniesPage(pageable))
 
     @PostMapping("/create")
     suspend fun create(

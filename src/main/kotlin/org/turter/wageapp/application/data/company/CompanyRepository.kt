@@ -1,5 +1,6 @@
 package org.turter.wageapp.application.data.company
 
+import org.springframework.data.domain.Pageable
 import org.springframework.data.r2dbc.repository.R2dbcRepository
 import org.turter.wageapp.domain.company.Company
 import reactor.core.publisher.Flux
@@ -9,6 +10,8 @@ import java.util.*
 interface CompanyRepository : R2dbcRepository<CompanyDbEntity, UUID>, CustomCompanyRepository {
 
     fun existsByTitle(title: String): Mono<Boolean>
+
+    fun findAllBy(pageable: Pageable): Flux<CompanyDbEntity>
 
 }
 
