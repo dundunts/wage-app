@@ -65,6 +65,7 @@ enum class CalculationSource {
 
 // Save
 data class SaveShiftResultPayload(
+    val replacementId: UUID? = null,
     val companyId: UUID,
     val overwrite: Boolean = false,
     val payments: List<PaymentPayload>,

@@ -93,17 +93,23 @@ class ShiftResultServiceImpl(
     ): SaveShiftResultResponse {
         validateUserCompanyBind(userId, payload.companyId, companyRepository)
 
-        val existing = shiftResultRepository
+        val existingByCompanyAndDate = shiftResultRepository
             .findByCompanyIdAndDate(payload.companyId, payload.date)
             .awaitSingleOrNull()
 
-        if (existing != null && !payload.overwrite) {
+        if (existingByCompanyAndDate != null && !payload.overwrite) {
             throw ShiftResultConflictException(
                 "Shift result already exists for date {${payload.date}} and company ID {${payload.companyId}}"
             )
         }
 
-        existing?.let { resultDbEntity ->
+        payload.replacementId?.let { replacementId ->
+            paymentRepository.deleteAllByShiftResultId(replacementId).awaitSingleOrNull()
+
+            shiftResultRepository.deleteById(replacementId).awaitSingleOrNull()
+        }
+
+        existingByCompanyAndDate?.let { resultDbEntity ->
             paymentRepository.deleteAllByShiftResultId(resultDbEntity.id!!).awaitSingleOrNull()
 
             shiftResultRepository.delete(resultDbEntity).awaitSingleOrNull()

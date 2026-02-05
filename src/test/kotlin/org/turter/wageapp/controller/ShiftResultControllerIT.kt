@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.api.assertNull
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.core.ParameterizedTypeReference
@@ -418,6 +419,56 @@ class ShiftResultControllerIT : CommonWageAppIT() {
             .expectBody(SaveShiftResultResponse::class.java)
             .returnResult()
             .responseBody!!
+
+        val payments = paymentRepository.findAllByShiftResultId(newResult.resultId).collectList().block()!!
+
+        assertEquals(1, payments.size)
+        assertEquals(500, payments.first().tips)
+    }
+
+    @Test
+    @DisplayName("Перезапись существующего результата смены при overwrite = true с изменением даты")
+    fun saveResult_overwritesExistingResultWithDifferentDate_whenOverwriteTrue() {
+        val (employee, company) = saveNewUserEmployeeAndCompany()
+        val targetDate = LocalDate.of(2025, 1, 10)
+        val oldDate = LocalDate.of(2025, 1, 9)
+
+        val forOverwrite = saveShiftResult(company.id!!, targetDate)
+        val existing = saveShiftResult(company.id!!, oldDate)
+
+        savePayment(forOverwrite.id!!, employee.id!!)
+        savePayment(existing.id!!, employee.id!!)
+
+        val payload = SaveShiftResultPayloadDtoSupplier.default(
+            replacementId = existing.id,
+            companyId = company.id!!,
+            date = targetDate,
+            overwrite = true,
+            payments = listOf(
+                PaymentPayloadDtoSupplier.default(employee.id!!, tips = 500)
+            )
+        )
+
+        val newResult = client
+            .withUser()
+            .post()
+            .uri("/api/v1/shift-result/save")
+            .bodyValue(payload)
+            .exchange()
+            .expectStatus().isCreated
+            .expectBody(SaveShiftResultResponse::class.java)
+            .returnResult()
+            .responseBody!!
+
+        val savedResult = shiftResultRepository.findById(newResult.resultId).block()
+
+        assertNotNull(savedResult)
+
+        val oldResult = shiftResultRepository.findById(existing.id!!).block()
+        val replacedResult = shiftResultRepository.findById(forOverwrite.id!!).block()
+
+        assertNull(oldResult)
+        assertNull(replacedResult)
 
         val payments = paymentRepository.findAllByShiftResultId(newResult.resultId).collectList().block()!!
 
