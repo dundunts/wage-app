@@ -503,6 +503,31 @@ class ShiftResultControllerIT : CommonWageAppIT() {
     }
 
     @Test
+    @DisplayName("Ошибка 409 при сохранении результата, если в указаны несколько выплат для одного работника")
+    fun saveResult_returns409_whenPaymentsHasDuplicatesEmployees() {
+        val (employee, company) = saveNewUserEmployeeAndCompany()
+        val date = LocalDate.of(2025, 1, 10)
+
+        val payload = SaveShiftResultPayloadDtoSupplier.default(
+            companyId = company.id!!,
+            date = date,
+            payments = listOf(
+                PaymentPayloadDtoSupplier.default(employee.id!!),
+                PaymentPayloadDtoSupplier.default(employee.id!!)
+            )
+        )
+
+        client
+            .withUser()
+            .post()
+            .uri("/api/v1/shift-result/save")
+            .bodyValue(payload)
+            .exchange()
+            .expectStatus().isEqualTo(HttpStatus.CONFLICT)
+            .expectBody(ProblemDetail::class.java)
+    }
+
+    @Test
     @DisplayName("Удаление результата смены вместе с платежами")
     fun deleteResult_deletesResultAndPayments() {
         val (employee, company) = saveNewUserEmployeeAndCompany()

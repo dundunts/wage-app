@@ -93,6 +93,10 @@ class ShiftResultServiceImpl(
     ): SaveShiftResultResponse {
         validateUserCompanyBind(userId, payload.companyId, companyRepository)
 
+        if (hasDuplicateIds(payload.payments)) throw ShiftResultConflictException(
+            "Payments contains duplicates employee IDs"
+        )
+
         val existingByCompanyAndDate = shiftResultRepository
             .findByCompanyIdAndDate(payload.companyId, payload.date)
             .awaitSingleOrNull()
@@ -140,5 +144,10 @@ class ShiftResultServiceImpl(
         paymentRepository.deleteAllByShiftResultId(resultId).awaitSingleOrNull()
 
         shiftResultRepository.deleteById(resultId).awaitSingleOrNull()
+    }
+
+    private fun hasDuplicateIds(payloads: List<SaveShiftResultPayload.PaymentPayload>): Boolean {
+        val seenIds = mutableSetOf<UUID>()
+        return payloads.any { !seenIds.add(it.employeeId) }
     }
 }
