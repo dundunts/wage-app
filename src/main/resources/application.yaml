@@ -28,8 +28,8 @@ spring:
         registration:
           keycloak:
             provider: keycloak
-            client-id: backend-core
-            client-secret: a79VFySQIX0oZ7YycmkbfC9ciXuJfJKD
+            client-id: ${KEYCLOAK_CLIENT_ID:backend-core}
+            client-secret: ${KEYCLOAK_CLIENT_SECRET:a79VFySQIX0oZ7YycmkbfC9ciXuJfJKD}
             authorization-grant-type: client_credentials
 
 server:
