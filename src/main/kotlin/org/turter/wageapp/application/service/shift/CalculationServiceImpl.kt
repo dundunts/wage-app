@@ -136,7 +136,7 @@ class CalculationServiceImpl(
         session: ShiftSessionDbEntity
     ): ShiftResultDraft {
         val checkpoints = checkpointRepository.findAllByShiftSessionIdOrderByDateTimeAsc(sessionId)
-            .flatMap { checkpoint ->
+            .concatMap { checkpoint ->
                 checkpointEmployeeRepository.findAllByCheckpointId(checkpoint.id!!)
                     .collectList()
                     .map { employeeBinds ->
@@ -149,7 +149,7 @@ class CalculationServiceImpl(
             .collectList()
             .awaitSingle()
 
-        val company = companyRepository.findById(session.companyId!!).awaitSingle()
+        val company = companyRepository.findById(session.companyId).awaitSingle()
 
         val calculator = PaymentDraftCalculator(
             checkpoints,
