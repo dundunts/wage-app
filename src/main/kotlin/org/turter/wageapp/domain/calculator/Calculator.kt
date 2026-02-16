@@ -32,10 +32,12 @@ data class CoefficientFromRevenue(
 }
 
 class PaymentDraftCalculator(
-    private val checkpoints: List<CheckpointInfo>,
+    checkpoints: List<CheckpointInfo>,
     private val coefficientFromRevenue: CoefficientFromRevenue,
     private val initialDateTime: LocalDateTime
 ) {
+    private val checkpoints = checkpoints.sortedBy { it.dateTime }
+
     fun calculate(): Map<UUID, PaymentDraftCalculation> {
         val employeePaymentMap = ConcurrentHashMap<UUID, PaymentDraftCalculation>()
 

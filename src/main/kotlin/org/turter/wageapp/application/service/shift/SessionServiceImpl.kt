@@ -183,7 +183,10 @@ class SessionServiceImpl(
     }
 
     private suspend fun convertToShiftSession(session: ShiftSessionDbEntity): ShiftSession =
-        sessionMapper.toShiftSession(session, getCheckpointsForSession(session.id!!))
+        sessionMapper.toShiftSession(
+            session,
+            getCheckpointsForSession(session.id!!).sortedBy { it.dateTime }
+        )
 
     private suspend fun getCheckpointsForSession(id: UUID): List<Checkpoint> {
         return checkpointRepository.findAllByShiftSessionId(id)
