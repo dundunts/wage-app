@@ -5,6 +5,7 @@ import org.turter.wageapp.domain.notification.NotificationEvent
 import org.turter.wageapp.domain.shift.Checkpoint
 
 @Component
+@Deprecated("Mapping logic was moved to separate service - wage-app-tg-bot")
 class NotificationEventTextMessageFactory {
 
     fun getTextMessage(e: NotificationEvent): String =

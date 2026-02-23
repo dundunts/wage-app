@@ -4,15 +4,14 @@ import kotlinx.coroutines.reactor.awaitSingleOrNull
 import org.slf4j.LoggerFactory
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
-import org.turter.wageapp.messaging.model.TelegramNotificationEvent
-import java.util.UUID
+import org.turter.wageapp.domain.notification.NotificationEvent
 
 class TelegramNotificationClient(
     private val webClient: WebClient
 ) {
     private val log = LoggerFactory.getLogger(TelegramNotificationClient::class.java)
 
-    suspend fun notify(event: TelegramNotificationEvent) {
+    suspend fun notify(event: NotificationEvent) {
         try {
             webClient
                 .post()
@@ -24,17 +23,5 @@ class TelegramNotificationClient(
         } catch (e: WebClientResponseException) {
             log.error("Catch exception while sending notification", e)
         }
-    }
-
-    suspend fun notify(
-        companyId: UUID,
-        messageText: String
-    ) {
-        notify(
-            TelegramNotificationEvent(
-                companyId = companyId,
-                messageText = messageText
-            )
-        )
     }
 }
