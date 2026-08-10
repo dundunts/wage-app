@@ -10,4 +10,12 @@ class WageAppApplicationTests : CommonWageAppIT() {
     fun contextLoads() {
     }
 
+    @Test
+    fun unauthenticatedApiRequestIsRejected() {
+        client.get()
+            .uri("/api/v1/company/get/page")
+            .exchange()
+            .expectStatus().isUnauthorized
+    }
+
 }

@@ -12,8 +12,8 @@ spring:
     enabled: true
     drop-first: false
     url: jdbc:postgresql://${POSTGRES_URL:localhost:5434}/${POSTGRES_DB:postgres}
-    user: user
-    password: password
+    user: ${POSTGRES_USER:user}
+    password: ${POSTGRES_PASSWORD:password}
     change-log: db/changelog/db-changelog-master.yaml
 
   security:
@@ -29,7 +29,7 @@ spring:
           keycloak:
             provider: keycloak
             client-id: ${KEYCLOAK_CLIENT_ID:backend-core}
-            client-secret: ${KEYCLOAK_CLIENT_SECRET:a79VFySQIX0oZ7YycmkbfC9ciXuJfJKD}
+            client-secret: ${KEYCLOAK_CLIENT_SECRET:}
             authorization-grant-type: client_credentials
 
 server:

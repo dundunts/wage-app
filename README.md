@@ -109,3 +109,17 @@ Java / Kotlin Backend Developer
 Telegram: @turterDun
 
 Email: DunDunTs@yandex.ru
+
+## Release automation
+
+Pull requests and protected branches run the complete test/build contract. An
+annotated `vX.Y.Z` or `vX.Y.Z-U<N>` tag on the matching `release/X.Y.Z` line
+publishes immutable version and `git-<sha>` Docker tags, records the registry
+digest, and opens an image-only pull request in `wage-app-infr`.
+
+The owner provisions the repository-scoped GitHub App without sharing its key
+with an agent or committing it:
+
+```shell
+./scripts/setup-backend-release-promoter.sh
+```
