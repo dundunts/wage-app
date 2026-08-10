@@ -41,7 +41,7 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@4c125117fe7c5aed11272ec4213f602f012f89f2 # v5
       - name: Test release source once
-        run: ./gradlew test --no-daemon
+        run: bash gradlew test --no-daemon
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
       - name: Log in to Docker Hub
@@ -51,14 +51,14 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
       - name: Refuse an existing version tag
         env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
           IMAGE: docker.io/${{ secrets.DOCKER_USERNAME }}/wage-app
           VERSION: ${{ steps.version.outputs.version }}
         run: |
           set -euo pipefail
-          if docker buildx imagetools inspect "$IMAGE:$VERSION" >/dev/null 2>&1; then
-            echo "Refusing to overwrite existing image tag $VERSION" >&2
-            exit 1
-          fi
+          bash scripts/verify-docker-tag.sh require-absent "$IMAGE" "$VERSION"
+          bash scripts/verify-docker-tag.sh require-absent "$IMAGE" "git-$GITHUB_SHA"
       - name: Define immutable image metadata
         id: metadata
         uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5
@@ -82,6 +82,8 @@ jobs:
           platforms: linux/amd64
       - name: Verify published digest and tags
         env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
           DIGEST: ${{ steps.publish.outputs.digest }}
           IMAGE: docker.io/${{ secrets.DOCKER_USERNAME }}/wage-app
           VERSION: ${{ steps.version.outputs.version }}
@@ -89,8 +91,8 @@ jobs:
           set -euo pipefail
           [[ "$DIGEST" =~ ^sha256:[0-9a-f]{64}$ ]]
           docker buildx imagetools inspect "$IMAGE@$DIGEST" >/dev/null
-          docker buildx imagetools inspect "$IMAGE:$VERSION" >/dev/null
-          docker buildx imagetools inspect "$IMAGE:git-$GITHUB_SHA" >/dev/null
+          bash scripts/verify-docker-tag.sh require-digest "$IMAGE" "$VERSION" "$DIGEST"
+          bash scripts/verify-docker-tag.sh require-digest "$IMAGE" "git-$GITHUB_SHA" "$DIGEST"
       - name: Create narrowly scoped infrastructure token
         id: infra-token
         uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2

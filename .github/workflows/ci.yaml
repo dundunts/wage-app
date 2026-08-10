@@ -26,5 +26,4 @@ jobs:
       - name: Verify release contract
         run: bash tests/release-contract.sh
       - name: Test once and build
-        run: ./gradlew test bootJar --no-daemon
-
+        run: bash gradlew test bootJar --no-daemon

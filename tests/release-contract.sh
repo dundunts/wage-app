@@ -28,11 +28,16 @@ ruby -ryaml -e '
     release_yaml.include?("secrets.INFRA_APP_PRIVATE_KEY") &&
     release_yaml.include?("repositories: wage-app-infr")
   abort "release workflow must not receive Kubernetes credentials" if release_yaml.match?(/KUBECONFIG|kubectl/)
+  abort "workflows must invoke the non-executable Gradle wrapper through bash" unless
+    File.read(File.join(root, ".github/workflows/ci.yaml")).include?("bash gradlew test bootJar") &&
+    release_yaml.include?("bash gradlew test")
 
   app = File.read(File.join(root, "src/main/resources/application.yaml"))
   abort "Liquibase must use runtime database credentials" unless
     app.include?("user: ${POSTGRES_USER:user}") && app.include?("password: ${POSTGRES_PASSWORD:password}")
   abort "Keycloak client secret must not have a committed default" unless app.include?("client-secret: ${KEYCLOAK_CLIENT_SECRET:}")
 ' "$repo_root"
+
+bash "$repo_root/tests/verify-docker-tag.sh"
 
 echo "backend release contract is valid"
