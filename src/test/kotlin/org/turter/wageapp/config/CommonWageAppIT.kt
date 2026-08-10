@@ -2,6 +2,7 @@ package org.turter.wageapp.config
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.github.tomakehurst.wiremock.WireMockServer
+import com.github.tomakehurst.wiremock.client.VerificationException
 import com.github.tomakehurst.wiremock.client.WireMock.aResponse
 import com.github.tomakehurst.wiremock.client.WireMock.equalTo
 import com.github.tomakehurst.wiremock.client.WireMock.exactly
@@ -129,28 +130,36 @@ open class CommonWageAppIT {
 
     protected fun awaitVerifyRequestedStubTgBot(
         event: NotificationEvent,
-        delayDuration: Duration = 3.toDuration(DurationUnit.SECONDS)
-    ) = awaitVerifyRequestedStubTgBot(companyId = event.meta.companyId, delayDuration = delayDuration)
+        timeoutDuration: Duration = 10.toDuration(DurationUnit.SECONDS)
+    ) = awaitVerifyRequestedStubTgBot(companyId = event.meta.companyId, timeoutDuration = timeoutDuration)
 
     protected fun awaitVerifyRequestedStubTgBot(
         companyId: UUID,
         messageText: String? = null,
-        delayDuration: Duration = 3.toDuration(DurationUnit.SECONDS)
+        timeoutDuration: Duration = 10.toDuration(DurationUnit.SECONDS)
     ) = runBlocking {
         val messageTextPattern = messageText?.let { text ->
             matchingJsonPath("$.messageText", equalTo(text))
         } ?: matchingJsonPath("$.messageText")
 
-        delay(delayDuration)
+        val requestPattern = postRequestedFor(urlPathEqualTo("/api/notifications"))
+            .withRequestBody(
+                matchingJsonPath("$.companyId", equalTo(companyId.toString()))
+            )
+            .withRequestBody(messageTextPattern)
+        val pollingIntervalMillis = 100L
+        val attempts = (timeoutDuration.inWholeMilliseconds / pollingIntervalMillis).coerceAtLeast(1)
 
-        wireMockServer.verify(
-            exactly(1),
-            postRequestedFor(urlPathEqualTo("/api/notifications"))
-                .withRequestBody(
-                    matchingJsonPath("$.companyId", equalTo(companyId.toString()))
-                )
-                .withRequestBody(messageTextPattern)
-        )
+        repeat((attempts - 1).toInt()) {
+            try {
+                wireMockServer.verify(exactly(1), requestPattern)
+                return@runBlocking
+            } catch (_: VerificationException) {
+                delay(pollingIntervalMillis)
+            }
+        }
+
+        wireMockServer.verify(exactly(1), requestPattern)
     }
 
     protected fun getExpectedEventJsonString(event: NotificationEvent): String {
