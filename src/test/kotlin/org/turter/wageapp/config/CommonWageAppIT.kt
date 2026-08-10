@@ -1,7 +1,7 @@
 package org.turter.wageapp.config
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.github.tomakehurst.wiremock.WireMockServer
+import com.github.tomakehurst.wiremock.client.VerificationException
 import com.github.tomakehurst.wiremock.client.WireMock.aResponse
 import com.github.tomakehurst.wiremock.client.WireMock.equalTo
 import com.github.tomakehurst.wiremock.client.WireMock.exactly
@@ -32,8 +32,6 @@ import org.turter.wageapp.application.data.employee.entity.EmployeeCompanyDbEnti
 import org.turter.wageapp.application.data.employee.entity.EmployeeDbEntity
 import org.turter.wageapp.domain.employee.Employee
 import org.turter.wageapp.domain.notification.NotificationEvent
-import org.turter.wageapp.messaging.model.TelegramNotificationEvent
-import org.turter.wageapp.messaging.service.NotificationEventTextMessageFactory
 import org.turter.wageapp.utils.company.CompanyEntityFactory
 import org.turter.wageapp.utils.employee.EmployeeCompanyEntityFactory
 import org.turter.wageapp.utils.employee.EmployeeEntityFactory
@@ -66,12 +64,6 @@ open class CommonWageAppIT {
 
     @Autowired
     protected lateinit var employeeCompanyRepository: EmployeeCompanyRepository
-
-    @Autowired
-    protected lateinit var notificationEventTextMessageFactory: NotificationEventTextMessageFactory
-
-    @Autowired
-    protected lateinit var objectMapper: ObjectMapper
 
     @InjectWireMock
     protected lateinit var wireMockServer: WireMockServer
@@ -112,54 +104,42 @@ open class CommonWageAppIT {
 
     protected fun setupStubTgBotAPI(event: NotificationEvent) = setupStubTgBotAPI(event.meta.companyId)
 
-    protected fun setupStubTgBotAPI(companyId: UUID, messageText: String? = null) {
-        val messageTextPattern = messageText?.let { text ->
-            matchingJsonPath("$.messageText", equalTo(text))
-        } ?: matchingJsonPath("$.messageText")
-
+    protected fun setupStubTgBotAPI(companyId: UUID) {
         wireMockServer.stubFor(
             post(urlPathEqualTo("/api/notifications"))
                 .withRequestBody(
-                    matchingJsonPath("$.companyId", equalTo(companyId.toString())),
+                    matchingJsonPath("$.meta.companyId", equalTo(companyId.toString())),
                 )
-                .withRequestBody(messageTextPattern)
                 .willReturn(aResponse().withStatus(202))
         )
     }
 
     protected fun awaitVerifyRequestedStubTgBot(
         event: NotificationEvent,
-        delayDuration: Duration = 3.toDuration(DurationUnit.SECONDS)
-    ) = awaitVerifyRequestedStubTgBot(companyId = event.meta.companyId, delayDuration = delayDuration)
+        timeoutDuration: Duration = 10.toDuration(DurationUnit.SECONDS)
+    ) = awaitVerifyRequestedStubTgBot(companyId = event.meta.companyId, timeoutDuration = timeoutDuration)
 
     protected fun awaitVerifyRequestedStubTgBot(
         companyId: UUID,
-        messageText: String? = null,
-        delayDuration: Duration = 3.toDuration(DurationUnit.SECONDS)
+        timeoutDuration: Duration = 10.toDuration(DurationUnit.SECONDS)
     ) = runBlocking {
-        val messageTextPattern = messageText?.let { text ->
-            matchingJsonPath("$.messageText", equalTo(text))
-        } ?: matchingJsonPath("$.messageText")
+        val requestPattern = postRequestedFor(urlPathEqualTo("/api/notifications"))
+            .withRequestBody(
+                matchingJsonPath("$.meta.companyId", equalTo(companyId.toString()))
+            )
+        val pollingIntervalMillis = 100L
+        val attempts = (timeoutDuration.inWholeMilliseconds / pollingIntervalMillis).coerceAtLeast(1)
 
-        delay(delayDuration)
+        repeat((attempts - 1).toInt()) {
+            try {
+                wireMockServer.verify(exactly(1), requestPattern)
+                return@runBlocking
+            } catch (_: VerificationException) {
+                delay(pollingIntervalMillis)
+            }
+        }
 
-        wireMockServer.verify(
-            exactly(1),
-            postRequestedFor(urlPathEqualTo("/api/notifications"))
-                .withRequestBody(
-                    matchingJsonPath("$.companyId", equalTo(companyId.toString()))
-                )
-                .withRequestBody(messageTextPattern)
-        )
-    }
-
-    protected fun getExpectedEventJsonString(event: NotificationEvent): String {
-        return objectMapper.writeValueAsString(getExpectedEvent(event))
-    }
-
-    protected fun getExpectedEvent(event: NotificationEvent): TelegramNotificationEvent {
-        val text = notificationEventTextMessageFactory.getTextMessage(event)
-        return TelegramNotificationEvent(event.meta.companyId, text)
+        wireMockServer.verify(exactly(1), requestPattern)
     }
 
     protected fun CompanyDbEntity.addEmployee(firstName: String = "first_name"): EmployeeDbEntity {
