@@ -25,6 +25,9 @@ ruby -ryaml -e '
     release_yaml.include?("type=raw,value=${{ steps.version.outputs.version }}") &&
     release_yaml.include?("type=raw,value=git-${{ steps.version.outputs.source_sha }}")
   abort "release must capture the registry digest" unless release_yaml.include?("steps.publish.outputs.digest")
+  abort "release image must use the canonical repository, not the login credential as a namespace" unless
+    release_yaml.scan("docker.io/dundunts/wage-app").length >= 3 &&
+    !release_yaml.include?(%q{docker.io/${{ secrets.DOCKER_USERNAME }}/wage-app})
   abort "release must verify the remote annotated tag outside checkout-managed refs" unless
     release_yaml.include?(%q{verified_tag_ref="refs/release-tags/$RELEASE_TAG"}) &&
     release_yaml.include?(%q{refs/tags/$RELEASE_TAG:$verified_tag_ref}) &&

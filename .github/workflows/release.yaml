@@ -67,7 +67,7 @@ jobs:
         env:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-          IMAGE: docker.io/${{ secrets.DOCKER_USERNAME }}/wage-app
+          IMAGE: docker.io/dundunts/wage-app
           SOURCE_SHA: ${{ steps.version.outputs.source_sha }}
           VERSION: ${{ steps.version.outputs.version }}
         run: |
@@ -78,7 +78,7 @@ jobs:
         id: metadata
         uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5
         with:
-          images: docker.io/${{ secrets.DOCKER_USERNAME }}/wage-app
+          images: docker.io/dundunts/wage-app
           tags: |
             type=raw,value=${{ steps.version.outputs.version }}
             type=raw,value=git-${{ steps.version.outputs.source_sha }}
@@ -100,7 +100,7 @@ jobs:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
           DIGEST: ${{ steps.publish.outputs.digest }}
-          IMAGE: docker.io/${{ secrets.DOCKER_USERNAME }}/wage-app
+          IMAGE: docker.io/dundunts/wage-app
           SOURCE_SHA: ${{ steps.version.outputs.source_sha }}
           VERSION: ${{ steps.version.outputs.version }}
         run: |
@@ -130,7 +130,7 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.infra-token.outputs.token }}
           DIGEST: ${{ steps.publish.outputs.digest }}
-          IMAGE: docker.io/${{ secrets.DOCKER_USERNAME }}/wage-app
+          IMAGE: docker.io/dundunts/wage-app
           SOURCE_SHA: ${{ steps.version.outputs.source_sha }}
           VERSION: ${{ steps.version.outputs.version }}
         shell: bash
