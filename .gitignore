@@ -45,3 +45,7 @@ out/
 ### Enviroment ###
 .env
 .env.*
+
+### AI ###
+.agents
+skills-lock.json
