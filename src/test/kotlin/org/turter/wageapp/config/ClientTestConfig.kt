@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Primary
 import org.springframework.http.client.reactive.ReactorClientHttpConnector
 import org.springframework.web.reactive.function.client.WebClient
 import org.turter.wageapp.messaging.client.TelegramNotificationClient
+import org.turter.wageapp.messaging.config.TelegramNotificationClientProps
 import reactor.netty.http.client.HttpClient
 import reactor.netty.transport.logging.AdvancedByteBufFormat
 
@@ -28,9 +29,13 @@ class ClientTestConfig {
 
     @Bean
     @Primary
-    fun telegramNotificationTestClient(testWebClientBuilder: WebClient.Builder): TelegramNotificationClient =
+    fun telegramNotificationTestClient(
+        testWebClientBuilder: WebClient.Builder,
+        props: TelegramNotificationClientProps
+    ): TelegramNotificationClient =
         TelegramNotificationClient(
-            testWebClientBuilder.baseUrl("http://localhost:12345").build()
+            testWebClientBuilder.baseUrl("http://localhost:12345").build(),
+            props.timeout
         )
 
 }

@@ -16,6 +16,10 @@ _Avoid_: User, account
 An authenticated identity that may be linked to an employee. A user acts in the companies associated with that employee.
 _Avoid_: Employee
 
+**Notification Event**:
+A channel-neutral announcement that a confirmed change occurred for a Company and may be presented to its users.
+_Avoid_: Telegram message, request, messaging event
+
 **Position**:
 An employee's operational designation, such as manager or waiter. It does not by itself grant system permissions.
 _Avoid_: Role, permission

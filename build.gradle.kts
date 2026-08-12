@@ -82,6 +82,7 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.security:spring-security-test")
     testImplementation("io.projectreactor:reactor-test")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test")
 
     testImplementation(platform("org.testcontainers:testcontainers-bom:1.20.3"))
     testImplementation("org.testcontainers:junit-jupiter")
