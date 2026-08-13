@@ -46,8 +46,8 @@ GetShiftResultsPage:
       - $ref: ../components/parameters.yaml#/StartDate
       - $ref: ../components/parameters.yaml#/EndDate
       - $ref: ../components/parameters.yaml#/CurrentDate
-      - $ref: ../components/parameters.yaml#/Page
-      - $ref: ../components/parameters.yaml#/Size
+      - $ref: ../components/parameters.yaml#/ShiftResultPageIndex
+      - $ref: ../components/parameters.yaml#/ShiftResultPageSize
       - $ref: ../components/parameters.yaml#/Sort
     responses:
       "200":

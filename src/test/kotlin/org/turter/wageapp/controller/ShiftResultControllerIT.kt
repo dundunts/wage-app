@@ -37,10 +37,14 @@ class ShiftResultControllerIT : CommonWageAppIT() {
     @Autowired
     private lateinit var shiftSessionRepository: ShiftSessionRepository
 
+    @Autowired
+    private lateinit var checkpointRepository: CheckpointRepository
+
     @BeforeEach
     fun setup() {
         paymentRepository.deleteAll().block()
         shiftResultRepository.deleteAll().block()
+        checkpointRepository.deleteAll().block()
         employeeCompanyRepository.deleteAll().block()
         employeeRepository.deleteAll().block()
         companyRepository.deleteAll().block()
@@ -94,6 +98,12 @@ class ShiftResultControllerIT : CommonWageAppIT() {
         ).block()!!
 
         val sessionId = session.id!!
+        checkpointRepository.save(
+            org.turter.wageapp.utils.checkpoint.CheckpointEntityFactory.create(
+                shiftSessionId = sessionId,
+                type = CheckpointType.REGULAR,
+            ),
+        ).block()!!
 
         val shiftResult = saveShiftResult(
             companyId = company.id!!,
@@ -106,18 +116,16 @@ class ShiftResultControllerIT : CommonWageAppIT() {
             employeeId = employee.id!!
         )
 
-        val response = client
+        client
             .withUser()
             .get()
             .uri("/api/v1/shift-result/{id}/get/detailed", shiftResult.id)
             .exchange()
             .expectStatus().isOk
-            .expectBody(ShiftResultExtendedResponse::class.java)
-            .returnResult()
-            .responseBody!!
-
-        assertEquals(shiftResult.id, response.shiftResult.id)
-        assertEquals(sessionId, response.session?.id)
+            .expectBody()
+            .jsonPath("$.shiftResult.id").isEqualTo(shiftResult.id.toString())
+            .jsonPath("$.session.id").isEqualTo(sessionId.toString())
+            .jsonPath("$.session.checkpoints[0].type").isEqualTo("REGULAR")
     }
 
     @Test
@@ -282,6 +290,34 @@ class ShiftResultControllerIT : CommonWageAppIT() {
             .exchange()
             .expectStatus().isBadRequest
             .expectBody(ProblemDetail::class.java)
+    }
+
+    @Test
+    @DisplayName("Malformed pagination uses default page and size")
+    fun getResultsByPeriodPage_usesDefaultsForMalformedPagination() {
+        val (_, company) = saveNewUserEmployeeAndCompany()
+
+        val response = client
+            .withUser()
+            .get()
+            .uri {
+                it.path("/api/v1/shift-result/get/detailed/by-period/page")
+                    .queryParam("companyId", company.id)
+                    .queryParam("periodType", PeriodType.CUSTOM)
+                    .queryParam("start", "2025-01-01")
+                    .queryParam("end", "2025-01-31")
+                    .queryParam("page", "malformed")
+                    .queryParam("size", "malformed")
+                    .build()
+            }
+            .exchange()
+            .expectStatus().isOk
+            .expectBody(object : ParameterizedTypeReference<RestPage<ShiftResultDetailed>>() {})
+            .returnResult()
+            .responseBody!!
+
+        assertEquals(0, response.number)
+        assertEquals(100, response.size)
     }
 
     @Test
