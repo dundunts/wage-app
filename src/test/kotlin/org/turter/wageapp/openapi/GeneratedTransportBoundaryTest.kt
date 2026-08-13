@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.turter.wageapp.application.controller.CheckpointController
 import org.turter.wageapp.application.controller.CompanyController
 import org.turter.wageapp.application.controller.EmployeeController
+import org.turter.wageapp.application.controller.SalaryController
 import org.turter.wageapp.application.controller.SessionController
 import org.turter.wageapp.transport.api.CheckpointApi
 import org.turter.wageapp.transport.api.CompanyApi
@@ -58,6 +59,11 @@ class GeneratedTransportBoundaryTest {
     fun `Company and Employee controllers implement their generated API interfaces`() {
         assertTrue(CompanyApi::class.java.isAssignableFrom(CompanyController::class.java))
         assertTrue(EmployeeApi::class.java.isAssignableFrom(EmployeeController::class.java))
+    }
+
+    @Test
+    fun `Payroll controller implements its generated API interface`() {
+        assertTrue(PayrollApi::class.java.isAssignableFrom(SalaryController::class.java))
     }
 
     @Test
