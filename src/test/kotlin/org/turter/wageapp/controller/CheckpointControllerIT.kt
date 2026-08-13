@@ -93,6 +93,37 @@ class CheckpointControllerIT : CommonWageAppIT() {
     }
 
     @Test
+    @DisplayName("POST /checkpoint/create — возвращает 400 для некорректной даты и времени")
+    fun shouldReturn400WhenCheckpointDateTimeIsInvalid() {
+        val (employee, company) = saveNewUserEmployeeAndCompany()
+        val session = shiftSessionRepository.save(
+            ShiftSessionEntityFactory.create(companyId = company.id!!, status = ShiftSession.Status.OPENED)
+        ).block()!!
+        val payload = CreateRegularCheckpointPayloadSupplier.valid(
+            sessionId = session.id!!,
+            employeeIds = setOf(employee.id!!),
+        )
+
+        client.withUser()
+            .post()
+            .uri("/api/v1/checkpoint/create")
+            .bodyValue(
+                mapOf(
+                    "sessionId" to payload.sessionId,
+                    "revenue" to payload.revenue,
+                    "tips" to payload.tips,
+                    "employeeIds" to payload.employeeIds,
+                    "dateTime" to "not-a-date",
+                    "type" to payload.type,
+                    "fieldRecords" to payload.fieldRecords,
+                )
+            )
+            .exchange()
+            .expectStatus().isBadRequest
+            .expectBody(ProblemDetail::class.java)
+    }
+
+    @Test
     @DisplayName("POST /checkpoint/create — успешно создаёт чекпоинт для RECALCULATING сессии без отправки уведомления")
     fun shouldCreateCheckpointForRecalculatingSessionWithoutNotification() {
         // given

@@ -1,49 +1,48 @@
 package org.turter.wageapp.application.controller
 
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.DeleteMapping
-import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
-import org.turter.wageapp.domain.shift.Checkpoint
-import org.turter.wageapp.domain.shift.CreateRegularCheckpointPayload
-import org.turter.wageapp.domain.shift.UpdateShiftCheckpointPayload
+import org.turter.wageapp.application.mapper.ShiftResultTransportMapper
+import org.turter.wageapp.application.mapper.ShiftSessionCheckpointRequestMapper
 import org.turter.wageapp.application.service.shift.CheckpointService
-import java.security.Principal
+import org.turter.wageapp.transport.api.CheckpointApi
+import org.turter.wageapp.transport.model.Checkpoint
+import org.turter.wageapp.transport.model.CreateCheckpointRequest
+import org.turter.wageapp.transport.model.UpdateCheckpointRequest
 import java.util.UUID
 
 @RestController
-@RequestMapping("/api/v1/checkpoint")
 class CheckpointController(
-    private val checkpointService: CheckpointService
-) {
+    private val checkpointService: CheckpointService,
+    private val requestMapper: ShiftSessionCheckpointRequestMapper,
+    private val responseMapper: ShiftResultTransportMapper,
+) : CheckpointApi {
 
-    @PostMapping("/create")
-    suspend fun createCheckpointForSession(
-        @RequestBody payload: CreateRegularCheckpointPayload,
-        principal: Principal
+    override suspend fun createCheckpoint(
+        createCheckpointRequest: CreateCheckpointRequest,
     ): ResponseEntity<Checkpoint> {
-        return ResponseEntity.status(201)
-            .body(checkpointService.createCheckpoint(payload, principal.name))
+        val checkpoint = checkpointService.createCheckpoint(
+            requestMapper.toDomain(createCheckpointRequest),
+            currentUserId(),
+        )
+        return responseMapper.toTransportResponse(HttpStatus.CREATED, checkpoint)
     }
 
-    @PostMapping("/update")
-    suspend fun updateCheckpoint(
-        @RequestBody payload: UpdateShiftCheckpointPayload,
-        principal: Principal
+    override suspend fun updateCheckpoint(
+        updateCheckpointRequest: UpdateCheckpointRequest,
     ): ResponseEntity<Checkpoint> {
-        return ResponseEntity.ok(checkpointService.updateCheckpoint(payload, principal.name))
+        val checkpoint = checkpointService.updateCheckpoint(
+            requestMapper.toDomain(updateCheckpointRequest),
+            currentUserId(),
+        )
+        return responseMapper.toTransportResponse(HttpStatus.OK, checkpoint)
     }
 
-    @DeleteMapping("/{checkpointId}/delete")
-    suspend fun deleteCheckpointById(
-        @PathVariable checkpointId: UUID,
-        principal: Principal
+    override suspend fun deleteCheckpoint(
+        checkpointId: UUID,
     ): ResponseEntity<Unit> {
-        checkpointService.deleteById(checkpointId, principal.name)
+        checkpointService.deleteById(checkpointId, currentUserId())
         return ResponseEntity.noContent().build()
     }
-
 }

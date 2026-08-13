@@ -4,8 +4,10 @@ import jakarta.validation.Validation
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.turter.wageapp.application.controller.CheckpointController
 import org.turter.wageapp.application.controller.CompanyController
 import org.turter.wageapp.application.controller.EmployeeController
+import org.turter.wageapp.application.controller.SessionController
 import org.turter.wageapp.transport.api.CheckpointApi
 import org.turter.wageapp.transport.api.CompanyApi
 import org.turter.wageapp.transport.api.EmployeeApi
@@ -73,5 +75,11 @@ class GeneratedTransportBoundaryTest {
             setOf("firstName"),
             validator.validate(request.copy(firstName = "   ")).mapTo(mutableSetOf()) { it.propertyPath.toString() },
         )
+    }
+
+    @Test
+    fun `Shift Session and Checkpoint controllers implement their generated API boundaries`() {
+        assertTrue(ShiftSessionApi::class.java.isAssignableFrom(SessionController::class.java))
+        assertTrue(CheckpointApi::class.java.isAssignableFrom(CheckpointController::class.java))
     }
 }
