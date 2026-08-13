@@ -1,0 +1,161 @@
+Company:
+  type: object
+  description: A work location whose Shift Sessions and Payroll are accounted independently.
+  additionalProperties: false
+  required:
+    - id
+    - title
+    - employeeWageCoefficientFromRevenue
+    - defaultShiftStartTime
+  properties:
+    id:
+      type: string
+      format: uuid
+      nullable: false
+      description: The Company's identifier.
+    title:
+      type: string
+      minLength: 1
+      maxLength: 255
+      nullable: false
+      description: The unique display title of the Company.
+      example: Central Cafe
+    employeeWageCoefficientFromRevenue:
+      type: integer
+      format: int32
+      nullable: false
+      description: The Company's Revenue Percentage expressed as a whole-number percentage.
+      example: 15
+    defaultShiftStartTime:
+      type: string
+      minLength: 5
+      maxLength: 5
+      pattern: "^([0-1][0-9]|2[0-3]):[0-5][0-9]$"
+      nullable: false
+      description: Default local Shift Session Start time in 24-hour `HH:mm` form.
+      example: "09:00"
+
+CompanyCreateOrUpdateRequest:
+  type: object
+  description: Fields required to create or update a Company.
+  additionalProperties: false
+  required:
+    - title
+    - employeeWageCoefficientFromRevenue
+    - defaultShiftStartTime
+  properties:
+    title:
+      type: string
+      minLength: 1
+      maxLength: 255
+      nullable: false
+      description: The unique display title of the Company.
+      example: Central Cafe
+    employeeWageCoefficientFromRevenue:
+      type: integer
+      format: int32
+      nullable: false
+      description: The Company's Revenue Percentage expressed as a whole-number percentage.
+      example: 15
+    defaultShiftStartTime:
+      type: string
+      minLength: 5
+      maxLength: 5
+      pattern: "^([0-1][0-9]|2[0-3]):[0-5][0-9]$"
+      nullable: false
+      description: Default local Shift Session Start time in 24-hour `HH:mm` form.
+      example: "09:00"
+
+UserCompaniesResponse:
+  type: object
+  description: Companies associated with the authenticated User's Employee record.
+  additionalProperties: false
+  required:
+    - companies
+  properties:
+    companies:
+      type: array
+      nullable: false
+      items:
+        $ref: "#/Company"
+
+CompanyPage:
+  type: object
+  description: >-
+    Stable Company pagination fields. The server can emit additional framework
+    metadata, which consumers must not rely on.
+  additionalProperties: true
+  required:
+    - content
+    - number
+    - size
+    - totalElements
+  properties:
+    content:
+      type: array
+      nullable: false
+      description: Companies in this page.
+      items:
+        $ref: "#/Company"
+    number:
+      type: integer
+      format: int32
+      minimum: 0
+      nullable: false
+      description: Zero-based page index.
+      example: 0
+    size:
+      type: integer
+      format: int32
+      minimum: 0
+      nullable: false
+      description: Requested page size, or zero for an unpaged response.
+      example: 100
+    totalElements:
+      type: integer
+      format: int64
+      minimum: 0
+      nullable: false
+      description: Total number of Companies across all pages.
+      example: 2
+
+ProblemDetail:
+  type: object
+  description: RFC 7807 problem details returned for application-level errors.
+  additionalProperties: true
+  required:
+    - type
+    - title
+    - status
+    - detail
+  properties:
+    type:
+      type: string
+      format: uri-reference
+      nullable: false
+      description: Identifier for the problem type; currently `about:blank`.
+      example: about:blank
+    title:
+      type: string
+      nullable: false
+      description: Short HTTP status phrase.
+      example: Not Found
+    status:
+      type: integer
+      format: int32
+      minimum: 400
+      maximum: 599
+      nullable: false
+      description: HTTP status code.
+      example: 404
+    detail:
+      type: string
+      nullable: false
+      description: Human-readable explanation specific to this occurrence.
+      example: Company 5b367932-2e5d-4d89-aa07-17f65ff4af9c not found
+    instance:
+      type: string
+      format: uri-reference
+      nullable: false
+      description: Request path associated with this occurrence when supplied by the server.
+      example: /api/v1/company/get/5b367932-2e5d-4d89-aa07-17f65ff4af9c

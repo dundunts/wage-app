@@ -1,0 +1,11 @@
+spring:
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.security.oauth2.client.reactive.ReactiveOAuth2ClientAutoConfiguration
+
+springdoc:
+  api-docs:
+    enabled: true
+  paths-to-match: /api/v1/company/**
+  swagger-ui:
+    enabled: false

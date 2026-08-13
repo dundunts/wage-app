@@ -1,0 +1,382 @@
+openapi: 3.0.3
+info:
+  title: Wage App API
+  version: 0.1.0
+  description: Draft baseline for the authenticated Company operations currently provided by Wage App. This tracer-bullet contract is not yet the complete /api/v1 contract.
+servers:
+  - url: /
+    description: Current Wage App server
+security:
+  - BearerAuth: []
+tags:
+  - name: Company
+    description: Operations for a work location whose shifts and pay are accounted independently.
+paths:
+  /api/v1/company/get/{id}:
+    get:
+      tags:
+        - Company
+      operationId: getCompany
+      summary: Get a Company
+      description: Returns one Company by its identifier.
+      parameters:
+        - $ref: '#/components/parameters/CompanyId'
+      responses:
+        '200':
+          description: The Company was found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Company'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/CompanyNotFound'
+  /api/v1/company/get/for-user:
+    get:
+      tags:
+        - Company
+      operationId: getCompaniesForUser
+      summary: List the current user's Companies
+      description: Returns the Companies associated with the authenticated User's Employee record.
+      responses:
+        '200':
+          description: The Companies associated with the current User, possibly empty.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserCompaniesResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /api/v1/company/get/page:
+    get:
+      tags:
+        - Company
+      operationId: getCompaniesPage
+      summary: List a page of Companies
+      description: Returns a page of Companies. The response guarantees the page content, index, requested size, and total element count; additional Spring pagination fields may be present but are not part of the supported contract.
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+        - $ref: '#/components/parameters/Sort'
+      responses:
+        '200':
+          description: A page of Companies.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyPage'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /api/v1/company/create:
+    post:
+      tags:
+        - Company
+      operationId: createCompany
+      summary: Create a Company
+      description: Creates a Company with a unique title.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompanyCreateOrUpdateRequest'
+      responses:
+        '201':
+          description: The Company was created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Company'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/CompanyConflict'
+  /api/v1/company/update/{id}:
+    put:
+      tags:
+        - Company
+      operationId: updateCompany
+      summary: Update a Company
+      description: Replaces the editable fields of an existing Company.
+      parameters:
+        - $ref: '#/components/parameters/CompanyId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompanyCreateOrUpdateRequest'
+      responses:
+        '204':
+          description: The Company was updated successfully. The response has no body.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/CompanyNotFound'
+        '409':
+          $ref: '#/components/responses/CompanyConflict'
+  /api/v1/company/delete/{id}:
+    delete:
+      tags:
+        - Company
+      operationId: deleteCompany
+      summary: Delete a Company
+      description: Deletes a Company by identifier. Deleting an absent Company is also successful.
+      parameters:
+        - $ref: '#/components/parameters/CompanyId'
+      responses:
+        '204':
+          description: The Company is absent after the request. The response has no body.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: A JWT access token accepted by the Wage App resource server.
+  parameters:
+    CompanyId:
+      name: id
+      in: path
+      required: true
+      description: The Company's identifier.
+      schema:
+        type: string
+        format: uuid
+        nullable: false
+    Page:
+      name: page
+      in: query
+      required: false
+      description: Zero-based page index. Missing, malformed, or negative values currently use the default of 0.
+      schema:
+        type: integer
+        format: int32
+        default: 0
+        nullable: false
+    Size:
+      name: size
+      in: query
+      required: false
+      description: Requested number of Companies per page. Missing, malformed, or nonpositive values use the default of 100; values above 2000 are capped at 2000.
+      schema:
+        type: integer
+        format: int32
+        default: 100
+        nullable: false
+    Sort:
+      name: sort
+      in: query
+      required: false
+      description: Sort criterion in `property,direction` form. Repeat the parameter for multiple criteria. Direction is `asc` or `desc`; when omitted, ascending order is used.
+      style: form
+      explode: true
+      schema:
+        type: array
+        nullable: false
+        items:
+          type: string
+      example:
+        - title,asc
+  responses:
+    BadRequest:
+      description: The path, query parameters, or request body are invalid.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+    Unauthorized:
+      description: A valid JWT was not supplied. The current response has no body.
+    Forbidden:
+      description: The authenticated principal is not allowed to perform the operation. The current response has no body.
+    CompanyNotFound:
+      description: The requested Company does not exist.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+    CompanyConflict:
+      description: Another Company already has the requested title.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+  schemas:
+    Company:
+      type: object
+      description: A work location whose Shift Sessions and Payroll are accounted independently.
+      additionalProperties: false
+      required:
+        - id
+        - title
+        - employeeWageCoefficientFromRevenue
+        - defaultShiftStartTime
+      properties:
+        id:
+          type: string
+          format: uuid
+          nullable: false
+          description: The Company's identifier.
+        title:
+          type: string
+          minLength: 1
+          maxLength: 255
+          nullable: false
+          description: The unique display title of the Company.
+          example: Central Cafe
+        employeeWageCoefficientFromRevenue:
+          type: integer
+          format: int32
+          nullable: false
+          description: The Company's Revenue Percentage expressed as a whole-number percentage.
+          example: 15
+        defaultShiftStartTime:
+          type: string
+          minLength: 5
+          maxLength: 5
+          pattern: ^([0-1][0-9]|2[0-3]):[0-5][0-9]$
+          nullable: false
+          description: Default local Shift Session Start time in 24-hour `HH:mm` form.
+          example: '09:00'
+    CompanyCreateOrUpdateRequest:
+      type: object
+      description: Fields required to create or update a Company.
+      additionalProperties: false
+      required:
+        - title
+        - employeeWageCoefficientFromRevenue
+        - defaultShiftStartTime
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 255
+          nullable: false
+          description: The unique display title of the Company.
+          example: Central Cafe
+        employeeWageCoefficientFromRevenue:
+          type: integer
+          format: int32
+          nullable: false
+          description: The Company's Revenue Percentage expressed as a whole-number percentage.
+          example: 15
+        defaultShiftStartTime:
+          type: string
+          minLength: 5
+          maxLength: 5
+          pattern: ^([0-1][0-9]|2[0-3]):[0-5][0-9]$
+          nullable: false
+          description: Default local Shift Session Start time in 24-hour `HH:mm` form.
+          example: '09:00'
+    UserCompaniesResponse:
+      type: object
+      description: Companies associated with the authenticated User's Employee record.
+      additionalProperties: false
+      required:
+        - companies
+      properties:
+        companies:
+          type: array
+          nullable: false
+          items:
+            $ref: '#/components/schemas/Company'
+    CompanyPage:
+      type: object
+      description: Stable Company pagination fields. The server can emit additional framework metadata, which consumers must not rely on.
+      additionalProperties: true
+      required:
+        - content
+        - number
+        - size
+        - totalElements
+      properties:
+        content:
+          type: array
+          nullable: false
+          description: Companies in this page.
+          items:
+            $ref: '#/components/schemas/Company'
+        number:
+          type: integer
+          format: int32
+          minimum: 0
+          nullable: false
+          description: Zero-based page index.
+          example: 0
+        size:
+          type: integer
+          format: int32
+          minimum: 0
+          nullable: false
+          description: Requested page size, or zero for an unpaged response.
+          example: 100
+        totalElements:
+          type: integer
+          format: int64
+          minimum: 0
+          nullable: false
+          description: Total number of Companies across all pages.
+          example: 2
+    ProblemDetail:
+      type: object
+      description: RFC 7807 problem details returned for application-level errors.
+      additionalProperties: true
+      required:
+        - type
+        - title
+        - status
+        - detail
+      properties:
+        type:
+          type: string
+          format: uri-reference
+          nullable: false
+          description: Identifier for the problem type; currently `about:blank`.
+          example: about:blank
+        title:
+          type: string
+          nullable: false
+          description: Short HTTP status phrase.
+          example: Not Found
+        status:
+          type: integer
+          format: int32
+          minimum: 400
+          maximum: 599
+          nullable: false
+          description: HTTP status code.
+          example: 404
+        detail:
+          type: string
+          nullable: false
+          description: Human-readable explanation specific to this occurrence.
+          example: Company 5b367932-2e5d-4d89-aa07-17f65ff4af9c not found
+        instance:
+          type: string
+          format: uri-reference
+          nullable: false
+          description: Request path associated with this occurrence when supplied by the server.
+          example: /api/v1/company/get/5b367932-2e5d-4d89-aa07-17f65ff4af9c

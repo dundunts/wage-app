@@ -1,0 +1,63 @@
+openapi: 3.0.3
+info:
+  title: Wage App API
+  version: 0.1.0
+  description: >-
+    Draft baseline for the authenticated Company operations currently provided by
+    Wage App. This tracer-bullet contract is not yet the complete /api/v1 contract.
+servers:
+  - url: /
+    description: Current Wage App server
+tags:
+  - name: Company
+    description: Operations for a work location whose shifts and pay are accounted independently.
+security:
+  - BearerAuth: []
+paths:
+  /api/v1/company/get/{id}:
+    $ref: ./paths/company.yaml#/GetCompany
+  /api/v1/company/get/for-user:
+    $ref: ./paths/company.yaml#/GetCompaniesForUser
+  /api/v1/company/get/page:
+    $ref: ./paths/company.yaml#/GetCompaniesPage
+  /api/v1/company/create:
+    $ref: ./paths/company.yaml#/CreateCompany
+  /api/v1/company/update/{id}:
+    $ref: ./paths/company.yaml#/UpdateCompany
+  /api/v1/company/delete/{id}:
+    $ref: ./paths/company.yaml#/DeleteCompany
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: ./components/security-schemes.yaml#/BearerAuth
+  parameters:
+    CompanyId:
+      $ref: ./components/parameters.yaml#/CompanyId
+    Page:
+      $ref: ./components/parameters.yaml#/Page
+    Size:
+      $ref: ./components/parameters.yaml#/Size
+    Sort:
+      $ref: ./components/parameters.yaml#/Sort
+  responses:
+    BadRequest:
+      $ref: ./components/responses.yaml#/BadRequest
+    Unauthorized:
+      $ref: ./components/responses.yaml#/Unauthorized
+    Forbidden:
+      $ref: ./components/responses.yaml#/Forbidden
+    CompanyNotFound:
+      $ref: ./components/responses.yaml#/CompanyNotFound
+    CompanyConflict:
+      $ref: ./components/responses.yaml#/CompanyConflict
+  schemas:
+    Company:
+      $ref: ./components/schemas.yaml#/Company
+    CompanyCreateOrUpdateRequest:
+      $ref: ./components/schemas.yaml#/CompanyCreateOrUpdateRequest
+    UserCompaniesResponse:
+      $ref: ./components/schemas.yaml#/UserCompaniesResponse
+    CompanyPage:
+      $ref: ./components/schemas.yaml#/CompanyPage
+    ProblemDetail:
+      $ref: ./components/schemas.yaml#/ProblemDetail

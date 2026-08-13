@@ -1,0 +1,146 @@
+GetCompany:
+  get:
+    tags:
+      - Company
+    operationId: getCompany
+    summary: Get a Company
+    description: Returns one Company by its identifier.
+    parameters:
+      - $ref: ../components/parameters.yaml#/CompanyId
+    responses:
+      "200":
+        description: The Company was found.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/Company
+      "400":
+        $ref: ../components/responses.yaml#/BadRequest
+      "401":
+        $ref: ../components/responses.yaml#/Unauthorized
+      "403":
+        $ref: ../components/responses.yaml#/Forbidden
+      "404":
+        $ref: ../components/responses.yaml#/CompanyNotFound
+
+GetCompaniesForUser:
+  get:
+    tags:
+      - Company
+    operationId: getCompaniesForUser
+    summary: List the current user's Companies
+    description: Returns the Companies associated with the authenticated User's Employee record.
+    responses:
+      "200":
+        description: The Companies associated with the current User, possibly empty.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/UserCompaniesResponse
+      "401":
+        $ref: ../components/responses.yaml#/Unauthorized
+      "403":
+        $ref: ../components/responses.yaml#/Forbidden
+
+GetCompaniesPage:
+  get:
+    tags:
+      - Company
+    operationId: getCompaniesPage
+    summary: List a page of Companies
+    description: >-
+      Returns a page of Companies. The response guarantees the page content, index,
+      requested size, and total element count; additional Spring pagination fields
+      may be present but are not part of the supported contract.
+    parameters:
+      - $ref: ../components/parameters.yaml#/Page
+      - $ref: ../components/parameters.yaml#/Size
+      - $ref: ../components/parameters.yaml#/Sort
+    responses:
+      "200":
+        description: A page of Companies.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/CompanyPage
+      "401":
+        $ref: ../components/responses.yaml#/Unauthorized
+      "403":
+        $ref: ../components/responses.yaml#/Forbidden
+
+CreateCompany:
+  post:
+    tags:
+      - Company
+    operationId: createCompany
+    summary: Create a Company
+    description: Creates a Company with a unique title.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas.yaml#/CompanyCreateOrUpdateRequest
+    responses:
+      "201":
+        description: The Company was created.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/Company
+      "400":
+        $ref: ../components/responses.yaml#/BadRequest
+      "401":
+        $ref: ../components/responses.yaml#/Unauthorized
+      "403":
+        $ref: ../components/responses.yaml#/Forbidden
+      "409":
+        $ref: ../components/responses.yaml#/CompanyConflict
+
+UpdateCompany:
+  put:
+    tags:
+      - Company
+    operationId: updateCompany
+    summary: Update a Company
+    description: Replaces the editable fields of an existing Company.
+    parameters:
+      - $ref: ../components/parameters.yaml#/CompanyId
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas.yaml#/CompanyCreateOrUpdateRequest
+    responses:
+      "204":
+        description: The Company was updated successfully. The response has no body.
+      "400":
+        $ref: ../components/responses.yaml#/BadRequest
+      "401":
+        $ref: ../components/responses.yaml#/Unauthorized
+      "403":
+        $ref: ../components/responses.yaml#/Forbidden
+      "404":
+        $ref: ../components/responses.yaml#/CompanyNotFound
+      "409":
+        $ref: ../components/responses.yaml#/CompanyConflict
+
+DeleteCompany:
+  delete:
+    tags:
+      - Company
+    operationId: deleteCompany
+    summary: Delete a Company
+    description: Deletes a Company by identifier. Deleting an absent Company is also successful.
+    parameters:
+      - $ref: ../components/parameters.yaml#/CompanyId
+    responses:
+      "204":
+        description: The Company is absent after the request. The response has no body.
+      "400":
+        $ref: ../components/responses.yaml#/BadRequest
+      "401":
+        $ref: ../components/responses.yaml#/Unauthorized
+      "403":
+        $ref: ../components/responses.yaml#/Forbidden

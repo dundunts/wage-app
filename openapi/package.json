@@ -1,0 +1,16 @@
+{
+  "name": "wage-app-openapi-toolchain",
+  "private": true,
+  "scripts": {
+    "validate": "node tests/validate.mjs openapi.yaml",
+    "lint": "spectral lint --ruleset .spectral.yaml --fail-severity error openapi.yaml",
+    "bundle": "redocly bundle openapi.yaml --output ../build/openapi/openapi.yaml",
+    "contract-test": "node tests/company-contract.mjs ../build/openapi/openapi.yaml"
+  },
+  "devDependencies": {
+    "@apidevtools/swagger-parser": "12.1.0",
+    "@redocly/cli": "2.46.1",
+    "@stoplight/spectral-cli": "6.16.3",
+    "yaml": "2.8.1"
+  }
+}

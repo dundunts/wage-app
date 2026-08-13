@@ -1,0 +1,26 @@
+BadRequest:
+  description: The path, query parameters, or request body are invalid.
+  content:
+    application/problem+json:
+      schema:
+        $ref: ./schemas.yaml#/ProblemDetail
+
+Unauthorized:
+  description: A valid JWT was not supplied. The current response has no body.
+
+Forbidden:
+  description: The authenticated principal is not allowed to perform the operation. The current response has no body.
+
+CompanyNotFound:
+  description: The requested Company does not exist.
+  content:
+    application/problem+json:
+      schema:
+        $ref: ./schemas.yaml#/ProblemDetail
+
+CompanyConflict:
+  description: Another Company already has the requested title.
+  content:
+    application/problem+json:
+      schema:
+        $ref: ./schemas.yaml#/ProblemDetail
