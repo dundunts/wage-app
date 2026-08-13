@@ -1,0 +1,81 @@
+GetShiftResultDraftForSession:
+  get:
+    tags:
+      - Shift Result Draft
+    operationId: getOrCalculateShiftResultDraft
+    summary: Get or calculate a Shift Result Draft
+    description: >-
+      Returns the existing Shift Result Draft for a Shift Session, or calculates
+      and persists one when the Shift Session is open or being recalculated.
+    parameters:
+      - $ref: ../components/parameters.yaml#/ShiftSessionId
+    responses:
+      "200":
+        description: The existing or newly calculated Shift Result Draft.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/ShiftResultDraft
+      "400":
+        $ref: ../components/responses.yaml#/BadRequest
+      "401":
+        $ref: ../components/responses.yaml#/Unauthorized
+      "403":
+        $ref: ../components/responses.yaml#/Forbidden
+      "404":
+        $ref: ../components/responses.yaml#/ShiftResultDraftResourceNotFound
+      "409":
+        $ref: ../components/responses.yaml#/ShiftResultDraftConflict
+
+ConfirmShiftResultDraft:
+  post:
+    tags:
+      - Shift Result Draft
+    operationId: confirmShiftResultDraft
+    summary: Confirm a Shift Result Draft
+    description: >-
+      Confirms a Shift Result Draft, creates a checkpoint-calculated Shift Result
+      with its Payments, closes the Shift Session, and deletes the Draft. This is
+      distinct from saving a Shift Result as a Manual Override.
+    parameters:
+      - $ref: ../components/parameters.yaml#/ShiftResultDraftId
+    responses:
+      "200":
+        description: The Shift Result Draft was confirmed.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/ConfirmShiftResultDraftResponse
+      "400":
+        $ref: ../components/responses.yaml#/BadRequest
+      "401":
+        $ref: ../components/responses.yaml#/Unauthorized
+      "403":
+        $ref: ../components/responses.yaml#/Forbidden
+      "404":
+        $ref: ../components/responses.yaml#/ShiftResultDraftResourceNotFound
+      "409":
+        $ref: ../components/responses.yaml#/ShiftResultDraftConflict
+
+DeleteShiftResultDraft:
+  delete:
+    tags:
+      - Shift Result Draft
+    operationId: deleteShiftResultDraft
+    summary: Delete a Shift Result Draft
+    description: >-
+      Deletes a Shift Result Draft and returns its Shift Session to the state from
+      before calculation. Deleting an absent Draft is also successful.
+    parameters:
+      - $ref: ../components/parameters.yaml#/ShiftResultDraftId
+    responses:
+      "204":
+        description: The Shift Result Draft is absent after the request. The response has no body.
+      "400":
+        $ref: ../components/responses.yaml#/BadRequest
+      "401":
+        $ref: ../components/responses.yaml#/Unauthorized
+      "403":
+        $ref: ../components/responses.yaml#/Forbidden
+      "409":
+        $ref: ../components/responses.yaml#/ShiftResultDraftConflict

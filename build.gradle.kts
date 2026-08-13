@@ -195,8 +195,7 @@ val openApiContractTest by tasks.registering(NpmTask::class) {
     dependsOn(tasks.npmInstall, openApiBundle)
     args.set(listOf("run", "contract-test"))
     inputs.file(layout.buildDirectory.file("openapi/openapi.yaml"))
-    inputs.file(layout.projectDirectory.file("openapi/tests/company-contract.mjs"))
-    inputs.file(layout.projectDirectory.file("openapi/tests/shift-session-checkpoint-contract.mjs"))
+    inputs.files(fileTree("openapi/tests") { include("*-contract.mjs") })
 }
 
 tasks.register<Copy>("openApiUpdateBundle") {

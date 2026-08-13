@@ -73,3 +73,35 @@ UserBindingConflict:
     application/problem+json:
       schema:
         $ref: ./schemas.yaml#/ProblemDetail
+
+ShiftResultDraftResourceNotFound:
+  description: A referenced Shift Result Draft or Shift Session does not exist.
+  content:
+    application/problem+json:
+      schema:
+        $ref: ./schemas.yaml#/ProblemDetail
+
+ShiftResultResourceNotFound:
+  description: A referenced Shift Result or Company does not exist.
+  content:
+    application/problem+json:
+      schema:
+        $ref: ./schemas.yaml#/ProblemDetail
+
+ShiftResultDraftConflict:
+  description: >-
+    The Shift Session state does not allow the operation, or the authenticated User
+    is not associated with the Shift Session's Company.
+  content:
+    application/problem+json:
+      schema:
+        $ref: ./schemas.yaml#/ProblemDetail
+
+ShiftResultConflict:
+  description: >-
+    The operation conflicts with an existing Shift Result, duplicate Payment
+    employees, or the authenticated User's Company associations.
+  content:
+    application/problem+json:
+      schema:
+        $ref: ./schemas.yaml#/ProblemDetail

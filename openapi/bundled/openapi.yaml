@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: Wage App API
   version: 0.1.0
-  description: Draft baseline for the authenticated Company, Employee, Shift Session, and Checkpoint operations currently provided by Wage App. This contract is not yet the complete /api/v1 contract.
+  description: Draft baseline for the authenticated Company, Employee, Shift Session, Checkpoint, Shift Result Draft, and Shift Result operations currently provided by Wage App. This contract is not yet the complete /api/v1 contract.
 servers:
   - url: /
     description: Current Wage App server
@@ -17,6 +17,10 @@ tags:
     description: Operations for a Company's team-based work accounting session.
   - name: Checkpoint
     description: Operations for boundaries that end Shift Intervals and record their teams and totals.
+  - name: Shift Result Draft
+    description: Operations that calculate, inspect, confirm, and discard provisional employee Payments.
+  - name: Shift Result
+    description: Operations for confirmed employee Payments from one Company's Shift Session.
 paths:
   /api/v1/company/get/{id}:
     get:
@@ -613,6 +617,187 @@ paths:
           $ref: '#/components/responses/CheckpointResourceNotFound'
         '409':
           $ref: '#/components/responses/CheckpointConflict'
+  /api/v1/calculation/draft/for-session/{sessionId}:
+    get:
+      tags:
+        - Shift Result Draft
+      operationId: getOrCalculateShiftResultDraft
+      summary: Get or calculate a Shift Result Draft
+      description: Returns the existing Shift Result Draft for a Shift Session, or calculates and persists one when the Shift Session is open or being recalculated.
+      parameters:
+        - $ref: '#/components/parameters/ShiftSessionId'
+      responses:
+        '200':
+          description: The existing or newly calculated Shift Result Draft.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShiftResultDraft'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/ShiftResultDraftResourceNotFound'
+        '409':
+          $ref: '#/components/responses/ShiftResultDraftConflict'
+  /api/v1/calculation/draft/{id}/confirm:
+    post:
+      tags:
+        - Shift Result Draft
+      operationId: confirmShiftResultDraft
+      summary: Confirm a Shift Result Draft
+      description: Confirms a Shift Result Draft, creates a checkpoint-calculated Shift Result with its Payments, closes the Shift Session, and deletes the Draft. This is distinct from saving a Shift Result as a Manual Override.
+      parameters:
+        - $ref: '#/components/parameters/ShiftResultDraftId'
+      responses:
+        '200':
+          description: The Shift Result Draft was confirmed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfirmShiftResultDraftResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/ShiftResultDraftResourceNotFound'
+        '409':
+          $ref: '#/components/responses/ShiftResultDraftConflict'
+  /api/v1/calculation/draft/{id}/delete:
+    delete:
+      tags:
+        - Shift Result Draft
+      operationId: deleteShiftResultDraft
+      summary: Delete a Shift Result Draft
+      description: Deletes a Shift Result Draft and returns its Shift Session to the state from before calculation. Deleting an absent Draft is also successful.
+      parameters:
+        - $ref: '#/components/parameters/ShiftResultDraftId'
+      responses:
+        '204':
+          description: The Shift Result Draft is absent after the request. The response has no body.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/ShiftResultDraftConflict'
+  /api/v1/shift-result/{resultId}/get/detailed:
+    get:
+      tags:
+        - Shift Result
+      operationId: getShiftResult
+      summary: Get a Shift Result
+      description: Returns one Shift Result with detailed Payments and its Shift Session when the result was created by confirming a Shift Result Draft. A Manual Override has no Shift Session.
+      parameters:
+        - $ref: '#/components/parameters/ShiftResultId'
+      responses:
+        '200':
+          description: The Shift Result and its optional Shift Session.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShiftResultResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/ShiftResultResourceNotFound'
+        '409':
+          $ref: '#/components/responses/ShiftResultConflict'
+  /api/v1/shift-result/get/detailed/by-period/page:
+    get:
+      tags:
+        - Shift Result
+      operationId: getShiftResultsPage
+      summary: List a page of Shift Results for a Payroll Period
+      description: Returns detailed Shift Results for a Company and inclusive Payroll Period. `CUSTOM` requires `start` and `end`; `CURRENT` and `PREVIOUS` require `now`. The response guarantees the page content, index, requested size, and total element count; additional Spring pagination fields may be present but are not part of the supported contract.
+      parameters:
+        - $ref: '#/components/parameters/ShiftResultCompanyId'
+        - $ref: '#/components/parameters/PeriodType'
+        - $ref: '#/components/parameters/StartDate'
+        - $ref: '#/components/parameters/EndDate'
+        - $ref: '#/components/parameters/CurrentDate'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+        - $ref: '#/components/parameters/Sort'
+      responses:
+        '200':
+          description: A page of Shift Results in the selected Payroll Period.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShiftResultPage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/CompanyNotFound'
+        '409':
+          $ref: '#/components/responses/ShiftResultConflict'
+  /api/v1/shift-result/save:
+    post:
+      tags:
+        - Shift Result
+      operationId: saveManualOverrideShiftResult
+      summary: Save a Shift Result as a Manual Override
+      description: Saves directly entered Payments as a Manual Override Shift Result. This does not confirm a Shift Result Draft and the saved result has no Shift Session. When `overwrite` is true, an existing result for the same Company and date is replaced; `replacementId` can additionally identify an earlier result to delete.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SaveManualOverrideShiftResultRequest'
+      responses:
+        '201':
+          description: The Manual Override Shift Result was saved.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SaveManualOverrideShiftResultResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/CompanyNotFound'
+        '409':
+          $ref: '#/components/responses/ShiftResultConflict'
+  /api/v1/shift-result/{resultId}/delete:
+    delete:
+      tags:
+        - Shift Result
+      operationId: deleteShiftResult
+      summary: Delete a Shift Result
+      description: Deletes a Shift Result and all its Payments. Deleting an absent result is also successful.
+      parameters:
+        - $ref: '#/components/parameters/ShiftResultId'
+      responses:
+        '204':
+          description: The Shift Result is absent after the request. The response has no body.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/ShiftResultConflict'
 components:
   securitySchemes:
     BearerAuth:
@@ -704,6 +889,79 @@ components:
         type: string
         format: uuid
         nullable: false
+    ShiftResultCompanyId:
+      name: companyId
+      in: query
+      required: true
+      description: Identifier of the Company whose Shift Results are requested.
+      schema:
+        type: string
+        format: uuid
+        nullable: false
+      example: 5b367932-2e5d-4d89-aa07-17f65ff4af9c
+    ShiftResultDraftId:
+      name: id
+      in: path
+      required: true
+      description: Identifier of the Shift Result Draft.
+      schema:
+        type: string
+        format: uuid
+        nullable: false
+      example: 3d65c0d7-69d9-4797-b976-37125a931534
+    ShiftResultId:
+      name: resultId
+      in: path
+      required: true
+      description: Identifier of the Shift Result.
+      schema:
+        type: string
+        format: uuid
+        nullable: false
+      example: 981f843f-9e31-4628-a81f-0c98a88af97c
+    PeriodType:
+      name: periodType
+      in: query
+      required: true
+      description: Selects the requested Payroll Period. `CUSTOM` requires `start` and `end`; `CURRENT` and `PREVIOUS` require `now`.
+      schema:
+        type: string
+        nullable: false
+        enum:
+          - CUSTOM
+          - CURRENT
+          - PREVIOUS
+      example: CUSTOM
+    StartDate:
+      name: start
+      in: query
+      required: false
+      description: Inclusive start date. Required only when `periodType` is `CUSTOM`.
+      schema:
+        type: string
+        format: date
+        nullable: false
+      example: '2026-08-01'
+    EndDate:
+      name: end
+      in: query
+      required: false
+      description: Inclusive end date. Required only when `periodType` is `CUSTOM` and must not precede `start`.
+      schema:
+        type: string
+        format: date
+        nullable: false
+      example: '2026-08-15'
+    CurrentDate:
+      name: now
+      in: query
+      required: false
+      description: Reference date. Required when `periodType` is `CURRENT` or `PREVIOUS`.
+      schema:
+        type: string
+        format: date
+        nullable: false
+      example: '2026-08-13'
     Page:
       name: page
       in: query
@@ -718,7 +976,7 @@ components:
       name: size
       in: query
       required: false
-      description: Requested number of Companies per page. Missing, malformed, or nonpositive values use the default of 100; values above 2000 are capped at 2000.
+      description: Requested number of resources per page. Missing, malformed, or nonpositive values use the default of 100; values above 2000 are capped at 2000.
       schema:
         type: integer
         format: int32
@@ -793,6 +1051,30 @@ components:
             $ref: '#/components/schemas/ProblemDetail'
     CheckpointConflict:
       description: The authenticated User is not associated with the Company, or the Shift Session state does not allow its Checkpoints to be modified.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+    ShiftResultDraftResourceNotFound:
+      description: A referenced Shift Result Draft or Shift Session does not exist.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+    ShiftResultResourceNotFound:
+      description: A referenced Shift Result or Company does not exist.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+    ShiftResultDraftConflict:
+      description: The Shift Session state does not allow the operation, or the authenticated User is not associated with the Shift Session's Company.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+    ShiftResultConflict:
+      description: The operation conflicts with an existing Shift Result, duplicate Payment employees, or the authenticated User's Company associations.
       content:
         application/problem+json:
           schema:
@@ -1577,3 +1859,393 @@ components:
           description: Replacement additional Revenue and Restaurant Tips amounts.
           items:
             $ref: '#/components/schemas/CheckpointMetricRecordRequest'
+    ShiftResultDraft:
+      type: object
+      description: A provisional calculation of employee Payments that has not yet been confirmed.
+      additionalProperties: false
+      required:
+        - id
+        - payments
+        - date
+        - sessionId
+      properties:
+        id:
+          type: string
+          format: uuid
+          nullable: false
+          description: Identifier of the Shift Result Draft.
+          example: 3d65c0d7-69d9-4797-b976-37125a931534
+        payments:
+          type: array
+          nullable: false
+          description: Provisional Payments calculated for the Shift Session team.
+          items:
+            $ref: '#/components/schemas/ShiftResultDraftPayment'
+        date:
+          type: string
+          format: date
+          nullable: false
+          description: Local business date of the Shift Session.
+          example: '2026-08-13'
+        sessionId:
+          type: string
+          format: uuid
+          nullable: false
+          description: Identifier of the Shift Session being calculated.
+          example: a840e78e-856c-4d79-bf36-8963a04a1dcf
+    ShiftResultDraftPayment:
+      type: object
+      description: A provisional employee Payment calculated for a Shift Result Draft.
+      additionalProperties: false
+      required:
+        - id
+        - employee
+        - percentFromRevenue
+        - tips
+        - workSeconds
+      properties:
+        id:
+          type: string
+          format: uuid
+          nullable: false
+          description: Identifier of the provisional Payment.
+          example: eb412773-eaf0-430f-8f60-9dbb7db89685
+        employee:
+          allOf:
+            - $ref: '#/components/schemas/ShiftResultDraftEmployee'
+          nullable: false
+          description: Employee receiving the provisional Payment.
+        percentFromRevenue:
+          type: integer
+          format: int32
+          nullable: false
+          description: Percent from Revenue allocated to the Employee, in whole Russian rubles.
+          example: 2400
+        tips:
+          type: integer
+          format: int32
+          nullable: false
+          description: Employee Tips allocated to the Employee, in whole Russian rubles.
+          example: 900
+        workSeconds:
+          type: integer
+          format: int64
+          nullable: false
+          description: Employee work duration represented as whole seconds.
+          example: 28800
+    ShiftResultDraftEmployee:
+      type: object
+      description: Employee identity displayed in a Shift Result Draft Payment.
+      additionalProperties: false
+      required:
+        - id
+        - firstName
+        - lastName
+        - patronymic
+        - simpleName
+      properties:
+        id:
+          type: string
+          format: uuid
+          nullable: false
+          description: Identifier of the Employee.
+          example: 68e13904-36df-4295-bfe8-d16e96652dc6
+        firstName:
+          type: string
+          nullable: false
+          description: Employee's first name.
+          example: Anna
+        lastName:
+          type: string
+          nullable: false
+          description: Employee's last name.
+          example: Petrova
+        patronymic:
+          type: string
+          nullable: false
+          description: Employee's patronymic.
+          example: Sergeevna
+        simpleName:
+          type: string
+          nullable: true
+          description: Optional short display name. The field is present and can be null.
+          example: Anya
+    ConfirmShiftResultDraftResponse:
+      type: object
+      description: Identifies the Shift Result created by confirming a Shift Result Draft.
+      additionalProperties: false
+      required:
+        - resultId
+      properties:
+        resultId:
+          type: string
+          format: uuid
+          nullable: false
+          description: Identifier of the created Shift Result.
+          example: 981f843f-9e31-4628-a81f-0c98a88af97c
+    ShiftResult:
+      type: object
+      description: The confirmed set of employee Payments for one Company's Shift Session or Manual Override.
+      additionalProperties: false
+      required:
+        - id
+        - payments
+        - date
+        - sessionId
+        - calculationSource
+      properties:
+        id:
+          type: string
+          format: uuid
+          nullable: false
+          description: Identifier of the Shift Result.
+          example: 981f843f-9e31-4628-a81f-0c98a88af97c
+        payments:
+          type: array
+          nullable: false
+          description: Confirmed Payments in this Shift Result.
+          items:
+            $ref: '#/components/schemas/Payment'
+        date:
+          type: string
+          format: date
+          nullable: false
+          description: Local business date covered by the Shift Result.
+          example: '2026-08-13'
+        sessionId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Identifier of the Shift Session whose Draft was confirmed. It is null for a Shift Result saved as a Manual Override.
+          example: a840e78e-856c-4d79-bf36-8963a04a1dcf
+        calculationSource:
+          allOf:
+            - $ref: '#/components/schemas/CalculationSource'
+          nullable: false
+          description: Whether Payments came from confirmed Checkpoints or a Manual Override.
+    Payment:
+      type: object
+      description: An Employee's confirmed Percent from Revenue and Employee Tips in a Shift Result.
+      additionalProperties: false
+      required:
+        - id
+        - employee
+        - percentFromRevenue
+        - tips
+        - workSeconds
+      properties:
+        id:
+          type: string
+          format: uuid
+          nullable: false
+          description: Identifier of the Payment.
+          example: 266b450d-d474-4440-a7e5-abd6ce155984
+        employee:
+          allOf:
+            - $ref: '#/components/schemas/PaymentEmployee'
+          nullable: false
+          description: Employee receiving the Payment.
+        percentFromRevenue:
+          type: integer
+          format: int32
+          nullable: false
+          description: Percent from Revenue allocated to the Employee, in whole Russian rubles.
+          example: 2400
+        tips:
+          type: integer
+          format: int32
+          nullable: false
+          description: Employee Tips allocated to the Employee, in whole Russian rubles.
+          example: 900
+        workSeconds:
+          type: integer
+          format: int64
+          nullable: false
+          description: Employee work duration represented as whole seconds.
+          example: 28800
+    PaymentEmployee:
+      type: object
+      description: Employee identity displayed in a confirmed Payment.
+      additionalProperties: false
+      required:
+        - id
+        - firstName
+        - lastName
+        - patronymic
+        - simpleName
+      properties:
+        id:
+          type: string
+          format: uuid
+          nullable: false
+          description: Identifier of the Employee.
+          example: 68e13904-36df-4295-bfe8-d16e96652dc6
+        firstName:
+          type: string
+          nullable: false
+          description: Employee's first name.
+          example: Anna
+        lastName:
+          type: string
+          nullable: false
+          description: Employee's last name.
+          example: Petrova
+        patronymic:
+          type: string
+          nullable: false
+          description: Employee's patronymic.
+          example: Sergeevna
+        simpleName:
+          type: string
+          nullable: true
+          description: Optional short display name. The field is present and can be null.
+          example: Anya
+    CalculationSource:
+      type: string
+      nullable: false
+      description: Source used to establish the Shift Result Payments.
+      enum:
+        - CHECKPOINTS
+        - MANUAL_OVERRIDE
+      example: CHECKPOINTS
+    SaveManualOverrideShiftResultRequest:
+      type: object
+      description: Directly entered Payments used to save a Shift Result as a Manual Override. The calculation source is always `MANUAL_OVERRIDE` and is not accepted as input.
+      additionalProperties: false
+      required:
+        - companyId
+        - payments
+        - date
+      properties:
+        replacementId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Optional identifier of an earlier Shift Result to delete before saving.
+          example: 19ea2df0-caa1-40a0-9e2b-dd013131b3cd
+        companyId:
+          type: string
+          format: uuid
+          nullable: false
+          description: Identifier of the Company that owns the Shift Result.
+          example: 5b367932-2e5d-4d89-aa07-17f65ff4af9c
+        overwrite:
+          type: boolean
+          default: false
+          nullable: false
+          description: Whether to replace an existing Shift Result for the same Company and date.
+          example: true
+        payments:
+          type: array
+          nullable: false
+          description: Directly entered Payments. Each Employee identifier must occur at most once.
+          items:
+            $ref: '#/components/schemas/ManualOverridePaymentRequest'
+        date:
+          type: string
+          format: date
+          nullable: false
+          description: Local business date covered by the Manual Override.
+          example: '2026-08-13'
+    ManualOverridePaymentRequest:
+      type: object
+      description: Directly entered Payment used in a Manual Override Shift Result.
+      additionalProperties: false
+      required:
+        - employeeId
+        - percentFromRevenue
+        - tips
+        - workSeconds
+      properties:
+        employeeId:
+          type: string
+          format: uuid
+          nullable: false
+          description: Identifier of the Employee receiving the Payment.
+          example: 68e13904-36df-4295-bfe8-d16e96652dc6
+        percentFromRevenue:
+          type: integer
+          format: int32
+          nullable: false
+          description: Directly entered Percent from Revenue, in whole Russian rubles.
+          example: 2400
+        tips:
+          type: integer
+          format: int32
+          nullable: false
+          description: Directly entered Employee Tips, in whole Russian rubles.
+          example: 900
+        workSeconds:
+          type: integer
+          format: int64
+          nullable: false
+          description: Directly entered Employee work duration represented as whole seconds.
+          example: 28800
+    SaveManualOverrideShiftResultResponse:
+      type: object
+      description: Identifies the Shift Result saved as a Manual Override.
+      additionalProperties: false
+      required:
+        - resultId
+      properties:
+        resultId:
+          type: string
+          format: uuid
+          nullable: false
+          description: Identifier of the saved Shift Result.
+          example: 981f843f-9e31-4628-a81f-0c98a88af97c
+    ShiftResultResponse:
+      type: object
+      description: A detailed Shift Result and the Shift Session from which it was calculated, when applicable.
+      additionalProperties: false
+      required:
+        - shiftResult
+        - session
+      properties:
+        shiftResult:
+          allOf:
+            - $ref: '#/components/schemas/ShiftResult'
+          nullable: false
+          description: Confirmed Shift Result with detailed Payments.
+        session:
+          allOf:
+            - $ref: '#/components/schemas/ShiftSession'
+          nullable: true
+          description: Shift Session associated with a checkpoint-calculated Shift Result. The field is present and null for a Manual Override.
+    ShiftResultPage:
+      type: object
+      description: Stable Shift Result pagination fields. The server can emit additional framework metadata, which consumers must not rely on.
+      additionalProperties: true
+      required:
+        - content
+        - number
+        - size
+        - totalElements
+      properties:
+        content:
+          type: array
+          nullable: false
+          description: Shift Results in this page.
+          items:
+            $ref: '#/components/schemas/ShiftResult'
+        number:
+          type: integer
+          format: int32
+          minimum: 0
+          nullable: false
+          description: Zero-based page index.
+          example: 0
+        size:
+          type: integer
+          format: int32
+          minimum: 0
+          nullable: false
+          description: Requested page size, or zero for an unpaged response.
+          example: 100
+        totalElements:
+          type: integer
+          format: int64
+          minimum: 0
+          nullable: false
+          description: Total number of Shift Results across all pages.
+          example: 2

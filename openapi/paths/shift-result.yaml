@@ -1,0 +1,124 @@
+GetShiftResult:
+  get:
+    tags:
+      - Shift Result
+    operationId: getShiftResult
+    summary: Get a Shift Result
+    description: >-
+      Returns one Shift Result with detailed Payments and its Shift Session when
+      the result was created by confirming a Shift Result Draft. A Manual Override
+      has no Shift Session.
+    parameters:
+      - $ref: ../components/parameters.yaml#/ShiftResultId
+    responses:
+      "200":
+        description: The Shift Result and its optional Shift Session.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/ShiftResultResponse
+      "400":
+        $ref: ../components/responses.yaml#/BadRequest
+      "401":
+        $ref: ../components/responses.yaml#/Unauthorized
+      "403":
+        $ref: ../components/responses.yaml#/Forbidden
+      "404":
+        $ref: ../components/responses.yaml#/ShiftResultResourceNotFound
+      "409":
+        $ref: ../components/responses.yaml#/ShiftResultConflict
+
+GetShiftResultsPage:
+  get:
+    tags:
+      - Shift Result
+    operationId: getShiftResultsPage
+    summary: List a page of Shift Results for a Payroll Period
+    description: >-
+      Returns detailed Shift Results for a Company and inclusive Payroll Period.
+      `CUSTOM` requires `start` and `end`; `CURRENT` and `PREVIOUS` require `now`.
+      The response guarantees the page content, index, requested size, and total
+      element count; additional Spring pagination fields may be present but are
+      not part of the supported contract.
+    parameters:
+      - $ref: ../components/parameters.yaml#/ShiftResultCompanyId
+      - $ref: ../components/parameters.yaml#/PeriodType
+      - $ref: ../components/parameters.yaml#/StartDate
+      - $ref: ../components/parameters.yaml#/EndDate
+      - $ref: ../components/parameters.yaml#/CurrentDate
+      - $ref: ../components/parameters.yaml#/Page
+      - $ref: ../components/parameters.yaml#/Size
+      - $ref: ../components/parameters.yaml#/Sort
+    responses:
+      "200":
+        description: A page of Shift Results in the selected Payroll Period.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/ShiftResultPage
+      "400":
+        $ref: ../components/responses.yaml#/BadRequest
+      "401":
+        $ref: ../components/responses.yaml#/Unauthorized
+      "403":
+        $ref: ../components/responses.yaml#/Forbidden
+      "404":
+        $ref: ../components/responses.yaml#/CompanyNotFound
+      "409":
+        $ref: ../components/responses.yaml#/ShiftResultConflict
+
+SaveManualOverrideShiftResult:
+  post:
+    tags:
+      - Shift Result
+    operationId: saveManualOverrideShiftResult
+    summary: Save a Shift Result as a Manual Override
+    description: >-
+      Saves directly entered Payments as a Manual Override Shift Result. This does
+      not confirm a Shift Result Draft and the saved result has no Shift Session.
+      When `overwrite` is true, an existing result for the same Company and date is
+      replaced; `replacementId` can additionally identify an earlier result to delete.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas.yaml#/SaveManualOverrideShiftResultRequest
+    responses:
+      "201":
+        description: The Manual Override Shift Result was saved.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/SaveManualOverrideShiftResultResponse
+      "400":
+        $ref: ../components/responses.yaml#/BadRequest
+      "401":
+        $ref: ../components/responses.yaml#/Unauthorized
+      "403":
+        $ref: ../components/responses.yaml#/Forbidden
+      "404":
+        $ref: ../components/responses.yaml#/CompanyNotFound
+      "409":
+        $ref: ../components/responses.yaml#/ShiftResultConflict
+
+DeleteShiftResult:
+  delete:
+    tags:
+      - Shift Result
+    operationId: deleteShiftResult
+    summary: Delete a Shift Result
+    description: Deletes a Shift Result and all its Payments. Deleting an absent result is also successful.
+    parameters:
+      - $ref: ../components/parameters.yaml#/ShiftResultId
+    responses:
+      "204":
+        description: The Shift Result is absent after the request. The response has no body.
+      "400":
+        $ref: ../components/responses.yaml#/BadRequest
+      "401":
+        $ref: ../components/responses.yaml#/Unauthorized
+      "403":
+        $ref: ../components/responses.yaml#/Forbidden
+      "409":
+        $ref: ../components/responses.yaml#/ShiftResultConflict

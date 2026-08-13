@@ -94,6 +94,88 @@ CheckpointId:
     format: uuid
     nullable: false
 
+ShiftResultCompanyId:
+  name: companyId
+  in: query
+  required: true
+  description: Identifier of the Company whose Shift Results are requested.
+  schema:
+    type: string
+    format: uuid
+    nullable: false
+  example: 5b367932-2e5d-4d89-aa07-17f65ff4af9c
+
+ShiftResultDraftId:
+  name: id
+  in: path
+  required: true
+  description: Identifier of the Shift Result Draft.
+  schema:
+    type: string
+    format: uuid
+    nullable: false
+  example: 3d65c0d7-69d9-4797-b976-37125a931534
+
+ShiftResultId:
+  name: resultId
+  in: path
+  required: true
+  description: Identifier of the Shift Result.
+  schema:
+    type: string
+    format: uuid
+    nullable: false
+  example: 981f843f-9e31-4628-a81f-0c98a88af97c
+
+PeriodType:
+  name: periodType
+  in: query
+  required: true
+  description: >-
+    Selects the requested Payroll Period. `CUSTOM` requires `start` and `end`;
+    `CURRENT` and `PREVIOUS` require `now`.
+  schema:
+    type: string
+    nullable: false
+    enum:
+      - CUSTOM
+      - CURRENT
+      - PREVIOUS
+  example: CUSTOM
+
+StartDate:
+  name: start
+  in: query
+  required: false
+  description: Inclusive start date. Required only when `periodType` is `CUSTOM`.
+  schema:
+    type: string
+    format: date
+    nullable: false
+  example: "2026-08-01"
+
+EndDate:
+  name: end
+  in: query
+  required: false
+  description: Inclusive end date. Required only when `periodType` is `CUSTOM` and must not precede `start`.
+  schema:
+    type: string
+    format: date
+    nullable: false
+  example: "2026-08-15"
+
+CurrentDate:
+  name: now
+  in: query
+  required: false
+  description: Reference date. Required when `periodType` is `CURRENT` or `PREVIOUS`.
+  schema:
+    type: string
+    format: date
+    nullable: false
+  example: "2026-08-13"
+
 Page:
   name: page
   in: query
@@ -112,7 +194,7 @@ Size:
   in: query
   required: false
   description: >-
-    Requested number of Companies per page. Missing, malformed, or nonpositive
+    Requested number of resources per page. Missing, malformed, or nonpositive
     values use the default of 100; values above 2000 are capped at 2000.
   schema:
     type: integer
