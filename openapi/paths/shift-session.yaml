@@ -1,0 +1,214 @@
+GetOpenedShiftSession:
+  get:
+    tags:
+      - Shift Session
+    operationId: getOpenedShiftSession
+    summary: Get a Company's opened Shift Session
+    description: >-
+      Returns the Company's single Shift Session in `OPENED` or `OPENED_DRAFT`
+      state. Multiple matching sessions are treated as a conflict rather than an
+      arbitrary session being selected.
+    parameters:
+      - $ref: ../components/parameters.yaml#/ShiftSessionCompanyId
+    responses:
+      "200":
+        description: The Company's opened Shift Session.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/ShiftSession
+      "400":
+        $ref: ../components/responses.yaml#/BadRequest
+      "401":
+        $ref: ../components/responses.yaml#/Unauthorized
+      "403":
+        $ref: ../components/responses.yaml#/Forbidden
+      "404":
+        $ref: ../components/responses.yaml#/ShiftSessionResourceNotFound
+      "409":
+        $ref: ../components/responses.yaml#/ShiftSessionConflict
+
+GetAvailableShiftSession:
+  get:
+    tags:
+      - Shift Session
+    operationId: getAvailableShiftSession
+    summary: Get an available Shift Session
+    description: >-
+      Returns a Shift Session only when it is available to the current workflow:
+      `OPENED`, `OPENED_DRAFT`, `RECALCULATING`, or `RECALCULATING_DRAFT`.
+    parameters:
+      - $ref: ../components/parameters.yaml#/ShiftSessionId
+    responses:
+      "200":
+        description: The available Shift Session.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/ShiftSession
+      "400":
+        $ref: ../components/responses.yaml#/BadRequest
+      "401":
+        $ref: ../components/responses.yaml#/Unauthorized
+      "403":
+        $ref: ../components/responses.yaml#/Forbidden
+      "404":
+        $ref: ../components/responses.yaml#/ShiftSessionResourceNotFound
+      "409":
+        $ref: ../components/responses.yaml#/ShiftSessionConflict
+
+GetAvailableShiftSessions:
+  get:
+    tags:
+      - Shift Session
+    operationId: getAvailableShiftSessions
+    summary: List a Company's available Shift Sessions
+    description: >-
+      Returns every Shift Session in `OPENED`, `OPENED_DRAFT`, `RECALCULATING`,
+      or `RECALCULATING_DRAFT` state. The collection is empty when none exist.
+    parameters:
+      - $ref: ../components/parameters.yaml#/ShiftSessionCompanyId
+    responses:
+      "200":
+        description: Available Shift Sessions, possibly empty.
+        content:
+          application/json:
+            schema:
+              type: array
+              nullable: false
+              items:
+                $ref: ../components/schemas.yaml#/ShiftSession
+      "400":
+        $ref: ../components/responses.yaml#/BadRequest
+      "401":
+        $ref: ../components/responses.yaml#/Unauthorized
+      "403":
+        $ref: ../components/responses.yaml#/Forbidden
+      "404":
+        $ref: ../components/responses.yaml#/ShiftSessionResourceNotFound
+      "409":
+        $ref: ../components/responses.yaml#/ShiftSessionConflict
+
+OpenShiftSession:
+  post:
+    tags:
+      - Shift Session
+    operationId: openShiftSession
+    summary: Open a new Shift Session
+    description: >-
+      Opens a Shift Session at the supplied local Shift Session Start. A Company
+      cannot have another session in `OPENED` state. The start is the first time
+      boundary and is not represented as a Checkpoint.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas.yaml#/OpenShiftSessionRequest
+    responses:
+      "201":
+        description: The Shift Session was opened.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/ShiftSession
+      "400":
+        $ref: ../components/responses.yaml#/BadRequest
+      "401":
+        $ref: ../components/responses.yaml#/Unauthorized
+      "403":
+        $ref: ../components/responses.yaml#/Forbidden
+      "404":
+        $ref: ../components/responses.yaml#/ShiftSessionResourceNotFound
+      "409":
+        $ref: ../components/responses.yaml#/ShiftSessionConflict
+
+OpenShiftSessionRecalculation:
+  post:
+    tags:
+      - Shift Session
+    operationId: openShiftSessionRecalculation
+    summary: Reopen a Shift Session for Recalculation
+    description: >-
+      Changes a `CLOSED` Shift Session to `RECALCULATING` so its Checkpoints can
+      be changed and its Shift Result calculated again. This reopens the existing
+      Shift Session; it does not create a second session or copy its Checkpoints.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas.yaml#/OpenShiftSessionRecalculationRequest
+    responses:
+      "201":
+        description: The existing Shift Session was reopened for Recalculation.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/ShiftSession
+      "400":
+        $ref: ../components/responses.yaml#/BadRequest
+      "401":
+        $ref: ../components/responses.yaml#/Unauthorized
+      "403":
+        $ref: ../components/responses.yaml#/Forbidden
+      "404":
+        $ref: ../components/responses.yaml#/ShiftSessionResourceNotFound
+      "409":
+        $ref: ../components/responses.yaml#/ShiftSessionConflict
+
+CloseShiftSession:
+  put:
+    tags:
+      - Shift Session
+    operationId: closeShiftSession
+    summary: Close a Shift Session
+    description: >-
+      Sets the Shift Session state to `CLOSED`. The current operation is idempotent
+      with respect to session state: already closed and recalculating sessions are
+      also left closed successfully.
+    parameters:
+      - $ref: ../components/parameters.yaml#/ShiftSessionId
+    responses:
+      "204":
+        description: The Shift Session is closed. The response has no body.
+      "400":
+        $ref: ../components/responses.yaml#/BadRequest
+      "401":
+        $ref: ../components/responses.yaml#/Unauthorized
+      "403":
+        $ref: ../components/responses.yaml#/Forbidden
+      "404":
+        $ref: ../components/responses.yaml#/ShiftSessionResourceNotFound
+      "409":
+        $ref: ../components/responses.yaml#/ShiftSessionConflict
+
+UpdateShiftSessionStart:
+  put:
+    tags:
+      - Shift Session
+    operationId: updateShiftSessionStart
+    summary: Update a Shift Session Start time
+    description: >-
+      Replaces only the local time portion of the Shift Session Start; the session
+      date is unchanged. The current state must be `OPENED` or `RECALCULATING`, so
+      the update is rejected while a Shift Result Draft exists or after closure.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas.yaml#/UpdateShiftSessionStartRequest
+    responses:
+      "204":
+        description: The Shift Session Start time was updated. The response has no body.
+      "400":
+        $ref: ../components/responses.yaml#/BadRequest
+      "401":
+        $ref: ../components/responses.yaml#/Unauthorized
+      "403":
+        $ref: ../components/responses.yaml#/Forbidden
+      "404":
+        $ref: ../components/responses.yaml#/ShiftSessionResourceNotFound
+      "409":
+        $ref: ../components/responses.yaml#/ShiftSessionConflict

@@ -1,0 +1,93 @@
+CreateCheckpoint:
+  post:
+    tags:
+      - Checkpoint
+    operationId: createCheckpoint
+    summary: Create a Checkpoint
+    description: >-
+      Creates a boundary in an `OPENED` or `RECALCULATING` Shift Session. The
+      Checkpoint records the Employee team, accumulated Revenue, and accumulated
+      Restaurant Tips for the Shift Interval that it ends. `FINAL` uses the same
+      payload and allocation rules as `REGULAR`.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas.yaml#/CreateCheckpointRequest
+    responses:
+      "201":
+        description: The Checkpoint was created.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/Checkpoint
+      "400":
+        $ref: ../components/responses.yaml#/BadRequest
+      "401":
+        $ref: ../components/responses.yaml#/Unauthorized
+      "403":
+        $ref: ../components/responses.yaml#/Forbidden
+      "404":
+        $ref: ../components/responses.yaml#/CheckpointResourceNotFound
+      "409":
+        $ref: ../components/responses.yaml#/CheckpointConflict
+
+UpdateCheckpoint:
+  post:
+    tags:
+      - Checkpoint
+    operationId: updateCheckpoint
+    summary: Update a Checkpoint
+    description: >-
+      Replaces a Checkpoint's boundary time, type, complete Employee team,
+      accumulated Revenue, accumulated Restaurant Tips, and metric records. Its
+      owning Shift Session must be in `OPENED` or `RECALCULATING` state.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas.yaml#/UpdateCheckpointRequest
+    responses:
+      "200":
+        description: The updated Checkpoint.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/Checkpoint
+      "400":
+        $ref: ../components/responses.yaml#/BadRequest
+      "401":
+        $ref: ../components/responses.yaml#/Unauthorized
+      "403":
+        $ref: ../components/responses.yaml#/Forbidden
+      "404":
+        $ref: ../components/responses.yaml#/CheckpointResourceNotFound
+      "409":
+        $ref: ../components/responses.yaml#/CheckpointConflict
+
+DeleteCheckpoint:
+  delete:
+    tags:
+      - Checkpoint
+    operationId: deleteCheckpoint
+    summary: Delete a Checkpoint
+    description: >-
+      Deletes a Checkpoint only while its Shift Session is `OPENED` or
+      `RECALCULATING`. Deleting an absent Checkpoint is also successful.
+    parameters:
+      - $ref: ../components/parameters.yaml#/CheckpointId
+    responses:
+      "204":
+        description: The Checkpoint is absent after the request. The response has no body.
+      "400":
+        $ref: ../components/responses.yaml#/BadRequest
+      "401":
+        $ref: ../components/responses.yaml#/Unauthorized
+      "403":
+        $ref: ../components/responses.yaml#/Forbidden
+      "404":
+        $ref: ../components/responses.yaml#/CheckpointResourceNotFound
+      "409":
+        $ref: ../components/responses.yaml#/CheckpointConflict

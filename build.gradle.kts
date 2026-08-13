@@ -191,11 +191,12 @@ val openApiVerifyBundle by tasks.registering {
 
 val openApiContractTest by tasks.registering(NpmTask::class) {
     group = "verification"
-    description = "Checks the public guarantees of the bundled Company contract."
+    description = "Checks the public guarantees of the bundled API contract."
     dependsOn(tasks.npmInstall, openApiBundle)
     args.set(listOf("run", "contract-test"))
     inputs.file(layout.buildDirectory.file("openapi/openapi.yaml"))
     inputs.file(layout.projectDirectory.file("openapi/tests/company-contract.mjs"))
+    inputs.file(layout.projectDirectory.file("openapi/tests/shift-session-checkpoint-contract.mjs"))
 }
 
 tasks.register<Copy>("openApiUpdateBundle") {

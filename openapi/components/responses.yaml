@@ -24,3 +24,38 @@ CompanyConflict:
     application/problem+json:
       schema:
         $ref: ./schemas.yaml#/ProblemDetail
+
+ShiftSessionResourceNotFound:
+  description: A referenced Company or Shift Session does not exist, or no opened Shift Session exists.
+  content:
+    application/problem+json:
+      schema:
+        $ref: ./schemas.yaml#/ProblemDetail
+
+ShiftSessionConflict:
+  description: >-
+    The authenticated User is not associated with the Company, the Shift Session
+    is not in a state allowed by the operation, or multiple opened sessions exist.
+  content:
+    application/problem+json:
+      schema:
+        $ref: ./schemas.yaml#/ProblemDetail
+
+CheckpointResourceNotFound:
+  description: >-
+    A referenced Checkpoint, Shift Session, or Company does not exist. Deleting an
+    unknown Checkpoint remains successful; deletion returns this response only if
+    an existing Checkpoint refers to a missing Shift Session or Company.
+  content:
+    application/problem+json:
+      schema:
+        $ref: ./schemas.yaml#/ProblemDetail
+
+CheckpointConflict:
+  description: >-
+    The authenticated User is not associated with the Company, or the Shift
+    Session state does not allow its Checkpoints to be modified.
+  content:
+    application/problem+json:
+      schema:
+        $ref: ./schemas.yaml#/ProblemDetail
