@@ -3,9 +3,9 @@ info:
   title: Wage App API
   version: 0.1.0
   description: >-
-    Draft baseline for the authenticated Company, Employee, Shift Session, and
-    Checkpoint operations currently provided by Wage App. This contract is not
-    yet the complete /api/v1 contract.
+    Draft baseline for the authenticated Company, Employee, Shift Session,
+    Checkpoint, Shift Result Draft, and Shift Result operations currently provided
+    by Wage App. This contract is not yet the complete /api/v1 contract.
 servers:
   - url: /
     description: Current Wage App server
@@ -18,6 +18,10 @@ tags:
     description: Operations for a Company's team-based work accounting session.
   - name: Checkpoint
     description: Operations for boundaries that end Shift Intervals and record their teams and totals.
+  - name: Shift Result Draft
+    description: Operations that calculate, inspect, confirm, and discard provisional employee Payments.
+  - name: Shift Result
+    description: Operations for confirmed employee Payments from one Company's Shift Session.
 security:
   - BearerAuth: []
 paths:
@@ -69,6 +73,20 @@ paths:
     $ref: ./paths/checkpoint.yaml#/UpdateCheckpoint
   /api/v1/checkpoint/{checkpointId}/delete:
     $ref: ./paths/checkpoint.yaml#/DeleteCheckpoint
+  /api/v1/calculation/draft/for-session/{sessionId}:
+    $ref: ./paths/calculation.yaml#/GetShiftResultDraftForSession
+  /api/v1/calculation/draft/{id}/confirm:
+    $ref: ./paths/calculation.yaml#/ConfirmShiftResultDraft
+  /api/v1/calculation/draft/{id}/delete:
+    $ref: ./paths/calculation.yaml#/DeleteShiftResultDraft
+  /api/v1/shift-result/{resultId}/get/detailed:
+    $ref: ./paths/shift-result.yaml#/GetShiftResult
+  /api/v1/shift-result/get/detailed/by-period/page:
+    $ref: ./paths/shift-result.yaml#/GetShiftResultsPage
+  /api/v1/shift-result/save:
+    $ref: ./paths/shift-result.yaml#/SaveManualOverrideShiftResult
+  /api/v1/shift-result/{resultId}/delete:
+    $ref: ./paths/shift-result.yaml#/DeleteShiftResult
 components:
   securitySchemes:
     BearerAuth:
@@ -90,6 +108,20 @@ components:
       $ref: ./components/parameters.yaml#/ShiftSessionId
     CheckpointId:
       $ref: ./components/parameters.yaml#/CheckpointId
+    ShiftResultCompanyId:
+      $ref: ./components/parameters.yaml#/ShiftResultCompanyId
+    ShiftResultDraftId:
+      $ref: ./components/parameters.yaml#/ShiftResultDraftId
+    ShiftResultId:
+      $ref: ./components/parameters.yaml#/ShiftResultId
+    PeriodType:
+      $ref: ./components/parameters.yaml#/PeriodType
+    StartDate:
+      $ref: ./components/parameters.yaml#/StartDate
+    EndDate:
+      $ref: ./components/parameters.yaml#/EndDate
+    CurrentDate:
+      $ref: ./components/parameters.yaml#/CurrentDate
     Page:
       $ref: ./components/parameters.yaml#/Page
     Size:
@@ -119,6 +151,14 @@ components:
       $ref: ./components/responses.yaml#/CheckpointResourceNotFound
     CheckpointConflict:
       $ref: ./components/responses.yaml#/CheckpointConflict
+    ShiftResultDraftResourceNotFound:
+      $ref: ./components/responses.yaml#/ShiftResultDraftResourceNotFound
+    ShiftResultResourceNotFound:
+      $ref: ./components/responses.yaml#/ShiftResultResourceNotFound
+    ShiftResultDraftConflict:
+      $ref: ./components/responses.yaml#/ShiftResultDraftConflict
+    ShiftResultConflict:
+      $ref: ./components/responses.yaml#/ShiftResultConflict
   schemas:
     Company:
       $ref: ./components/schemas.yaml#/Company
@@ -178,3 +218,29 @@ components:
       $ref: ./components/schemas.yaml#/CreateCheckpointRequest
     UpdateCheckpointRequest:
       $ref: ./components/schemas.yaml#/UpdateCheckpointRequest
+    ShiftResultDraft:
+      $ref: ./components/schemas.yaml#/ShiftResultDraft
+    ShiftResultDraftPayment:
+      $ref: ./components/schemas.yaml#/ShiftResultDraftPayment
+    ShiftResultDraftEmployee:
+      $ref: ./components/schemas.yaml#/ShiftResultDraftEmployee
+    ConfirmShiftResultDraftResponse:
+      $ref: ./components/schemas.yaml#/ConfirmShiftResultDraftResponse
+    ShiftResult:
+      $ref: ./components/schemas.yaml#/ShiftResult
+    Payment:
+      $ref: ./components/schemas.yaml#/Payment
+    PaymentEmployee:
+      $ref: ./components/schemas.yaml#/PaymentEmployee
+    CalculationSource:
+      $ref: ./components/schemas.yaml#/CalculationSource
+    SaveManualOverrideShiftResultRequest:
+      $ref: ./components/schemas.yaml#/SaveManualOverrideShiftResultRequest
+    ManualOverridePaymentRequest:
+      $ref: ./components/schemas.yaml#/ManualOverridePaymentRequest
+    SaveManualOverrideShiftResultResponse:
+      $ref: ./components/schemas.yaml#/SaveManualOverrideShiftResultResponse
+    ShiftResultResponse:
+      $ref: ./components/schemas.yaml#/ShiftResultResponse
+    ShiftResultPage:
+      $ref: ./components/schemas.yaml#/ShiftResultPage
