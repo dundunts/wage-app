@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: Wage App API
   version: 0.1.0
-  description: Draft baseline for the authenticated Company, Shift Session, and Checkpoint operations currently provided by Wage App. This contract is not yet the complete /api/v1 contract.
+  description: Draft baseline for the authenticated Company, Employee, Shift Session, and Checkpoint operations currently provided by Wage App. This contract is not yet the complete /api/v1 contract.
 servers:
   - url: /
     description: Current Wage App server
@@ -11,6 +11,8 @@ security:
 tags:
   - name: Company
     description: Operations for a work location whose shifts and pay are accounted independently.
+  - name: Employee
+    description: Operations for people whose work and pay are accounted by Companies.
   - name: Shift Session
     description: Operations for a Company's team-based work accounting session.
   - name: Checkpoint
@@ -148,6 +150,192 @@ paths:
       responses:
         '204':
           description: The Company is absent after the request. The response has no body.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /api/v1/employee/get/{id}:
+    get:
+      tags:
+        - Employee
+      operationId: getEmployee
+      summary: Get an Employee
+      description: Returns one Employee, including all Company memberships and any User binding.
+      parameters:
+        - $ref: '#/components/parameters/EmployeeId'
+      responses:
+        '200':
+          description: The Employee was found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Employee'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/EmployeeNotFound'
+  /api/v1/employee/get/all:
+    get:
+      tags:
+        - Employee
+      operationId: getAllEmployees
+      summary: List all Employees
+      description: Returns every Employee, including Company memberships and User bindings.
+      responses:
+        '200':
+          description: All Employees, possibly empty.
+          content:
+            application/json:
+              schema:
+                type: array
+                nullable: false
+                items:
+                  $ref: '#/components/schemas/Employee'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /api/v1/employee/get/by-companies:
+    get:
+      tags:
+        - Employee
+      operationId: getEmployeesByCompanies
+      summary: List Employees by Company
+      description: Returns Employees grouped by each requested Company. A Company without a matching Employee is omitted rather than returned with an empty collection.
+      parameters:
+        - $ref: '#/components/parameters/CompanyIds'
+      responses:
+        '200':
+          description: Company groups that contain at least one matching Employee, possibly empty.
+          content:
+            application/json:
+              schema:
+                type: array
+                nullable: false
+                items:
+                  $ref: '#/components/schemas/CompanyEmployees'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /api/v1/employee/get/coworkers:
+    get:
+      tags:
+        - Employee
+      operationId: getCoworkers
+      summary: List the current User's coworkers
+      description: Returns Employees, including the current User's Employee, grouped by each Company shared with the current User. Returns an empty list when the User is not bound to an Employee or that Employee has no Company membership.
+      responses:
+        '200':
+          description: Company groups containing the current User's coworkers, possibly empty.
+          content:
+            application/json:
+              schema:
+                type: array
+                nullable: false
+                items:
+                  $ref: '#/components/schemas/CompanyEmployees'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /api/v1/employee/create:
+    post:
+      tags:
+        - Employee
+      operationId: createEmployee
+      summary: Create an Employee
+      description: Creates an Employee and establishes the requested Company memberships.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateEmployeeRequest'
+      responses:
+        '201':
+          description: The Employee was created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Employee'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /api/v1/employee/update/{id}:
+    put:
+      tags:
+        - Employee
+      operationId: updateEmployee
+      summary: Update an Employee
+      description: Replaces the Employee's editable details and full Company membership list. The request can also replace or remove the User binding.
+      parameters:
+        - $ref: '#/components/parameters/EmployeeId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateEmployeeRequest'
+      responses:
+        '204':
+          description: The Employee was updated successfully. The response has no body.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/EmployeeNotFound'
+        '409':
+          $ref: '#/components/responses/UserBindingConflict'
+  /api/v1/employee/bind-user/{employeeId}:
+    put:
+      tags:
+        - Employee
+      operationId: bindEmployeeUser
+      summary: Bind an Employee to a User
+      description: Replaces the Employee's User binding with the supplied external User identifier. Company memberships and Employee details are unchanged.
+      parameters:
+        - $ref: '#/components/parameters/EmployeeBindingId'
+        - $ref: '#/components/parameters/UserId'
+      responses:
+        '204':
+          description: The User was bound to the Employee. The response has no body.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/EmployeeNotFound'
+        '409':
+          $ref: '#/components/responses/UserBindingConflict'
+  /api/v1/employee/delete/{id}:
+    delete:
+      tags:
+        - Employee
+      operationId: deleteEmployee
+      summary: Delete an Employee
+      description: Deletes an Employee and its Company memberships by identifier. Deleting an absent Employee is also successful.
+      parameters:
+        - $ref: '#/components/parameters/EmployeeId'
+      responses:
+        '204':
+          description: The Employee is absent after the request. The response has no body.
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -442,6 +630,53 @@ components:
         type: string
         format: uuid
         nullable: false
+      example: 9b66d829-8909-4399-bbbe-8ad4b14b9251
+    EmployeeId:
+      name: id
+      in: path
+      required: true
+      description: The Employee's identifier.
+      schema:
+        type: string
+        format: uuid
+        nullable: false
+      example: 6a3c626f-0d0f-41d8-9818-06d263b25695
+    EmployeeBindingId:
+      name: employeeId
+      in: path
+      required: true
+      description: The identifier of the Employee to bind to a User.
+      schema:
+        type: string
+        format: uuid
+        nullable: false
+      example: 6a3c626f-0d0f-41d8-9818-06d263b25695
+    CompanyIds:
+      name: companyIds
+      in: query
+      required: true
+      description: One or more Company identifiers supplied as repeated `companyIds` parameters. Only Companies with at least one matching Employee are represented in the response.
+      style: form
+      explode: true
+      schema:
+        type: array
+        minItems: 1
+        nullable: false
+        items:
+          type: string
+          format: uuid
+          nullable: false
+      example:
+        - 9b66d829-8909-4399-bbbe-8ad4b14b9251
+    UserId:
+      name: userId
+      in: query
+      required: true
+      description: The external identifier of the User to bind. It must not already be bound to a different Employee.
+      schema:
+        type: string
+        nullable: false
+      example: keycloak-user-123
     ShiftSessionCompanyId:
       name: companyId
       in: query
@@ -522,6 +757,18 @@ components:
             $ref: '#/components/schemas/ProblemDetail'
     CompanyConflict:
       description: Another Company already has the requested title.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+    EmployeeNotFound:
+      description: The requested Employee does not exist.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+    UserBindingConflict:
+      description: The requested User is already bound to a different Employee.
       content:
         application/problem+json:
           schema:
@@ -666,6 +913,242 @@ components:
           nullable: false
           description: Total number of Companies across all pages.
           example: 2
+    Position:
+      type: string
+      description: The Employee's operational designation; it does not grant system permissions.
+      nullable: false
+      enum:
+        - MANAGER
+        - WAITER_ACTIVE
+        - WAITER_INACTIVE
+      example: WAITER_ACTIVE
+    Employee:
+      type: object
+      description: A person whose work and pay are accounted by Companies. The current API also permits an Employee to exist without a Company membership.
+      additionalProperties: false
+      required:
+        - id
+        - companyIds
+        - userId
+        - firstName
+        - lastName
+        - patronymic
+        - simpleName
+        - position
+      properties:
+        id:
+          type: string
+          format: uuid
+          nullable: false
+          description: The Employee's identifier.
+          example: 6a3c626f-0d0f-41d8-9818-06d263b25695
+        companyIds:
+          type: array
+          nullable: false
+          description: Identifiers of the Companies whose membership includes this Employee.
+          items:
+            type: string
+            format: uuid
+            nullable: false
+          example:
+            - 9b66d829-8909-4399-bbbe-8ad4b14b9251
+        userId:
+          type: string
+          nullable: true
+          description: The bound User's external identifier, or null when no User is bound.
+          example: keycloak-user-123
+        firstName:
+          type: string
+          nullable: false
+          description: The Employee's first name.
+          example: Ivan
+        lastName:
+          type: string
+          nullable: false
+          description: The Employee's family name.
+          example: Ivanov
+        patronymic:
+          type: string
+          nullable: false
+          description: The Employee's patronymic.
+          example: Ivanovich
+        simpleName:
+          type: string
+          nullable: true
+          description: An optional short display name for the Employee.
+          example: Vanya
+        position:
+          $ref: '#/components/schemas/Position'
+    CompanyEmployee:
+      type: object
+      description: Employee details returned within one Company grouping.
+      additionalProperties: false
+      required:
+        - id
+        - userId
+        - firstName
+        - lastName
+        - patronymic
+        - simpleName
+        - position
+      properties:
+        id:
+          type: string
+          format: uuid
+          nullable: false
+          description: The Employee's identifier.
+          example: 6a3c626f-0d0f-41d8-9818-06d263b25695
+        userId:
+          type: string
+          nullable: true
+          description: The bound User's external identifier, or null when no User is bound.
+          example: keycloak-user-123
+        firstName:
+          type: string
+          nullable: false
+          description: The Employee's first name.
+          example: Ivan
+        lastName:
+          type: string
+          nullable: false
+          description: The Employee's family name.
+          example: Ivanov
+        patronymic:
+          type: string
+          nullable: false
+          description: The Employee's patronymic.
+          example: Ivanovich
+        simpleName:
+          type: string
+          nullable: true
+          description: An optional short display name for the Employee.
+          example: Vanya
+        position:
+          $ref: '#/components/schemas/Position'
+    CompanyEmployees:
+      type: object
+      description: Employees whose membership includes one Company.
+      additionalProperties: false
+      required:
+        - companyId
+        - data
+      properties:
+        companyId:
+          type: string
+          format: uuid
+          nullable: false
+          description: The Company's identifier.
+          example: 9b66d829-8909-4399-bbbe-8ad4b14b9251
+        data:
+          type: array
+          nullable: false
+          minItems: 1
+          description: Employees belonging to this Company.
+          items:
+            $ref: '#/components/schemas/CompanyEmployee'
+    CreateEmployeeRequest:
+      type: object
+      description: Fields used to create an Employee and establish initial Company memberships.
+      additionalProperties: false
+      required:
+        - firstName
+        - lastName
+        - patronymic
+        - position
+      properties:
+        companyIds:
+          type: array
+          nullable: false
+          default: []
+          description: Identifiers of the Companies the new Employee belongs to. Omission creates the Employee without Company membership.
+          items:
+            type: string
+            format: uuid
+            nullable: false
+          example:
+            - 9b66d829-8909-4399-bbbe-8ad4b14b9251
+        firstName:
+          type: string
+          minLength: 1
+          pattern: \S
+          nullable: false
+          description: The Employee's first name; it must contain a non-whitespace character.
+          example: Ivan
+        lastName:
+          type: string
+          minLength: 1
+          pattern: \S
+          nullable: false
+          description: The Employee's family name; it must contain a non-whitespace character.
+          example: Ivanov
+        patronymic:
+          type: string
+          minLength: 1
+          pattern: \S
+          nullable: false
+          description: The Employee's patronymic; it must contain a non-whitespace character.
+          example: Ivanovich
+        simpleName:
+          type: string
+          nullable: true
+          description: An optional short display name for the Employee.
+          example: Vanya
+        position:
+          $ref: '#/components/schemas/Position'
+    UpdateEmployeeRequest:
+      type: object
+      description: Fields used to replace an Employee's editable details and complete Company membership list. A null or omitted `userId` removes any existing User binding.
+      additionalProperties: false
+      required:
+        - firstName
+        - lastName
+        - patronymic
+        - position
+      properties:
+        companyIds:
+          type: array
+          nullable: false
+          default: []
+          description: Complete replacement list of Company memberships. Omission removes all Company memberships.
+          items:
+            type: string
+            format: uuid
+            nullable: false
+          example:
+            - 9b66d829-8909-4399-bbbe-8ad4b14b9251
+        userId:
+          type: string
+          nullable: true
+          description: External identifier of the User to bind, or null/omitted to remove the current binding. A non-null value must be unique across Employees.
+          example: keycloak-user-123
+        firstName:
+          type: string
+          minLength: 1
+          pattern: \S
+          nullable: false
+          description: The Employee's first name; it must contain a non-whitespace character.
+          example: Ivan
+        lastName:
+          type: string
+          minLength: 1
+          pattern: \S
+          nullable: false
+          description: The Employee's family name; it must contain a non-whitespace character.
+          example: Ivanov
+        patronymic:
+          type: string
+          minLength: 1
+          pattern: \S
+          nullable: false
+          description: The Employee's patronymic; it must contain a non-whitespace character.
+          example: Ivanovich
+        simpleName:
+          type: string
+          nullable: true
+          description: An optional short display name for the Employee.
+          example: Vanya
+        position:
+          $ref: '#/components/schemas/Position'
     ProblemDetail:
       type: object
       description: RFC 7807 problem details returned for application-level errors.

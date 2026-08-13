@@ -119,6 +119,258 @@ CompanyPage:
       description: Total number of Companies across all pages.
       example: 2
 
+Position:
+  type: string
+  description: The Employee's operational designation; it does not grant system permissions.
+  nullable: false
+  enum:
+    - MANAGER
+    - WAITER_ACTIVE
+    - WAITER_INACTIVE
+  example: WAITER_ACTIVE
+
+Employee:
+  type: object
+  description: >-
+    A person whose work and pay are accounted by Companies. The current API also
+    permits an Employee to exist without a Company membership.
+  additionalProperties: false
+  required:
+    - id
+    - companyIds
+    - userId
+    - firstName
+    - lastName
+    - patronymic
+    - simpleName
+    - position
+  properties:
+    id:
+      type: string
+      format: uuid
+      nullable: false
+      description: The Employee's identifier.
+      example: 6a3c626f-0d0f-41d8-9818-06d263b25695
+    companyIds:
+      type: array
+      nullable: false
+      description: Identifiers of the Companies whose membership includes this Employee.
+      items:
+        type: string
+        format: uuid
+        nullable: false
+      example:
+        - 9b66d829-8909-4399-bbbe-8ad4b14b9251
+    userId:
+      type: string
+      nullable: true
+      description: The bound User's external identifier, or null when no User is bound.
+      example: keycloak-user-123
+    firstName:
+      type: string
+      nullable: false
+      description: The Employee's first name.
+      example: Ivan
+    lastName:
+      type: string
+      nullable: false
+      description: The Employee's family name.
+      example: Ivanov
+    patronymic:
+      type: string
+      nullable: false
+      description: The Employee's patronymic.
+      example: Ivanovich
+    simpleName:
+      type: string
+      nullable: true
+      description: An optional short display name for the Employee.
+      example: Vanya
+    position:
+      $ref: "#/Position"
+
+CompanyEmployee:
+  type: object
+  description: Employee details returned within one Company grouping.
+  additionalProperties: false
+  required:
+    - id
+    - userId
+    - firstName
+    - lastName
+    - patronymic
+    - simpleName
+    - position
+  properties:
+    id:
+      type: string
+      format: uuid
+      nullable: false
+      description: The Employee's identifier.
+      example: 6a3c626f-0d0f-41d8-9818-06d263b25695
+    userId:
+      type: string
+      nullable: true
+      description: The bound User's external identifier, or null when no User is bound.
+      example: keycloak-user-123
+    firstName:
+      type: string
+      nullable: false
+      description: The Employee's first name.
+      example: Ivan
+    lastName:
+      type: string
+      nullable: false
+      description: The Employee's family name.
+      example: Ivanov
+    patronymic:
+      type: string
+      nullable: false
+      description: The Employee's patronymic.
+      example: Ivanovich
+    simpleName:
+      type: string
+      nullable: true
+      description: An optional short display name for the Employee.
+      example: Vanya
+    position:
+      $ref: "#/Position"
+
+CompanyEmployees:
+  type: object
+  description: Employees whose membership includes one Company.
+  additionalProperties: false
+  required:
+    - companyId
+    - data
+  properties:
+    companyId:
+      type: string
+      format: uuid
+      nullable: false
+      description: The Company's identifier.
+      example: 9b66d829-8909-4399-bbbe-8ad4b14b9251
+    data:
+      type: array
+      nullable: false
+      minItems: 1
+      description: Employees belonging to this Company.
+      items:
+        $ref: "#/CompanyEmployee"
+
+CreateEmployeeRequest:
+  type: object
+  description: Fields used to create an Employee and establish initial Company memberships.
+  additionalProperties: false
+  required:
+    - firstName
+    - lastName
+    - patronymic
+    - position
+  properties:
+    companyIds:
+      type: array
+      nullable: false
+      default: []
+      description: >-
+        Identifiers of the Companies the new Employee belongs to. Omission creates
+        the Employee without Company membership.
+      items:
+        type: string
+        format: uuid
+        nullable: false
+      example:
+        - 9b66d829-8909-4399-bbbe-8ad4b14b9251
+    firstName:
+      type: string
+      minLength: 1
+      pattern: '\S'
+      nullable: false
+      description: The Employee's first name; it must contain a non-whitespace character.
+      example: Ivan
+    lastName:
+      type: string
+      minLength: 1
+      pattern: '\S'
+      nullable: false
+      description: The Employee's family name; it must contain a non-whitespace character.
+      example: Ivanov
+    patronymic:
+      type: string
+      minLength: 1
+      pattern: '\S'
+      nullable: false
+      description: The Employee's patronymic; it must contain a non-whitespace character.
+      example: Ivanovich
+    simpleName:
+      type: string
+      nullable: true
+      description: An optional short display name for the Employee.
+      example: Vanya
+    position:
+      $ref: "#/Position"
+
+UpdateEmployeeRequest:
+  type: object
+  description: >-
+    Fields used to replace an Employee's editable details and complete Company
+    membership list. A null or omitted `userId` removes any existing User binding.
+  additionalProperties: false
+  required:
+    - firstName
+    - lastName
+    - patronymic
+    - position
+  properties:
+    companyIds:
+      type: array
+      nullable: false
+      default: []
+      description: >-
+        Complete replacement list of Company memberships. Omission removes all
+        Company memberships.
+      items:
+        type: string
+        format: uuid
+        nullable: false
+      example:
+        - 9b66d829-8909-4399-bbbe-8ad4b14b9251
+    userId:
+      type: string
+      nullable: true
+      description: >-
+        External identifier of the User to bind, or null/omitted to remove the
+        current binding. A non-null value must be unique across Employees.
+      example: keycloak-user-123
+    firstName:
+      type: string
+      minLength: 1
+      pattern: '\S'
+      nullable: false
+      description: The Employee's first name; it must contain a non-whitespace character.
+      example: Ivan
+    lastName:
+      type: string
+      minLength: 1
+      pattern: '\S'
+      nullable: false
+      description: The Employee's family name; it must contain a non-whitespace character.
+      example: Ivanov
+    patronymic:
+      type: string
+      minLength: 1
+      pattern: '\S'
+      nullable: false
+      description: The Employee's patronymic; it must contain a non-whitespace character.
+      example: Ivanovich
+    simpleName:
+      type: string
+      nullable: true
+      description: An optional short display name for the Employee.
+      example: Vanya
+    position:
+      $ref: "#/Position"
+
 ProblemDetail:
   type: object
   description: RFC 7807 problem details returned for application-level errors.

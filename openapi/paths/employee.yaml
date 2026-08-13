@@ -1,0 +1,204 @@
+GetEmployee:
+  get:
+    tags:
+      - Employee
+    operationId: getEmployee
+    summary: Get an Employee
+    description: Returns one Employee, including all Company memberships and any User binding.
+    parameters:
+      - $ref: ../components/parameters.yaml#/EmployeeId
+    responses:
+      "200":
+        description: The Employee was found.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/Employee
+      "400":
+        $ref: ../components/responses.yaml#/BadRequest
+      "401":
+        $ref: ../components/responses.yaml#/Unauthorized
+      "403":
+        $ref: ../components/responses.yaml#/Forbidden
+      "404":
+        $ref: ../components/responses.yaml#/EmployeeNotFound
+
+GetAllEmployees:
+  get:
+    tags:
+      - Employee
+    operationId: getAllEmployees
+    summary: List all Employees
+    description: Returns every Employee, including Company memberships and User bindings.
+    responses:
+      "200":
+        description: All Employees, possibly empty.
+        content:
+          application/json:
+            schema:
+              type: array
+              nullable: false
+              items:
+                $ref: ../components/schemas.yaml#/Employee
+      "401":
+        $ref: ../components/responses.yaml#/Unauthorized
+      "403":
+        $ref: ../components/responses.yaml#/Forbidden
+
+GetEmployeesByCompanies:
+  get:
+    tags:
+      - Employee
+    operationId: getEmployeesByCompanies
+    summary: List Employees by Company
+    description: >-
+      Returns Employees grouped by each requested Company. A Company without a
+      matching Employee is omitted rather than returned with an empty collection.
+    parameters:
+      - $ref: ../components/parameters.yaml#/CompanyIds
+    responses:
+      "200":
+        description: Company groups that contain at least one matching Employee, possibly empty.
+        content:
+          application/json:
+            schema:
+              type: array
+              nullable: false
+              items:
+                $ref: ../components/schemas.yaml#/CompanyEmployees
+      "400":
+        $ref: ../components/responses.yaml#/BadRequest
+      "401":
+        $ref: ../components/responses.yaml#/Unauthorized
+      "403":
+        $ref: ../components/responses.yaml#/Forbidden
+
+GetCoworkers:
+  get:
+    tags:
+      - Employee
+    operationId: getCoworkers
+    summary: List the current User's coworkers
+    description: >-
+      Returns Employees, including the current User's Employee, grouped by each
+      Company shared with the current User. Returns an empty list when the User is
+      not bound to an Employee or that Employee has no Company membership.
+    responses:
+      "200":
+        description: Company groups containing the current User's coworkers, possibly empty.
+        content:
+          application/json:
+            schema:
+              type: array
+              nullable: false
+              items:
+                $ref: ../components/schemas.yaml#/CompanyEmployees
+      "401":
+        $ref: ../components/responses.yaml#/Unauthorized
+      "403":
+        $ref: ../components/responses.yaml#/Forbidden
+
+CreateEmployee:
+  post:
+    tags:
+      - Employee
+    operationId: createEmployee
+    summary: Create an Employee
+    description: Creates an Employee and establishes the requested Company memberships.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas.yaml#/CreateEmployeeRequest
+    responses:
+      "201":
+        description: The Employee was created.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/Employee
+      "400":
+        $ref: ../components/responses.yaml#/BadRequest
+      "401":
+        $ref: ../components/responses.yaml#/Unauthorized
+      "403":
+        $ref: ../components/responses.yaml#/Forbidden
+
+UpdateEmployee:
+  put:
+    tags:
+      - Employee
+    operationId: updateEmployee
+    summary: Update an Employee
+    description: >-
+      Replaces the Employee's editable details and full Company membership list.
+      The request can also replace or remove the User binding.
+    parameters:
+      - $ref: ../components/parameters.yaml#/EmployeeId
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas.yaml#/UpdateEmployeeRequest
+    responses:
+      "204":
+        description: The Employee was updated successfully. The response has no body.
+      "400":
+        $ref: ../components/responses.yaml#/BadRequest
+      "401":
+        $ref: ../components/responses.yaml#/Unauthorized
+      "403":
+        $ref: ../components/responses.yaml#/Forbidden
+      "404":
+        $ref: ../components/responses.yaml#/EmployeeNotFound
+      "409":
+        $ref: ../components/responses.yaml#/UserBindingConflict
+
+BindEmployeeUser:
+  put:
+    tags:
+      - Employee
+    operationId: bindEmployeeUser
+    summary: Bind an Employee to a User
+    description: >-
+      Replaces the Employee's User binding with the supplied external User
+      identifier. Company memberships and Employee details are unchanged.
+    parameters:
+      - $ref: ../components/parameters.yaml#/EmployeeBindingId
+      - $ref: ../components/parameters.yaml#/UserId
+    responses:
+      "204":
+        description: The User was bound to the Employee. The response has no body.
+      "400":
+        $ref: ../components/responses.yaml#/BadRequest
+      "401":
+        $ref: ../components/responses.yaml#/Unauthorized
+      "403":
+        $ref: ../components/responses.yaml#/Forbidden
+      "404":
+        $ref: ../components/responses.yaml#/EmployeeNotFound
+      "409":
+        $ref: ../components/responses.yaml#/UserBindingConflict
+
+DeleteEmployee:
+  delete:
+    tags:
+      - Employee
+    operationId: deleteEmployee
+    summary: Delete an Employee
+    description: >-
+      Deletes an Employee and its Company memberships by identifier. Deleting an
+      absent Employee is also successful.
+    parameters:
+      - $ref: ../components/parameters.yaml#/EmployeeId
+    responses:
+      "204":
+        description: The Employee is absent after the request. The response has no body.
+      "400":
+        $ref: ../components/responses.yaml#/BadRequest
+      "401":
+        $ref: ../components/responses.yaml#/Unauthorized
+      "403":
+        $ref: ../components/responses.yaml#/Forbidden

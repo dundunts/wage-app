@@ -32,6 +32,13 @@ ShiftSessionResourceNotFound:
       schema:
         $ref: ./schemas.yaml#/ProblemDetail
 
+EmployeeNotFound:
+  description: The requested Employee does not exist.
+  content:
+    application/problem+json:
+      schema:
+        $ref: ./schemas.yaml#/ProblemDetail
+
 ShiftSessionConflict:
   description: >-
     The authenticated User is not associated with the Company, the Shift Session
@@ -55,6 +62,13 @@ CheckpointConflict:
   description: >-
     The authenticated User is not associated with the Company, or the Shift
     Session state does not allow its Checkpoints to be modified.
+  content:
+    application/problem+json:
+      schema:
+        $ref: ./schemas.yaml#/ProblemDetail
+
+UserBindingConflict:
+  description: The requested User is already bound to a different Employee.
   content:
     application/problem+json:
       schema:

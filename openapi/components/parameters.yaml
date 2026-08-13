@@ -7,6 +7,62 @@ CompanyId:
     type: string
     format: uuid
     nullable: false
+  example: 9b66d829-8909-4399-bbbe-8ad4b14b9251
+
+EmployeeId:
+  name: id
+  in: path
+  required: true
+  description: The Employee's identifier.
+  schema:
+    type: string
+    format: uuid
+    nullable: false
+  example: 6a3c626f-0d0f-41d8-9818-06d263b25695
+
+EmployeeBindingId:
+  name: employeeId
+  in: path
+  required: true
+  description: The identifier of the Employee to bind to a User.
+  schema:
+    type: string
+    format: uuid
+    nullable: false
+  example: 6a3c626f-0d0f-41d8-9818-06d263b25695
+
+CompanyIds:
+  name: companyIds
+  in: query
+  required: true
+  description: >-
+    One or more Company identifiers supplied as repeated `companyIds` parameters.
+    Only Companies with at least one matching Employee are represented in the
+    response.
+  style: form
+  explode: true
+  schema:
+    type: array
+    minItems: 1
+    nullable: false
+    items:
+      type: string
+      format: uuid
+      nullable: false
+  example:
+    - 9b66d829-8909-4399-bbbe-8ad4b14b9251
+
+UserId:
+  name: userId
+  in: query
+  required: true
+  description: >-
+    The external identifier of the User to bind. It must not already be bound to a
+    different Employee.
+  schema:
+    type: string
+    nullable: false
+  example: keycloak-user-123
 
 ShiftSessionCompanyId:
   name: companyId
