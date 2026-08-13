@@ -105,6 +105,17 @@ ShiftResultCompanyId:
     nullable: false
   example: 5b367932-2e5d-4d89-aa07-17f65ff4af9c
 
+PayrollCompanyId:
+  name: companyId
+  in: query
+  required: true
+  description: Identifier of the Company whose Payroll is requested.
+  schema:
+    type: string
+    format: uuid
+    nullable: false
+  example: 9b66d829-8909-4399-bbbe-8ad4b14b9251
+
 ShiftResultDraftId:
   name: id
   in: path
@@ -132,8 +143,10 @@ PeriodType:
   in: query
   required: true
   description: >-
-    Selects the requested Payroll Period. `CUSTOM` requires `start` and `end`;
-    `CURRENT` and `PREVIOUS` require `now`.
+    Selects the requested Payroll Period. `CUSTOM` requires `start` and `end` and
+    ignores `now`. `CURRENT` and `PREVIOUS` require `now` and ignore `start` and
+    `end`. Standard periods cover either days 1 through 15 or day 16 through the
+    last day of a calendar month.
   schema:
     type: string
     nullable: false
@@ -147,7 +160,9 @@ StartDate:
   name: start
   in: query
   required: false
-  description: Inclusive start date. Required only when `periodType` is `CUSTOM`.
+  description: >-
+    Inclusive first date of a `CUSTOM` Payroll Period. Required only when
+    `periodType` is `CUSTOM`; otherwise ignored. It must not be after `end`.
   schema:
     type: string
     format: date
@@ -158,7 +173,9 @@ EndDate:
   name: end
   in: query
   required: false
-  description: Inclusive end date. Required only when `periodType` is `CUSTOM` and must not precede `start`.
+  description: >-
+    Inclusive last date of a `CUSTOM` Payroll Period. Required only when
+    `periodType` is `CUSTOM`; otherwise ignored. It must not be before `start`.
   schema:
     type: string
     format: date
@@ -169,7 +186,9 @@ CurrentDate:
   name: now
   in: query
   required: false
-  description: Reference date. Required when `periodType` is `CURRENT` or `PREVIOUS`.
+  description: >-
+    Reference date used to construct a `CURRENT` or `PREVIOUS` Payroll Period.
+    Required for those period types; ignored for `CUSTOM`.
   schema:
     type: string
     format: date

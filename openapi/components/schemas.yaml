@@ -1204,3 +1204,141 @@ ShiftResultPage:
       nullable: false
       description: Total number of Shift Results across all pages.
       example: 2
+
+Payroll:
+  type: object
+  description: >-
+    Employee Payments aggregated over one Payroll Period for a Company. Elements
+    are ordered by date; the aggregation granularity depends on the amount of
+    source data in the selected period.
+  additionalProperties: false
+  required: [type, elements, summaries]
+  properties:
+    type:
+      $ref: "#/PayrollAggregation"
+    elements:
+      type: array
+      nullable: false
+      description: Date-ordered Payment groups at the selected aggregation granularity.
+      items:
+        $ref: "#/PayrollElement"
+    summaries:
+      type: array
+      nullable: false
+      description: Payroll totals grouped by Employee over the complete selected period.
+      items:
+        $ref: "#/EmployeePayrollSummary"
+
+PayrollAggregation:
+  type: string
+  nullable: false
+  description: >-
+    Granularity of the Payroll elements. Daily data is returned for up to 31
+    source elements, monthly data for more than 31 and up to three years of source
+    elements, and yearly data beyond that threshold.
+  enum: [BY_DAY, BY_MONTH, BY_YEAR]
+  example: BY_DAY
+
+PayrollElement:
+  type: object
+  description: Payments aggregated for one day, month, or year in a Payroll.
+  additionalProperties: false
+  required: [date, payments]
+  properties:
+    date:
+      type: string
+      format: date
+      nullable: false
+      description: >-
+        The source day for daily aggregation, the first day of the month for
+        monthly aggregation, or the first day of the year for yearly aggregation.
+      example: "2026-01-01"
+    payments:
+      type: array
+      nullable: false
+      description: Payments for Employees represented in this element.
+      items:
+        $ref: "#/PayrollPayment"
+
+PayrollPayment:
+  type: object
+  description: >-
+    One Employee's Percent from Revenue and Employee Tips within a Payroll
+    element. Monetary amounts are whole Russian rubles.
+  additionalProperties: false
+  required: [employee, percentFromRevenue, tips]
+  properties:
+    employee:
+      allOf:
+        - $ref: "#/PayrollEmployee"
+      nullable: false
+      description: Employee receiving the Payment.
+    percentFromRevenue:
+      type: integer
+      format: int32
+      nullable: false
+      description: The Employee's Percent from Revenue in whole Russian rubles.
+      example: 2500
+    tips:
+      type: integer
+      format: int32
+      nullable: false
+      description: The Employee Tips allocated to the Employee in whole Russian rubles.
+      example: 1200
+
+EmployeePayrollSummary:
+  type: object
+  description: One Employee's Payment totals over the complete Payroll Period.
+  additionalProperties: false
+  required: [employee, totalPercentFromRevenue, totalTips]
+  properties:
+    employee:
+      allOf:
+        - $ref: "#/PayrollEmployee"
+      nullable: false
+      description: Employee whose Payments are totaled.
+    totalPercentFromRevenue:
+      type: integer
+      format: int32
+      nullable: false
+      description: Total Percent from Revenue in whole Russian rubles.
+      example: 25000
+    totalTips:
+      type: integer
+      format: int32
+      nullable: false
+      description: Total Employee Tips in whole Russian rubles.
+      example: 12000
+
+PayrollEmployee:
+  type: object
+  description: Employee identity embedded in a Payroll Payment or summary.
+  additionalProperties: false
+  required: [id, firstName, lastName, patronymic, simpleName]
+  properties:
+    id:
+      type: string
+      format: uuid
+      nullable: false
+      description: The Employee's identifier.
+      example: 6a3c626f-0d0f-41d8-9818-06d263b25695
+    firstName:
+      type: string
+      nullable: false
+      description: The Employee's first name.
+      example: Ivan
+    lastName:
+      type: string
+      nullable: false
+      description: The Employee's family name.
+      example: Ivanov
+    patronymic:
+      type: string
+      nullable: false
+      description: The Employee's patronymic.
+      example: Ivanovich
+    simpleName:
+      type: string
+      nullable: true
+      description: An optional short display name for the Employee.
+      example: Vanya
