@@ -107,7 +107,7 @@ assert.deepEqual(schemas.CreateEmployeeRequest.required, [
 assert.deepEqual(schemas.CreateEmployeeRequest.properties.companyIds.default, []);
 assert.equal(schemas.CreateEmployeeRequest.properties.companyIds.items.format, "uuid");
 assert.equal(schemas.CreateEmployeeRequest.properties.firstName.minLength, 1);
-assert.equal(schemas.CreateEmployeeRequest.properties.firstName.pattern, "\\S");
+assert.equal(schemas.CreateEmployeeRequest.properties.firstName.pattern, ".*\\S.*");
 assert.equal(schemas.UpdateEmployeeRequest.properties.userId.nullable, true);
 assert.deepEqual(schemas.CompanyEmployees.required, ["companyId", "data"]);
 assert.equal(schemas.CompanyEmployees.properties.companyId.format, "uuid");

@@ -53,8 +53,8 @@ GetCompaniesPage:
       requested size, and total element count; additional Spring pagination fields
       may be present but are not part of the supported contract.
     parameters:
-      - $ref: ../components/parameters.yaml#/Page
-      - $ref: ../components/parameters.yaml#/Size
+      - $ref: ../components/parameters.yaml#/CompanyPageIndex
+      - $ref: ../components/parameters.yaml#/CompanyPageSize
       - $ref: ../components/parameters.yaml#/Sort
     responses:
       "200":
