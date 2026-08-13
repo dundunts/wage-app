@@ -104,8 +104,6 @@ dependencies {
     testImplementation("org.wiremock:wiremock-standalone:3.13.2")
     testImplementation("org.wiremock.integrations:wiremock-spring-boot:3.10.0")
 
-    // Temporary baseline extraction support. This dependency is absent from production artifacts.
-    testImplementation("org.springdoc:springdoc-openapi-starter-webflux-api:2.8.14")
 }
 
 kotlin {
@@ -124,22 +122,6 @@ tasks.test {
     }
 }
 
-val extractCompanyOpenApi by tasks.registering(Test::class) {
-    group = "openapi"
-    description = "Extracts the current Company operations with the openapi-docs test profile."
-    dependsOn(tasks.testClasses)
-    testClassesDirs = sourceSets["test"].output.classesDirs
-    classpath = sourceSets["test"].runtimeClasspath
-    useJUnitPlatform {
-        includeTags("openapi-extraction")
-    }
-    systemProperty(
-        "openapi.extraction.output",
-        layout.buildDirectory.file("openapi/extracted-company.json").get().asFile.absolutePath,
-    )
-    outputs.file(layout.buildDirectory.file("openapi/extracted-company.json"))
-}
-
 val openApiSources = fileTree("openapi") {
     include("**/*.yaml")
     exclude("bundled/**")
@@ -147,10 +129,11 @@ val openApiSources = fileTree("openapi") {
 
 val openApiValidate by tasks.registering(NpmTask::class) {
     group = "verification"
-    description = "Validates the modular OpenAPI document and its references."
-    dependsOn(tasks.npmInstall)
+    description = "Validates the modular and bundled OpenAPI documents and their references."
+    dependsOn(tasks.npmInstall, "openApiBundle")
     args.set(listOf("run", "validate"))
     inputs.files(openApiSources)
+    inputs.file(layout.buildDirectory.file("openapi/openapi.yaml"))
 }
 
 val openApiLint by tasks.registering(NpmTask::class) {
@@ -198,6 +181,18 @@ val openApiContractTest by tasks.registering(NpmTask::class) {
     inputs.files(fileTree("openapi/tests") { include("*-contract.mjs") })
 }
 
+val openApiWorkflowContract by tasks.registering(Exec::class) {
+    group = "verification"
+    description = "Checks OpenAPI publication, compatibility reporting, and runtime isolation."
+    commandLine("bash", layout.projectDirectory.file("tests/openapi-workflow-contract.sh"))
+    inputs.files(
+        layout.projectDirectory.file(".github/workflows/api-compatibility.yaml"),
+        layout.projectDirectory.file("build.gradle.kts"),
+        layout.projectDirectory.file("src/main/resources/application.yaml"),
+        layout.projectDirectory.file("tests/openapi-workflow-contract.sh"),
+    )
+}
+
 tasks.register<Copy>("openApiUpdateBundle") {
     group = "openapi"
     description = "Rebuilds the committed self-contained OpenAPI bundle."
@@ -208,8 +203,14 @@ tasks.register<Copy>("openApiUpdateBundle") {
 
 val openApiCheck by tasks.registering {
     group = "verification"
-    description = "Validates, lints, and checks the deterministic OpenAPI bundle."
-    dependsOn(openApiValidate, openApiLint, openApiVerifyBundle, openApiContractTest)
+    description = "Validates, lints, and checks OpenAPI publication and its deterministic bundle."
+    dependsOn(
+        openApiValidate,
+        openApiLint,
+        openApiVerifyBundle,
+        openApiContractTest,
+        openApiWorkflowContract,
+    )
 }
 
 tasks.check {
