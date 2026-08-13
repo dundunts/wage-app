@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: Wage App API
   version: 0.1.0
-  description: Draft baseline for the authenticated Company, Employee, Shift Session, Checkpoint, Shift Result Draft, and Shift Result operations currently provided by Wage App. This contract is not yet the complete /api/v1 contract.
+  description: Draft baseline for the authenticated Company, Employee, Shift Session, Checkpoint, Shift Result Draft, Shift Result, and Payroll operations currently provided by Wage App. This contract is not yet the complete /api/v1 contract.
 servers:
   - url: /
     description: Current Wage App server
@@ -21,6 +21,8 @@ tags:
     description: Operations that calculate, inspect, confirm, and discard provisional employee Payments.
   - name: Shift Result
     description: Operations for confirmed employee Payments from one Company's Shift Session.
+  - name: Payroll
+    description: Operations for Employee Payments aggregated over a Payroll Period for one Company.
 paths:
   /api/v1/company/get/{id}:
     get:
@@ -798,6 +800,109 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '409':
           $ref: '#/components/responses/ShiftResultConflict'
+  /api/v1/salary/own/get:
+    get:
+      tags:
+        - Payroll
+      operationId: getOwnPayroll
+      summary: Get the current Employee's Payroll
+      description: Returns Payments for the authenticated User's Employee record in one Company and Payroll Period. The historical `/salary` URL is preserved while the operation and schema use canonical Payroll terminology.
+      parameters:
+        - $ref: '#/components/parameters/PayrollCompanyId'
+        - $ref: '#/components/parameters/PeriodType'
+        - $ref: '#/components/parameters/StartDate'
+        - $ref: '#/components/parameters/EndDate'
+        - $ref: '#/components/parameters/CurrentDate'
+      responses:
+        '200':
+          description: The Employee's Payroll, possibly with no Payments.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payroll'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/PayrollResourceNotFound'
+        '409':
+          $ref: '#/components/responses/PayrollConflict'
+  /api/v1/salary/staff/get:
+    get:
+      tags:
+        - Payroll
+      operationId: getStaffPayroll
+      summary: Get the staff Payroll
+      description: Returns Payments for all Employees represented in one Company's Payroll during the selected Payroll Period. The historical `/salary` URL is preserved while the operation and schema use canonical Payroll terminology.
+      parameters:
+        - $ref: '#/components/parameters/PayrollCompanyId'
+        - $ref: '#/components/parameters/PeriodType'
+        - $ref: '#/components/parameters/StartDate'
+        - $ref: '#/components/parameters/EndDate'
+        - $ref: '#/components/parameters/CurrentDate'
+      responses:
+        '200':
+          description: The Company's staff Payroll, possibly with no Payments.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payroll'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/PayrollResourceNotFound'
+        '409':
+          $ref: '#/components/responses/PayrollConflict'
+  /api/v1/salary/reports-table:
+    get:
+      tags:
+        - Payroll
+      operationId: exportStaffPayroll
+      summary: Export the staff Payroll reports table
+      description: Exports the selected Company's staff Payroll as an XLSX reports table. The current endpoint returns the file with the generic binary media type and an attachment disposition using the stable `reports.xlsx` filename.
+      parameters:
+        - $ref: '#/components/parameters/PayrollCompanyId'
+        - $ref: '#/components/parameters/PeriodType'
+        - $ref: '#/components/parameters/StartDate'
+        - $ref: '#/components/parameters/EndDate'
+        - $ref: '#/components/parameters/CurrentDate'
+      responses:
+        '200':
+          description: An XLSX file containing the staff Payroll reports table.
+          headers:
+            Content-Disposition:
+              description: Marks the response as an attachment named `reports.xlsx`.
+              schema:
+                type: string
+              example: attachment; filename=reports.xlsx
+            Content-Length:
+              description: Size of the generated XLSX file in bytes.
+              schema:
+                type: integer
+                format: int64
+                minimum: 0
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/PayrollResourceNotFound'
+        '409':
+          $ref: '#/components/responses/PayrollConflict'
 components:
   securitySchemes:
     BearerAuth:
@@ -899,6 +1004,16 @@ components:
         format: uuid
         nullable: false
       example: 5b367932-2e5d-4d89-aa07-17f65ff4af9c
+    PayrollCompanyId:
+      name: companyId
+      in: query
+      required: true
+      description: Identifier of the Company whose Payroll is requested.
+      schema:
+        type: string
+        format: uuid
+        nullable: false
+      example: 9b66d829-8909-4399-bbbe-8ad4b14b9251
     ShiftResultDraftId:
       name: id
       in: path
@@ -923,7 +1038,7 @@ components:
       name: periodType
       in: query
       required: true
-      description: Selects the requested Payroll Period. `CUSTOM` requires `start` and `end`; `CURRENT` and `PREVIOUS` require `now`.
+      description: Selects the requested Payroll Period. `CUSTOM` requires `start` and `end` and ignores `now`. `CURRENT` and `PREVIOUS` require `now` and ignore `start` and `end`. Standard periods cover either days 1 through 15 or day 16 through the last day of a calendar month.
       schema:
         type: string
         nullable: false
@@ -936,7 +1051,7 @@ components:
       name: start
       in: query
       required: false
-      description: Inclusive start date. Required only when `periodType` is `CUSTOM`.
+      description: Inclusive first date of a `CUSTOM` Payroll Period. Required only when `periodType` is `CUSTOM`; otherwise ignored. It must not be after `end`.
       schema:
         type: string
         format: date
@@ -946,7 +1061,7 @@ components:
       name: end
       in: query
       required: false
-      description: Inclusive end date. Required only when `periodType` is `CUSTOM` and must not precede `start`.
+      description: Inclusive last date of a `CUSTOM` Payroll Period. Required only when `periodType` is `CUSTOM`; otherwise ignored. It must not be before `start`.
       schema:
         type: string
         format: date
@@ -956,7 +1071,7 @@ components:
       name: now
       in: query
       required: false
-      description: Reference date. Required when `periodType` is `CURRENT` or `PREVIOUS`.
+      description: Reference date used to construct a `CURRENT` or `PREVIOUS` Payroll Period. Required for those period types; ignored for `CUSTOM`.
       schema:
         type: string
         format: date
@@ -1075,6 +1190,18 @@ components:
             $ref: '#/components/schemas/ProblemDetail'
     ShiftResultConflict:
       description: The operation conflicts with an existing Shift Result, duplicate Payment employees, or the authenticated User's Company associations.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+    PayrollResourceNotFound:
+      description: The requested Company or authenticated User's Employee record does not exist.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+    PayrollConflict:
+      description: The authenticated User is not associated with the requested Company.
       content:
         application/problem+json:
           schema:
@@ -2249,3 +2376,144 @@ components:
           nullable: false
           description: Total number of Shift Results across all pages.
           example: 2
+    Payroll:
+      type: object
+      description: Employee Payments aggregated over one Payroll Period for a Company. Elements are ordered by date; the aggregation granularity depends on the amount of source data in the selected period.
+      additionalProperties: false
+      required:
+        - type
+        - elements
+        - summaries
+      properties:
+        type:
+          $ref: '#/components/schemas/PayrollAggregation'
+        elements:
+          type: array
+          nullable: false
+          description: Date-ordered Payment groups at the selected aggregation granularity.
+          items:
+            $ref: '#/components/schemas/PayrollElement'
+        summaries:
+          type: array
+          nullable: false
+          description: Payroll totals grouped by Employee over the complete selected period.
+          items:
+            $ref: '#/components/schemas/EmployeePayrollSummary'
+    PayrollAggregation:
+      type: string
+      nullable: false
+      description: Granularity of the Payroll elements. Daily data is returned for up to 31 source elements, monthly data for more than 31 and up to three years of source elements, and yearly data beyond that threshold.
+      enum:
+        - BY_DAY
+        - BY_MONTH
+        - BY_YEAR
+      example: BY_DAY
+    PayrollElement:
+      type: object
+      description: Payments aggregated for one day, month, or year in a Payroll.
+      additionalProperties: false
+      required:
+        - date
+        - payments
+      properties:
+        date:
+          type: string
+          format: date
+          nullable: false
+          description: The source day for daily aggregation, the first day of the month for monthly aggregation, or the first day of the year for yearly aggregation.
+          example: '2026-01-01'
+        payments:
+          type: array
+          nullable: false
+          description: Payments for Employees represented in this element.
+          items:
+            $ref: '#/components/schemas/PayrollPayment'
+    PayrollPayment:
+      type: object
+      description: One Employee's Percent from Revenue and Employee Tips within a Payroll element. Monetary amounts are whole Russian rubles.
+      additionalProperties: false
+      required:
+        - employee
+        - percentFromRevenue
+        - tips
+      properties:
+        employee:
+          allOf:
+            - $ref: '#/components/schemas/PayrollEmployee'
+          nullable: false
+          description: Employee receiving the Payment.
+        percentFromRevenue:
+          type: integer
+          format: int32
+          nullable: false
+          description: The Employee's Percent from Revenue in whole Russian rubles.
+          example: 2500
+        tips:
+          type: integer
+          format: int32
+          nullable: false
+          description: The Employee Tips allocated to the Employee in whole Russian rubles.
+          example: 1200
+    EmployeePayrollSummary:
+      type: object
+      description: One Employee's Payment totals over the complete Payroll Period.
+      additionalProperties: false
+      required:
+        - employee
+        - totalPercentFromRevenue
+        - totalTips
+      properties:
+        employee:
+          allOf:
+            - $ref: '#/components/schemas/PayrollEmployee'
+          nullable: false
+          description: Employee whose Payments are totaled.
+        totalPercentFromRevenue:
+          type: integer
+          format: int32
+          nullable: false
+          description: Total Percent from Revenue in whole Russian rubles.
+          example: 25000
+        totalTips:
+          type: integer
+          format: int32
+          nullable: false
+          description: Total Employee Tips in whole Russian rubles.
+          example: 12000
+    PayrollEmployee:
+      type: object
+      description: Employee identity embedded in a Payroll Payment or summary.
+      additionalProperties: false
+      required:
+        - id
+        - firstName
+        - lastName
+        - patronymic
+        - simpleName
+      properties:
+        id:
+          type: string
+          format: uuid
+          nullable: false
+          description: The Employee's identifier.
+          example: 6a3c626f-0d0f-41d8-9818-06d263b25695
+        firstName:
+          type: string
+          nullable: false
+          description: The Employee's first name.
+          example: Ivan
+        lastName:
+          type: string
+          nullable: false
+          description: The Employee's family name.
+          example: Ivanov
+        patronymic:
+          type: string
+          nullable: false
+          description: The Employee's patronymic.
+          example: Ivanovich
+        simpleName:
+          type: string
+          nullable: true
+          description: An optional short display name for the Employee.
+          example: Vanya

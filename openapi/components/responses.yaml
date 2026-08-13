@@ -105,3 +105,17 @@ ShiftResultConflict:
     application/problem+json:
       schema:
         $ref: ./schemas.yaml#/ProblemDetail
+
+PayrollResourceNotFound:
+  description: The requested Company or authenticated User's Employee record does not exist.
+  content:
+    application/problem+json:
+      schema:
+        $ref: ./schemas.yaml#/ProblemDetail
+
+PayrollConflict:
+  description: The authenticated User is not associated with the requested Company.
+  content:
+    application/problem+json:
+      schema:
+        $ref: ./schemas.yaml#/ProblemDetail

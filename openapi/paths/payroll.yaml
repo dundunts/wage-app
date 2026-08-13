@@ -1,0 +1,114 @@
+GetOwnPayroll:
+  get:
+    tags:
+      - Payroll
+    operationId: getOwnPayroll
+    summary: Get the current Employee's Payroll
+    description: >-
+      Returns Payments for the authenticated User's Employee record in one
+      Company and Payroll Period. The historical `/salary` URL is preserved while
+      the operation and schema use canonical Payroll terminology.
+    parameters:
+      - $ref: ../components/parameters.yaml#/PayrollCompanyId
+      - $ref: ../components/parameters.yaml#/PeriodType
+      - $ref: ../components/parameters.yaml#/StartDate
+      - $ref: ../components/parameters.yaml#/EndDate
+      - $ref: ../components/parameters.yaml#/CurrentDate
+    responses:
+      "200":
+        description: The Employee's Payroll, possibly with no Payments.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/Payroll
+      "400":
+        $ref: ../components/responses.yaml#/BadRequest
+      "401":
+        $ref: ../components/responses.yaml#/Unauthorized
+      "403":
+        $ref: ../components/responses.yaml#/Forbidden
+      "404":
+        $ref: ../components/responses.yaml#/PayrollResourceNotFound
+      "409":
+        $ref: ../components/responses.yaml#/PayrollConflict
+
+GetStaffPayroll:
+  get:
+    tags:
+      - Payroll
+    operationId: getStaffPayroll
+    summary: Get the staff Payroll
+    description: >-
+      Returns Payments for all Employees represented in one Company's Payroll
+      during the selected Payroll Period. The historical `/salary` URL is
+      preserved while the operation and schema use canonical Payroll terminology.
+    parameters:
+      - $ref: ../components/parameters.yaml#/PayrollCompanyId
+      - $ref: ../components/parameters.yaml#/PeriodType
+      - $ref: ../components/parameters.yaml#/StartDate
+      - $ref: ../components/parameters.yaml#/EndDate
+      - $ref: ../components/parameters.yaml#/CurrentDate
+    responses:
+      "200":
+        description: The Company's staff Payroll, possibly with no Payments.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/Payroll
+      "400":
+        $ref: ../components/responses.yaml#/BadRequest
+      "401":
+        $ref: ../components/responses.yaml#/Unauthorized
+      "403":
+        $ref: ../components/responses.yaml#/Forbidden
+      "404":
+        $ref: ../components/responses.yaml#/PayrollResourceNotFound
+      "409":
+        $ref: ../components/responses.yaml#/PayrollConflict
+
+ExportStaffPayroll:
+  get:
+    tags:
+      - Payroll
+    operationId: exportStaffPayroll
+    summary: Export the staff Payroll reports table
+    description: >-
+      Exports the selected Company's staff Payroll as an XLSX reports table. The
+      current endpoint returns the file with the generic binary media type and an
+      attachment disposition using the stable `reports.xlsx` filename.
+    parameters:
+      - $ref: ../components/parameters.yaml#/PayrollCompanyId
+      - $ref: ../components/parameters.yaml#/PeriodType
+      - $ref: ../components/parameters.yaml#/StartDate
+      - $ref: ../components/parameters.yaml#/EndDate
+      - $ref: ../components/parameters.yaml#/CurrentDate
+    responses:
+      "200":
+        description: An XLSX file containing the staff Payroll reports table.
+        headers:
+          Content-Disposition:
+            description: Marks the response as an attachment named `reports.xlsx`.
+            schema:
+              type: string
+            example: attachment; filename=reports.xlsx
+          Content-Length:
+            description: Size of the generated XLSX file in bytes.
+            schema:
+              type: integer
+              format: int64
+              minimum: 0
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary
+      "400":
+        $ref: ../components/responses.yaml#/BadRequest
+      "401":
+        $ref: ../components/responses.yaml#/Unauthorized
+      "403":
+        $ref: ../components/responses.yaml#/Forbidden
+      "404":
+        $ref: ../components/responses.yaml#/PayrollResourceNotFound
+      "409":
+        $ref: ../components/responses.yaml#/PayrollConflict
