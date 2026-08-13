@@ -1,39 +1,36 @@
 package org.turter.wageapp.application.controller
 
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.*
-import org.turter.wageapp.domain.shift.ConfirmDraftResponse
-import org.turter.wageapp.domain.shift.ShiftResultDraft
+import org.springframework.web.bind.annotation.RestController
+import org.turter.wageapp.application.mapper.ShiftResultTransportMapper
 import org.turter.wageapp.application.service.shift.CalculationService
-import java.security.Principal
-import java.util.*
+import org.turter.wageapp.transport.api.ShiftResultDraftApi
+import org.turter.wageapp.transport.model.ConfirmShiftResultDraftResponse
+import org.turter.wageapp.transport.model.ShiftResultDraft
+import java.util.UUID
 
 @RestController
-@RequestMapping("/api/v1/calculation")
 class CalculationController(
-    private val calculationService: CalculationService
-) {
+    private val calculationService: CalculationService,
+    private val transportMapper: ShiftResultTransportMapper,
+) : ShiftResultDraftApi {
 
-    @GetMapping("/draft/for-session/{sessionId}")
-    suspend fun getDraftForSession(
-        @PathVariable sessionId: UUID,
-        principal: Principal
-    ): ResponseEntity<ShiftResultDraft> {
-        return ResponseEntity.ok(calculationService.getOrCalculateDraft(sessionId, principal.name))
-    }
+    override suspend fun getOrCalculateShiftResultDraft(
+        sessionId: UUID,
+    ): ResponseEntity<ShiftResultDraft> = ResponseEntity.ok(
+        transportMapper.toTransport(
+            calculationService.getOrCalculateDraft(sessionId, currentUserId()),
+        ),
+    )
 
-    @PostMapping("/draft/{id}/confirm")
-    suspend fun confirmDraft(
-        @PathVariable id: UUID,
-        principal: Principal
-    ): ResponseEntity<ConfirmDraftResponse> {
-        return ResponseEntity.ok(calculationService.confirmDraft(id, principal.name))
-    }
+    override suspend fun confirmShiftResultDraft(
+        id: UUID,
+    ): ResponseEntity<ConfirmShiftResultDraftResponse> = ResponseEntity.ok(
+        transportMapper.toTransport(calculationService.confirmDraft(id, currentUserId())),
+    )
 
-    @DeleteMapping("/draft/{id}/delete")
-    suspend fun deleteDraft(@PathVariable id: UUID, principal: Principal): ResponseEntity<Unit> {
-        calculationService.deleteDraft(id, principal.name)
+    override suspend fun deleteShiftResultDraft(id: UUID): ResponseEntity<Unit> {
+        calculationService.deleteDraft(id, currentUserId())
         return ResponseEntity.noContent().build()
     }
-
 }
