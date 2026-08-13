@@ -1,6 +1,6 @@
 package org.turter.wageapp.utils.session
 
-import org.turter.wageapp.domain.shift.UpdateShiftSessionStartWorkTimePayload
+import org.turter.wageapp.transport.model.UpdateShiftSessionStartRequest
 import java.time.LocalTime
 import java.util.UUID
 
@@ -9,9 +9,9 @@ object UpdateShiftSessionStartWorkTimePayloadSupplier {
     fun valid(
         sessionId: UUID,
         startWorkTime: LocalTime = LocalTime.of(10, 0)
-    ): UpdateShiftSessionStartWorkTimePayload =
-        UpdateShiftSessionStartWorkTimePayload(
+    ): UpdateShiftSessionStartRequest =
+        UpdateShiftSessionStartRequest(
             sessionId = sessionId,
-            startWorkTime = startWorkTime
+            startWorkTime = startWorkTime.toString()
         )
 }

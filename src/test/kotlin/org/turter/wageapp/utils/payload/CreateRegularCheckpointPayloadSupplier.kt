@@ -1,9 +1,9 @@
 package org.turter.wageapp.utils.payload
 
-import org.turter.wageapp.domain.shift.CheckpointCalcDestination
-import org.turter.wageapp.domain.shift.CheckpointMetricRecordPayload
-import org.turter.wageapp.domain.shift.CheckpointType
-import org.turter.wageapp.domain.shift.CreateRegularCheckpointPayload
+import org.turter.wageapp.transport.model.CheckpointMetricDestination
+import org.turter.wageapp.transport.model.CheckpointMetricRecordRequest
+import org.turter.wageapp.transport.model.CheckpointType
+import org.turter.wageapp.transport.model.CreateCheckpointRequest
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -16,23 +16,23 @@ object CreateRegularCheckpointPayloadSupplier {
         tips: Int = 1_000,
         dateTime: LocalDateTime = LocalDateTime.now(),
         type: CheckpointType = CheckpointType.REGULAR
-    ): CreateRegularCheckpointPayload =
-        CreateRegularCheckpointPayload(
+    ): CreateCheckpointRequest =
+        CreateCheckpointRequest(
             sessionId = sessionId,
             revenue = revenue,
             tips = tips,
             employeeIds = employeeIds,
-            dateTime = dateTime,
+            dateTime = dateTime.toString(),
             type = type,
             fieldRecords = listOf(
-                CheckpointMetricRecordPayload(
+                CheckpointMetricRecordRequest(
                     label = "revenue",
-                    destination = CheckpointCalcDestination.REVENUE,
+                    destination = CheckpointMetricDestination.REVENUE,
                     value = revenue
                 ),
-                CheckpointMetricRecordPayload(
+                CheckpointMetricRecordRequest(
                     label = "tips",
-                    destination = CheckpointCalcDestination.TIPS,
+                    destination = CheckpointMetricDestination.TIPS,
                     value = tips
                 )
             )

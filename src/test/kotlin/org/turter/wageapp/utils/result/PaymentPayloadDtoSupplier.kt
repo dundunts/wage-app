@@ -1,6 +1,6 @@
 package org.turter.wageapp.utils.result
 
-import org.turter.wageapp.domain.shift.SaveShiftResultPayload
+import org.turter.wageapp.transport.model.ManualOverridePaymentRequest
 import java.util.UUID
 
 object PaymentPayloadDtoSupplier {
@@ -10,8 +10,8 @@ object PaymentPayloadDtoSupplier {
         percentFromRevenue: Int = 10,
         tips: Int = 100,
         workSeconds: Long = 3600
-    ): SaveShiftResultPayload.PaymentPayload {
-        return SaveShiftResultPayload.PaymentPayload(
+    ): ManualOverridePaymentRequest {
+        return ManualOverridePaymentRequest(
             employeeId = employeeId,
             percentFromRevenue = percentFromRevenue,
             tips = tips,

@@ -1,6 +1,7 @@
 package org.turter.wageapp.utils.result
 
-import org.turter.wageapp.domain.shift.SaveShiftResultPayload
+import org.turter.wageapp.transport.model.ManualOverridePaymentRequest
+import org.turter.wageapp.transport.model.SaveManualOverrideShiftResultRequest
 import java.time.LocalDate
 import java.util.UUID
 
@@ -10,15 +11,15 @@ object SaveShiftResultPayloadDtoSupplier {
         replacementId: UUID? = null,
         companyId: UUID,
         date: LocalDate,
-        payments: List<SaveShiftResultPayload.PaymentPayload>,
+        payments: List<ManualOverridePaymentRequest>,
         overwrite: Boolean = false
-    ): SaveShiftResultPayload {
-        return SaveShiftResultPayload(
-            replacementId = replacementId,
+    ): SaveManualOverrideShiftResultRequest {
+        return SaveManualOverrideShiftResultRequest(
             companyId = companyId,
-            overwrite = overwrite,
             payments = payments,
-            date = date
+            date = date,
+            replacementId = replacementId,
+            overwrite = overwrite,
         )
     }
 }

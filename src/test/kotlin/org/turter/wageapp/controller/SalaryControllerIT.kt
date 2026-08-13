@@ -12,8 +12,9 @@ import org.turter.wageapp.application.data.employee.entity.EmployeeDbEntity
 import org.turter.wageapp.application.data.shift.*
 import org.turter.wageapp.config.CommonWageAppIT
 import org.turter.wageapp.config.withUser
-import org.turter.wageapp.domain.salary.Payroll
 import org.turter.wageapp.domain.salary.Period
+import org.turter.wageapp.transport.model.Payroll
+import org.turter.wageapp.transport.model.PayrollAggregation
 import org.turter.wageapp.utils.period.PeriodRequestParamsSupplier
 import org.turter.wageapp.utils.result.PaymentEntityFactory
 import org.turter.wageapp.utils.result.ShiftResultEntityFactory
@@ -77,7 +78,7 @@ class SalaryControllerIT : CommonWageAppIT() {
             .returnResult()
             .responseBody!!
 
-        assertEquals(Payroll.Type.BY_DAY, response.type)
+        assertEquals(PayrollAggregation.BY_DAY, response.type)
         assertEquals(1, response.elements.size)
         assertEquals(date, response.elements.first().date)
         val payment = response.elements.first().payments.first()
@@ -114,7 +115,7 @@ class SalaryControllerIT : CommonWageAppIT() {
             .returnResult()
             .responseBody!!
 
-        assertEquals(Payroll.Type.BY_DAY, response.type)
+        assertEquals(PayrollAggregation.BY_DAY, response.type)
         assertEquals(1, response.elements.size)
         assertEquals(date, response.elements.first().date)
     }
@@ -142,7 +143,7 @@ class SalaryControllerIT : CommonWageAppIT() {
             .returnResult()
             .responseBody!!
 
-        assertEquals(Payroll.Type.BY_DAY, response.type)
+        assertEquals(PayrollAggregation.BY_DAY, response.type)
         assertEquals(6, response.elements.size)
         assertEquals(start, response.elements.first().date)
         assertEquals(end, response.elements.last().date)
@@ -221,7 +222,7 @@ class SalaryControllerIT : CommonWageAppIT() {
             .returnResult()
             .responseBody!!
 
-        assertEquals(Payroll.Type.BY_DAY, response.type)
+        assertEquals(PayrollAggregation.BY_DAY, response.type)
         assertTrue(response.elements.isEmpty())
         assertTrue(response.summaries.isEmpty())
     }
@@ -266,7 +267,7 @@ class SalaryControllerIT : CommonWageAppIT() {
             .returnResult()
             .responseBody!!
 
-        assertEquals(Payroll.Type.BY_DAY, response.type)
+        assertEquals(PayrollAggregation.BY_DAY, response.type)
         assertEquals(1, response.elements.size)
         assertEquals(2, response.summaries.size)
         assertTrue(response.elements.first().payments.all { it.percentFromRevenue == 10 && it.tips == 100 })
@@ -301,7 +302,7 @@ class SalaryControllerIT : CommonWageAppIT() {
             .returnResult()
             .responseBody!!
 
-        assertEquals(Payroll.Type.BY_DAY, response.type)
+        assertEquals(PayrollAggregation.BY_DAY, response.type)
         assertEquals(1, response.elements.size)
         assertEquals(2, response.summaries.size)
     }
@@ -338,7 +339,7 @@ class SalaryControllerIT : CommonWageAppIT() {
             .responseBody!!
 
         // проверяем агрегирование элементов и суммарные данные
-        assertEquals(Payroll.Type.BY_DAY, response.type)
+        assertEquals(PayrollAggregation.BY_DAY, response.type)
         assertEquals(31, response.elements.size)
         assertEquals(3, response.summaries.size)
         response.elements.forEach { element ->
@@ -487,7 +488,7 @@ class SalaryControllerIT : CommonWageAppIT() {
             .returnResult()
             .responseBody!!
 
-        assertEquals(Payroll.Type.BY_DAY, response.type)
+        assertEquals(PayrollAggregation.BY_DAY, response.type)
         assertEquals(2, response.elements.size)
         assertTrue(response.elements.all { it.payments.any { p -> p.employee.id == employee.id } })
     }
@@ -518,7 +519,7 @@ class SalaryControllerIT : CommonWageAppIT() {
             .returnResult()
             .responseBody!!
 
-        assertEquals(Payroll.Type.BY_MONTH, response.type)
+        assertEquals(PayrollAggregation.BY_MONTH, response.type)
         assertTrue(response.elements.size <= 2) // два месяца данных
         assertTrue(response.elements.all { it.payments.any { p -> p.employee.id == employee.id } })
     }
@@ -549,7 +550,7 @@ class SalaryControllerIT : CommonWageAppIT() {
             .returnResult()
             .responseBody!!
 
-        assertEquals(Payroll.Type.BY_YEAR, response.type)
+        assertEquals(PayrollAggregation.BY_YEAR, response.type)
         assertTrue(response.elements.size <= 5) // не больше количества лет
         assertTrue(response.elements.all { it.payments.any { p -> p.employee.id == employee.id } })
     }

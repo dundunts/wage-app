@@ -48,10 +48,10 @@ is cleared before generation, and is wired into Kotlin compilation. It
 contains only API interfaces in `org.turter.wageapp.transport.api` and transport
 DTOs in `org.turter.wageapp.transport.model`; domain models remain hand-written.
 
-The existing controllers continue to own request handling during this expand
-phase. API groups can migrate independently to generated interfaces and explicit
-transport/domain mappings in subsequent changes without changing current HTTP
-behavior.
+Every generated API operation is implemented explicitly by a handwritten Spring
+controller. Those controllers accept and return only generated transport types
+at the HTTP boundary and map them to handwritten domain models. Generated API
+interfaces contain no default endpoint implementations.
 
 ## Pinned toolchain
 

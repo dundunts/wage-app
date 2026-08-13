@@ -82,5 +82,3 @@ data class SaveShiftResultPayload(
 }
 
 data class SaveShiftResultResponse(val resultId: UUID)
-
-data class ShiftResultExtendedResponse(val shiftResult: ShiftResultDetailed, val session: ShiftSession?)
