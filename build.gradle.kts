@@ -1,4 +1,5 @@
 import com.github.gradle.node.npm.task.NpmTask
+import org.openapitools.generator.gradle.plugin.tasks.GenerateTask
 
 plugins {
     kotlin("jvm") version "2.1.0"
@@ -7,6 +8,7 @@ plugins {
     id("org.springframework.boot") version "3.5.7"
     id("io.spring.dependency-management") version "1.1.7"
     id("com.github.node-gradle.node") version "7.1.0"
+    id("org.openapi.generator") version "7.17.0"
 }
 
 node {
@@ -122,12 +124,76 @@ tasks.test {
     }
 }
 
+val generatedOpenApiRoot = layout.buildDirectory.dir("generated/openapi")
+val generatedOpenApiKotlin = generatedOpenApiRoot.map { it.dir("src/main/kotlin") }
+
+kotlin.sourceSets.main {
+    kotlin.srcDir(generatedOpenApiKotlin)
+}
+
+val openApiGenerateTransport by tasks.registering(GenerateTask::class) {
+    group = "openapi"
+    description = "Generates Kotlin Spring API interfaces and transport DTOs from the canonical bundle."
+    generatorName.set("kotlin-spring")
+    inputSpec.set(layout.projectDirectory.file("openapi/bundled/openapi.yaml").asFile.absolutePath)
+    outputDir.set(generatedOpenApiRoot.get().asFile.absolutePath)
+    apiPackage.set("org.turter.wageapp.transport.api")
+    modelPackage.set("org.turter.wageapp.transport.model")
+    cleanupOutput.set(true)
+    globalProperties.set(
+        mapOf(
+            "apis" to "",
+            "models" to "",
+            "apiDocs" to "false",
+            "apiTests" to "false",
+            "modelDocs" to "false",
+            "modelTests" to "false",
+            "supportingFiles" to "false",
+        )
+    )
+    configOptions.set(
+        mapOf(
+            "annotationLibrary" to "none",
+            "documentationProvider" to "none",
+            "exceptionHandler" to "false",
+            "gradleBuildFile" to "false",
+            "interfaceOnly" to "true",
+            "library" to "spring-boot",
+            "openApiNullable" to "false",
+            "reactive" to "true",
+            "requestMappingMode" to "api_interface",
+            "skipDefaultInterface" to "true",
+            "sortModelPropertiesByRequiredFlag" to "true",
+            "sortParamsByRequiredFlag" to "true",
+            "sourceFolder" to "src/main/kotlin",
+            "suspendFunctions" to "true",
+            "useBeanValidation" to "true",
+            "useFlowForArrayReturnType" to "false",
+            "useResponseEntity" to "true",
+            "useSpringBoot3" to "true",
+            "useSpringBuiltInValidation" to "false",
+            "useSwaggerUI" to "false",
+            "useTags" to "true",
+        )
+    )
+    inputs.file(layout.projectDirectory.file("openapi/bundled/openapi.yaml"))
+    outputs.dir(generatedOpenApiKotlin)
+}
+
+tasks.compileKotlin {
+    dependsOn(openApiGenerateTransport)
+}
+
+tasks.matching { it.name == "kaptGenerateStubsKotlin" }.configureEach {
+    dependsOn(openApiGenerateTransport)
+}
+
 val openApiSources = fileTree("openapi") {
     include("**/*.yaml")
     exclude("bundled/**")
 }
 
-val openApiValidate by tasks.registering(NpmTask::class) {
+val openApiSpecValidate by tasks.registering(NpmTask::class) {
     group = "verification"
     description = "Validates the modular and bundled OpenAPI documents and their references."
     dependsOn(tasks.npmInstall, "openApiBundle")
@@ -203,13 +269,15 @@ tasks.register<Copy>("openApiUpdateBundle") {
 
 val openApiCheck by tasks.registering {
     group = "verification"
-    description = "Validates, lints, and checks OpenAPI publication and its deterministic bundle."
+    description = "Validates the contract, generates and compiles transport sources, and runs all tests."
     dependsOn(
-        openApiValidate,
+        openApiSpecValidate,
         openApiLint,
         openApiVerifyBundle,
         openApiContractTest,
         openApiWorkflowContract,
+        tasks.compileKotlin,
+        tasks.test,
     )
 }
 
