@@ -45,8 +45,8 @@ ruby -ryaml -e '
     release_yaml.include?("repositories: wage-app-infr")
   abort "release workflow must not receive Kubernetes credentials" if release_yaml.match?(/KUBECONFIG|kubectl/)
   abort "workflows must invoke the non-executable Gradle wrapper through bash" unless
-    File.read(File.join(root, ".github/workflows/ci.yaml")).include?("bash gradlew test bootJar") &&
-    release_yaml.include?("bash gradlew test")
+    File.read(File.join(root, ".github/workflows/ci.yaml")).include?("bash ./gradlew check bootJar") &&
+    release_yaml.include?("bash ./gradlew test")
 
   app = File.read(File.join(root, "src/main/resources/application.yaml"))
   abort "Liquibase must use runtime database credentials" unless
