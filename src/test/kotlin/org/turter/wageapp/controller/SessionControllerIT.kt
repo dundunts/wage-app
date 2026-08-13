@@ -341,6 +341,20 @@ class SessionControllerIT : CommonWageAppIT() {
     }
 
     @Test
+    @DisplayName("Возвращает 400, если время начала новой сессии не является строкой")
+    fun openNewSession_returns400IfStartWorkAtIsNotString() {
+        val (_, company) = saveNewUserEmployeeAndCompany()
+
+        client.withUser()
+            .post()
+            .uri("/api/v1/session/open")
+            .bodyValue(mapOf("companyId" to company.id, "startWorkAt" to 10))
+            .exchange()
+            .expectStatus().isBadRequest
+            .expectBody(ProblemDetail::class.java)
+    }
+
+    @Test
     @DisplayName("Возвращает 409, если для компании уже существует открытая сессия")
     fun openNewSession_returns409IfSessionAlreadyOpened() {
         val (_, company) = saveNewUserEmployeeAndCompany()
@@ -550,6 +564,23 @@ class SessionControllerIT : CommonWageAppIT() {
 
         val updated = shiftSessionRepository.findById(session.id!!).block()!!
         assertEquals(LocalTime.of(11, 30), updated.startWorkTime)
+    }
+
+    @Test
+    @DisplayName("Возвращает 400, если новое время начала сессии некорректно")
+    fun updateSessionStartWorkTime_returns400IfTimeIsInvalid() {
+        val (_, company) = saveNewUserEmployeeAndCompany()
+        val session = shiftSessionRepository.save(
+            ShiftSessionEntityFactory.available(company.id!!, ShiftSession.Status.OPENED)
+        ).block()!!
+
+        client.withUser()
+            .put()
+            .uri("/api/v1/session/update/time")
+            .bodyValue(mapOf("sessionId" to session.id, "startWorkTime" to "25:00"))
+            .exchange()
+            .expectStatus().isBadRequest
+            .expectBody(ProblemDetail::class.java)
     }
 
     @Test

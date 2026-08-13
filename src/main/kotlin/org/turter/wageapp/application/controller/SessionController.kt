@@ -1,84 +1,79 @@
 package org.turter.wageapp.application.controller
 
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.PutMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
-import org.turter.wageapp.domain.shift.CreateRecalculatingShiftSessionPayload
-import org.turter.wageapp.domain.shift.OpenNewShiftSessionPayload
-import org.turter.wageapp.domain.shift.ShiftSession
-import org.turter.wageapp.domain.shift.UpdateShiftSessionStartWorkTimePayload
+import org.turter.wageapp.application.mapper.ShiftResultTransportMapper
+import org.turter.wageapp.application.mapper.ShiftSessionCheckpointRequestMapper
 import org.turter.wageapp.application.service.shift.SessionService
-import java.security.Principal
+import org.turter.wageapp.transport.api.ShiftSessionApi
+import org.turter.wageapp.transport.model.OpenShiftSessionRecalculationRequest
+import org.turter.wageapp.transport.model.OpenShiftSessionRequest
+import org.turter.wageapp.transport.model.ShiftSession
+import org.turter.wageapp.transport.model.UpdateShiftSessionStartRequest
 import java.util.UUID
 
 @RestController
-@RequestMapping("/api/v1/session")
 class SessionController(
-    private val sessionService: SessionService
-) {
+    private val sessionService: SessionService,
+    private val requestMapper: ShiftSessionCheckpointRequestMapper,
+    private val responseMapper: ShiftResultTransportMapper,
+) : ShiftSessionApi {
 
-    @GetMapping("/get/opened")
-    suspend fun getOpenedSessionForCompanyId(
-        @RequestParam companyId: UUID,
-        principal: Principal
+    override suspend fun getOpenedShiftSession(
+        companyId: UUID,
     ): ResponseEntity<ShiftSession> {
-        return ResponseEntity.ok(sessionService.getOpenedSessionForCompany(companyId, principal.name))
+        val session = sessionService.getOpenedSessionForCompany(companyId, currentUserId())
+        return ResponseEntity.ok(responseMapper.toTransport(session))
     }
 
-    @GetMapping("/get/available/{sessionId}")
-    suspend fun getAvailableById(
-        @PathVariable sessionId: UUID,
-        principal: Principal
+    override suspend fun getAvailableShiftSession(
+        sessionId: UUID,
     ): ResponseEntity<ShiftSession> {
-        return ResponseEntity.ok(sessionService.getAvailableById(sessionId, principal.name))
+        val session = sessionService.getAvailableById(sessionId, currentUserId())
+        return ResponseEntity.ok(responseMapper.toTransport(session))
     }
 
-    @GetMapping("/get/available/all")
-    suspend fun getAllAvailableSessions(
-        @RequestParam companyId: UUID,
-        principal: Principal
+    override suspend fun getAvailableShiftSessions(
+        companyId: UUID,
     ): ResponseEntity<List<ShiftSession>> {
-        return ResponseEntity.ok(sessionService.getAllAvailableSessions(companyId, principal.name))
+        val sessions = sessionService.getAllAvailableSessions(companyId, currentUserId())
+        return ResponseEntity.ok(sessions.map { responseMapper.toTransport(it) })
     }
 
-    @PostMapping("/open")
-    suspend fun openNewSession(
-        @RequestBody payload: OpenNewShiftSessionPayload,
-        principal: Principal
+    override suspend fun openShiftSession(
+        openShiftSessionRequest: OpenShiftSessionRequest,
     ): ResponseEntity<ShiftSession> {
-        return ResponseEntity.status(201).body(sessionService.openNewSession(payload, principal.name))
+        val session = sessionService.openNewSession(
+            requestMapper.toDomain(openShiftSessionRequest),
+            currentUserId(),
+        )
+        return ResponseEntity.status(201).body(responseMapper.toTransport(session))
     }
 
-    @PostMapping("/recalculating")
-    suspend fun openRecalculatingSession(
-        @RequestBody payload: CreateRecalculatingShiftSessionPayload,
-        principal: Principal
+    override suspend fun openShiftSessionRecalculation(
+        openShiftSessionRecalculationRequest: OpenShiftSessionRecalculationRequest,
     ): ResponseEntity<ShiftSession> {
-        return ResponseEntity.status(201).body(sessionService.openRecalculatingSession(payload, principal.name))
+        val session = sessionService.openRecalculatingSession(
+            requestMapper.toDomain(openShiftSessionRecalculationRequest),
+            currentUserId(),
+        )
+        return ResponseEntity.status(201).body(responseMapper.toTransport(session))
     }
 
-    @PutMapping("/{sessionId}/close")
-    suspend fun closeSession(
-        @PathVariable sessionId: UUID,
-        principal: Principal
+    override suspend fun closeShiftSession(
+        sessionId: UUID,
     ): ResponseEntity<Unit> {
-        sessionService.closeSession(sessionId, principal.name)
+        sessionService.closeSession(sessionId, currentUserId())
         return ResponseEntity.noContent().build()
     }
 
-    @PutMapping("/update/time")
-    suspend fun updateSessionStartWorkTime(
-        @RequestBody payload: UpdateShiftSessionStartWorkTimePayload,
-        principal: Principal
+    override suspend fun updateShiftSessionStart(
+        updateShiftSessionStartRequest: UpdateShiftSessionStartRequest,
     ): ResponseEntity<Unit> {
-        sessionService.updateStartWorkTime(payload, principal.name)
+        sessionService.updateStartWorkTime(
+            requestMapper.toDomain(updateShiftSessionStartRequest),
+            currentUserId(),
+        )
         return ResponseEntity.noContent().build()
     }
-
 }

@@ -1,6 +1,8 @@
 package org.turter.wageapp.application.mapper
 
 import org.springframework.data.domain.Page
+import org.springframework.http.HttpStatus
+import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Component
 import org.turter.wageapp.domain.shift.Checkpoint
 import org.turter.wageapp.domain.shift.CheckpointCalcDestination
@@ -129,7 +131,7 @@ class ShiftResultTransportMapper {
             workSeconds = payment.workSeconds,
         )
 
-    private fun toTransport(session: ShiftSession): TransportShiftSession = TransportShiftSession(
+    fun toTransport(session: ShiftSession): TransportShiftSession = TransportShiftSession(
         id = session.id,
         companyId = session.companyId,
         startWorkTime = session.startWorkTime.toString(),
@@ -143,6 +145,14 @@ class ShiftResultTransportMapper {
         // The generator models oneOf as an interface but does not declare its named DTOs as implementers.
         // The list-level bridge is safe because every element is one of those generated DTOs.
         map(::toTransportCheckpoint) as List<TransportCheckpoint>
+
+    @Suppress("UNCHECKED_CAST")
+    fun toTransportResponse(
+        status: HttpStatus,
+        checkpoint: Checkpoint,
+    ): ResponseEntity<TransportCheckpoint> =
+        // The container-level bridge is safe because the body is a generated oneOf variant.
+        ResponseEntity.status(status).body(toTransportCheckpoint(checkpoint)) as ResponseEntity<TransportCheckpoint>
 
     private fun toTransportCheckpoint(checkpoint: Checkpoint): Any {
         val employees = checkpoint.employees.map {
