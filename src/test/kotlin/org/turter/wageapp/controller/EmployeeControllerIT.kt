@@ -324,6 +324,22 @@ class EmployeeControllerIT : CommonWageAppIT() {
     }
 
     @Test
+    @DisplayName("PUT /employee/update — 409 если пользователь уже привязан к другому сотруднику")
+    fun updateShouldReturn409WhenUserAlreadyBound() {
+        saveNewEmployee(userId = "user-123")
+        val employee = saveNewEmployee()
+        val request = EmployeePayloadDtoSupplier.validForUpdate(userId = "user-123")
+
+        client.withUser()
+            .put()
+            .uri("/api/v1/employee/update/{id}", employee.id!!)
+            .bodyValue(request)
+            .exchange()
+            .expectStatus().isEqualTo(409)
+            .expectBody(ProblemDetail::class.java)
+    }
+
+    @Test
     @DisplayName("PUT /employee/bind-user — успешно привязывает пользователя")
     fun shouldBindUserToEmployee() {
         val employee = saveNewEmployee()
@@ -342,6 +358,39 @@ class EmployeeControllerIT : CommonWageAppIT() {
 
         val updated = employeeRepository.findById(employee.id!!).block()!!
         assertEquals(userId, updated.userId)
+    }
+
+    @Test
+    @DisplayName("PUT /employee/bind-user — 404 если сотрудник не найден")
+    fun bindUserShouldReturn404WhenEmployeeNotFound() {
+        client.withUser()
+            .put()
+            .uri { builder ->
+                builder.path("/api/v1/employee/bind-user/{id}")
+                    .queryParam("userId", "user-123")
+                    .build(UUID.randomUUID())
+            }
+            .exchange()
+            .expectStatus().isNotFound
+            .expectBody(ProblemDetail::class.java)
+    }
+
+    @Test
+    @DisplayName("PUT /employee/bind-user — 409 если пользователь уже привязан к другому сотруднику")
+    fun bindUserShouldReturn409WhenUserAlreadyBound() {
+        saveNewEmployee(userId = "user-123")
+        val employee = saveNewEmployee()
+
+        client.withUser()
+            .put()
+            .uri { builder ->
+                builder.path("/api/v1/employee/bind-user/{id}")
+                    .queryParam("userId", "user-123")
+                    .build(employee.id)
+            }
+            .exchange()
+            .expectStatus().isEqualTo(409)
+            .expectBody(ProblemDetail::class.java)
     }
 
     @Test

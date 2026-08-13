@@ -3,15 +3,17 @@ info:
   title: Wage App API
   version: 0.1.0
   description: >-
-    Draft baseline for the authenticated Company, Shift Session, and Checkpoint
-    operations currently provided by Wage App. This contract is not yet the
-    complete /api/v1 contract.
+    Draft baseline for the authenticated Company, Employee, Shift Session, and
+    Checkpoint operations currently provided by Wage App. This contract is not
+    yet the complete /api/v1 contract.
 servers:
   - url: /
     description: Current Wage App server
 tags:
   - name: Company
     description: Operations for a work location whose shifts and pay are accounted independently.
+  - name: Employee
+    description: Operations for people whose work and pay are accounted by Companies.
   - name: Shift Session
     description: Operations for a Company's team-based work accounting session.
   - name: Checkpoint
@@ -31,6 +33,22 @@ paths:
     $ref: ./paths/company.yaml#/UpdateCompany
   /api/v1/company/delete/{id}:
     $ref: ./paths/company.yaml#/DeleteCompany
+  /api/v1/employee/get/{id}:
+    $ref: ./paths/employee.yaml#/GetEmployee
+  /api/v1/employee/get/all:
+    $ref: ./paths/employee.yaml#/GetAllEmployees
+  /api/v1/employee/get/by-companies:
+    $ref: ./paths/employee.yaml#/GetEmployeesByCompanies
+  /api/v1/employee/get/coworkers:
+    $ref: ./paths/employee.yaml#/GetCoworkers
+  /api/v1/employee/create:
+    $ref: ./paths/employee.yaml#/CreateEmployee
+  /api/v1/employee/update/{id}:
+    $ref: ./paths/employee.yaml#/UpdateEmployee
+  /api/v1/employee/bind-user/{employeeId}:
+    $ref: ./paths/employee.yaml#/BindEmployeeUser
+  /api/v1/employee/delete/{id}:
+    $ref: ./paths/employee.yaml#/DeleteEmployee
   /api/v1/session/get/opened:
     $ref: ./paths/shift-session.yaml#/GetOpenedShiftSession
   /api/v1/session/get/available/{sessionId}:
@@ -58,6 +76,14 @@ components:
   parameters:
     CompanyId:
       $ref: ./components/parameters.yaml#/CompanyId
+    EmployeeId:
+      $ref: ./components/parameters.yaml#/EmployeeId
+    EmployeeBindingId:
+      $ref: ./components/parameters.yaml#/EmployeeBindingId
+    CompanyIds:
+      $ref: ./components/parameters.yaml#/CompanyIds
+    UserId:
+      $ref: ./components/parameters.yaml#/UserId
     ShiftSessionCompanyId:
       $ref: ./components/parameters.yaml#/ShiftSessionCompanyId
     ShiftSessionId:
@@ -81,6 +107,10 @@ components:
       $ref: ./components/responses.yaml#/CompanyNotFound
     CompanyConflict:
       $ref: ./components/responses.yaml#/CompanyConflict
+    EmployeeNotFound:
+      $ref: ./components/responses.yaml#/EmployeeNotFound
+    UserBindingConflict:
+      $ref: ./components/responses.yaml#/UserBindingConflict
     ShiftSessionResourceNotFound:
       $ref: ./components/responses.yaml#/ShiftSessionResourceNotFound
     ShiftSessionConflict:
@@ -98,6 +128,18 @@ components:
       $ref: ./components/schemas.yaml#/UserCompaniesResponse
     CompanyPage:
       $ref: ./components/schemas.yaml#/CompanyPage
+    Position:
+      $ref: ./components/schemas.yaml#/Position
+    Employee:
+      $ref: ./components/schemas.yaml#/Employee
+    CompanyEmployee:
+      $ref: ./components/schemas.yaml#/CompanyEmployee
+    CompanyEmployees:
+      $ref: ./components/schemas.yaml#/CompanyEmployees
+    CreateEmployeeRequest:
+      $ref: ./components/schemas.yaml#/CreateEmployeeRequest
+    UpdateEmployeeRequest:
+      $ref: ./components/schemas.yaml#/UpdateEmployeeRequest
     ProblemDetail:
       $ref: ./components/schemas.yaml#/ProblemDetail
     ShiftSession:

@@ -1,7 +1,7 @@
 # Wage App OpenAPI workflow
 
 This directory contains the manually reviewed OpenAPI 3.0.3 baseline for the
-Company, Shift Session, and Checkpoint APIs.
+Company, Employee, Shift Session, and Checkpoint APIs.
 `openapi.yaml` and its referenced `paths/` and `components/` files are the authored
 sources. `bundled/openapi.yaml` is the deterministic, self-contained document for
 consumers.
