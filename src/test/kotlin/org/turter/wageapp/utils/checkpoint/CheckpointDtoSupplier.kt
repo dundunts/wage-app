@@ -1,10 +1,10 @@
 package org.turter.wageapp.utils.checkpoint
 
-import org.turter.wageapp.domain.shift.CheckpointCalcDestination
-import org.turter.wageapp.domain.shift.CheckpointMetricRecordPayload
-import org.turter.wageapp.domain.shift.CheckpointType
-import org.turter.wageapp.domain.shift.CreateRegularCheckpointPayload
-import org.turter.wageapp.domain.shift.UpdateShiftCheckpointPayload
+import org.turter.wageapp.transport.model.CheckpointMetricDestination
+import org.turter.wageapp.transport.model.CheckpointMetricRecordRequest
+import org.turter.wageapp.transport.model.CheckpointType
+import org.turter.wageapp.transport.model.CreateCheckpointRequest
+import org.turter.wageapp.transport.model.UpdateCheckpointRequest
 import java.time.LocalDateTime
 import java.util.*
 
@@ -17,13 +17,13 @@ object CheckpointDtoSupplier {
         employeeIds: Set<UUID> = emptySet(),
         dateTime: LocalDateTime = LocalDateTime.now(),
         type: CheckpointType = CheckpointType.REGULAR,
-        fieldRecords: List<CheckpointMetricRecordPayload> = emptyList()
-    ) = CreateRegularCheckpointPayload(
+        fieldRecords: List<CheckpointMetricRecordRequest> = emptyList()
+    ) = CreateCheckpointRequest(
         sessionId = sessionId,
         revenue = revenue,
         tips = tips,
         employeeIds = employeeIds,
-        dateTime = dateTime,
+        dateTime = dateTime.toString(),
         type = type,
         fieldRecords = fieldRecords
     )
@@ -35,20 +35,20 @@ object CheckpointDtoSupplier {
         employeeIds: Set<UUID> = emptySet(),
         dateTime: LocalDateTime = LocalDateTime.now(),
         type: CheckpointType = CheckpointType.REGULAR,
-        fieldRecords: List<CheckpointMetricRecordPayload> = emptyList()
-    ) = UpdateShiftCheckpointPayload(
+        fieldRecords: List<CheckpointMetricRecordRequest> = emptyList()
+    ) = UpdateCheckpointRequest(
         id = id,
         revenue = revenue,
         tips = tips,
         employeeIds = employeeIds,
-        dateTime = dateTime,
+        dateTime = dateTime.toString(),
         type = type,
         fieldRecords = fieldRecords
     )
 
     fun metricRecord(
         label: String = "label",
-        destination: CheckpointCalcDestination = CheckpointCalcDestination.REVENUE,
+        destination: CheckpointMetricDestination = CheckpointMetricDestination.REVENUE,
         value: Int = 100
-    ) = CheckpointMetricRecordPayload(label, destination, value)
+    ) = CheckpointMetricRecordRequest(label, destination, value)
 }

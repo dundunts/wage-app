@@ -1,8 +1,8 @@
 package org.turter.wageapp.utils.employee
 
-import org.turter.wageapp.domain.employee.CreateEmployeePayload
-import org.turter.wageapp.domain.employee.Employee
-import org.turter.wageapp.domain.employee.UpdateEmployeePayload
+import org.turter.wageapp.transport.model.CreateEmployeeRequest
+import org.turter.wageapp.transport.model.Position
+import org.turter.wageapp.transport.model.UpdateEmployeeRequest
 import java.util.UUID
 
 object EmployeePayloadDtoSupplier {
@@ -13,18 +13,18 @@ object EmployeePayloadDtoSupplier {
         lastName: String = "Ivanov",
         patronymic: String = "Ivanovich",
         simpleName: String? = null,
-        position: Employee.Position = Employee.Position.WAITER_ACTIVE
-    ): CreateEmployeePayload =
-        CreateEmployeePayload(
-            companyIds = companyIds,
+        position: Position = Position.WAITER_ACTIVE
+    ): CreateEmployeeRequest =
+        CreateEmployeeRequest(
             firstName = firstName,
             lastName = lastName,
             patronymic = patronymic,
             simpleName = simpleName,
-            position = position
+            position = position,
+            companyIds = companyIds,
         )
 
-    fun withEmptyFirstName(): CreateEmployeePayload =
+    fun withEmptyFirstName(): CreateEmployeeRequest =
         validForCreate(firstName = "")
 
     fun validForUpdate(
@@ -34,16 +34,16 @@ object EmployeePayloadDtoSupplier {
         lastName: String = "Ivanov",
         patronymic: String = "Ivanovich",
         simpleName: String? = null,
-        position: Employee.Position = Employee.Position.WAITER_ACTIVE
-    ): UpdateEmployeePayload =
-        UpdateEmployeePayload(
-            companyIds = companyIds,
-            userId = userId,
+        position: Position = Position.WAITER_ACTIVE
+    ): UpdateEmployeeRequest =
+        UpdateEmployeeRequest(
             firstName = firstName,
             lastName = lastName,
             patronymic = patronymic,
             simpleName = simpleName,
-            position = position
+            position = position,
+            companyIds = companyIds,
+            userId = userId,
         )
 
 }

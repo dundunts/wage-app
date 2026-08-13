@@ -1,6 +1,6 @@
 package org.turter.wageapp.utils.company
 
-import org.turter.wageapp.domain.company.CompanyPayload
+import org.turter.wageapp.transport.model.CompanyCreateOrUpdateRequest
 
 object CompanyPayloadDtoSupplier {
 
@@ -8,16 +8,16 @@ object CompanyPayloadDtoSupplier {
         title: String = "New company",
         employeeWageCoefficientFromRevenue: Int = 10,
         defaultShiftStartTime: String = "09:00"
-    ): CompanyPayload =
-        CompanyPayload(
+    ): CompanyCreateOrUpdateRequest =
+        CompanyCreateOrUpdateRequest(
             title = title,
             employeeWageCoefficientFromRevenue = employeeWageCoefficientFromRevenue,
             defaultShiftStartTime = defaultShiftStartTime
         )
 
-    fun withEmptyTitle(): CompanyPayload =
+    fun withEmptyTitle(): CompanyCreateOrUpdateRequest =
         valid(title = "")
 
-    fun withInvalidShiftStartTime(): CompanyPayload =
+    fun withInvalidShiftStartTime(): CompanyCreateOrUpdateRequest =
         valid(defaultShiftStartTime = "25:99")
 }

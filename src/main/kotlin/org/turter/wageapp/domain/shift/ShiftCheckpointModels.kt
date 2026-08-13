@@ -50,16 +50,6 @@ interface ShiftCheckpointPayload {
     val fieldRecords: List<CheckpointMetricRecordPayload>
 }
 
-data class CreateFirstShiftCheckpointPayload(
-    val companyId: UUID,
-    override val revenue: Int,
-    override val tips: Int,
-    override val employeeIds: Set<UUID>,
-    override val dateTime: LocalDateTime,
-    override val type: CheckpointType,
-    override val fieldRecords: List<CheckpointMetricRecordPayload>
-) : ShiftCheckpointPayload
-
 data class CreateRegularCheckpointPayload(
     val sessionId: UUID,
     override val revenue: Int,
@@ -87,4 +77,3 @@ data class CheckpointMetricRecordPayload(
     val destination: CheckpointCalcDestination,
     val value: Int
 )
-

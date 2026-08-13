@@ -10,9 +10,9 @@ import org.springframework.http.ProblemDetail
 import org.turter.wageapp.application.data.shift.*
 import org.turter.wageapp.config.CommonWageAppIT
 import org.turter.wageapp.config.withUser
-import org.turter.wageapp.domain.shift.ConfirmDraftResponse
-import org.turter.wageapp.domain.shift.ShiftResultDraft
 import org.turter.wageapp.domain.shift.ShiftSession
+import org.turter.wageapp.transport.model.ConfirmShiftResultDraftResponse
+import org.turter.wageapp.transport.model.ShiftResultDraft
 import org.turter.wageapp.utils.checkpoint.CheckpointEmployeeEntityFactory
 import org.turter.wageapp.utils.checkpoint.CheckpointEntityFactory
 import org.turter.wageapp.utils.draft.PaymentDraftEntityFactory
@@ -353,7 +353,7 @@ class CalculationControllerIT : CommonWageAppIT() {
             .uri("/api/v1/calculation/draft/{id}/confirm", draft.id)
             .exchange()
             .expectStatus().isOk
-            .expectBody(ConfirmDraftResponse::class.java)
+            .expectBody(ConfirmShiftResultDraftResponse::class.java)
             .returnResult()
             .responseBody!!
 
@@ -414,7 +414,7 @@ class CalculationControllerIT : CommonWageAppIT() {
             .uri("/api/v1/calculation/draft/{id}/confirm", draft.id)
             .exchange()
             .expectStatus().isOk
-            .expectBody(ConfirmDraftResponse::class.java)
+            .expectBody(ConfirmShiftResultDraftResponse::class.java)
             .returnResult()
             .responseBody!!
 

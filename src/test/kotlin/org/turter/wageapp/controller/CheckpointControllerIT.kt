@@ -12,8 +12,8 @@ import org.turter.wageapp.application.data.shift.CheckpointRepository
 import org.turter.wageapp.application.data.shift.ShiftSessionRepository
 import org.turter.wageapp.config.CommonWageAppIT
 import org.turter.wageapp.config.withUser
-import org.turter.wageapp.domain.shift.Checkpoint
 import org.turter.wageapp.domain.shift.ShiftSession
+import org.turter.wageapp.transport.model.RegularCheckpoint
 import org.turter.wageapp.utils.checkpoint.CheckpointDtoSupplier
 import org.turter.wageapp.utils.checkpoint.CheckpointEmployeeEntityFactory
 import org.turter.wageapp.utils.checkpoint.CheckpointEntityFactory
@@ -76,7 +76,7 @@ class CheckpointControllerIT : CommonWageAppIT() {
             .bodyValue(payload)
             .exchange()
             .expectStatus().isCreated
-            .expectBody(Checkpoint::class.java)
+            .expectBody(RegularCheckpoint::class.java)
             .returnResult()
             .responseBody!!
 
@@ -148,7 +148,7 @@ class CheckpointControllerIT : CommonWageAppIT() {
             .bodyValue(payload)
             .exchange()
             .expectStatus().isCreated
-            .expectBody(Checkpoint::class.java)
+            .expectBody(RegularCheckpoint::class.java)
             .returnResult()
             .responseBody!!
 
@@ -300,7 +300,7 @@ class CheckpointControllerIT : CommonWageAppIT() {
             .bodyValue(payload)
             .exchange()
             .expectStatus().isOk
-            .expectBody(Checkpoint::class.java)
+            .expectBody(RegularCheckpoint::class.java)
             .returnResult()
             .responseBody!!
 
@@ -356,7 +356,7 @@ class CheckpointControllerIT : CommonWageAppIT() {
             .bodyValue(payload)
             .exchange()
             .expectStatus().isOk
-            .expectBody(Checkpoint::class.java)
+            .expectBody(RegularCheckpoint::class.java)
             .returnResult()
             .responseBody!!
 

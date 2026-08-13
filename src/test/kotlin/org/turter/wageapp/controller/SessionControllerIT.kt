@@ -14,6 +14,8 @@ import org.turter.wageapp.config.CommonWageAppIT
 import org.turter.wageapp.config.withUser
 import org.turter.wageapp.domain.notification.NotificationEvent
 import org.turter.wageapp.domain.shift.ShiftSession
+import org.turter.wageapp.transport.model.ShiftSession as TransportShiftSession
+import org.turter.wageapp.transport.model.ShiftSessionStatus
 import org.turter.wageapp.utils.session.CreateRecalculatingShiftSessionPayloadSupplier
 import org.turter.wageapp.utils.session.OpenNewShiftSessionPayloadSupplier
 import org.turter.wageapp.utils.session.ShiftSessionEntityFactory
@@ -55,14 +57,14 @@ class SessionControllerIT : CommonWageAppIT() {
             .accept(MediaType.APPLICATION_JSON)
             .exchange()
             .expectStatus().isOk
-            .expectBody(ShiftSession::class.java)
+            .expectBody(TransportShiftSession::class.java)
             .returnResult()
             .responseBody
 
         assertNotNull(response)
         assertEquals(savedSession.id, response?.id)
         assertEquals(company.id, response?.companyId)
-        assertEquals(ShiftSession.Status.OPENED, response?.status)
+        assertEquals(ShiftSessionStatus.OPENED, response?.status)
     }
 
     @Test
@@ -86,13 +88,13 @@ class SessionControllerIT : CommonWageAppIT() {
             }
             .exchange()
             .expectStatus().isOk
-            .expectBody(ShiftSession::class.java)
+            .expectBody(TransportShiftSession::class.java)
             .returnResult()
             .responseBody
 
         assertNotNull(response)
         assertEquals(savedSession.id, response?.id)
-        assertEquals(ShiftSession.Status.OPENED_DRAFT, response?.status)
+        assertEquals(ShiftSessionStatus.OPENED_DRAFT, response?.status)
     }
 
     @Test
@@ -175,13 +177,13 @@ class SessionControllerIT : CommonWageAppIT() {
             .uri("/api/v1/session/get/available/{id}", session.id)
             .exchange()
             .expectStatus().isOk
-            .expectBody(ShiftSession::class.java)
+            .expectBody(TransportShiftSession::class.java)
             .returnResult()
             .responseBody
 
         assertNotNull(response)
         assertEquals(session.id, response?.id)
-        assertEquals(ShiftSession.Status.OPENED, response?.status)
+        assertEquals(ShiftSessionStatus.OPENED, response?.status)
     }
 
     @Test
@@ -255,13 +257,13 @@ class SessionControllerIT : CommonWageAppIT() {
             }
             .exchange()
             .expectStatus().isOk
-            .expectBody(object : ParameterizedTypeReference<List<ShiftSession>>() {})
+            .expectBody(object : ParameterizedTypeReference<List<TransportShiftSession>>() {})
             .returnResult()
             .responseBody!!
 
         assertEquals(2, response.size)
         response.forEach {
-            assert(it.status != ShiftSession.Status.CLOSED)
+            assert(it.status != ShiftSessionStatus.CLOSED)
         }
     }
 
@@ -296,7 +298,7 @@ class SessionControllerIT : CommonWageAppIT() {
             }
             .exchange()
             .expectStatus().isOk
-            .expectBody(object : ParameterizedTypeReference<List<ShiftSession>>() {})
+            .expectBody(object : ParameterizedTypeReference<List<TransportShiftSession>>() {})
             .returnResult()
             .responseBody!!
 
@@ -314,12 +316,13 @@ class SessionControllerIT : CommonWageAppIT() {
         )
 
         val expectedSessionId = UUID.randomUUID()
+        val startWorkAt = LocalDateTime.parse(payload.startWorkAt as String)
 
         val notificationEvent = NotificationEvent.SessionOpened(
             meta = NotificationEvent.Meta(company.id!!, Instant.now()),
             sessionId = expectedSessionId,
-            startWorkTime = payload.startWorkAt.toLocalTime(),
-            date = payload.startWorkAt.toLocalDate()
+            startWorkTime = startWorkAt.toLocalTime(),
+            date = startWorkAt.toLocalDate()
         )
 
         setupStubTgBotAPI(notificationEvent)
@@ -330,12 +333,12 @@ class SessionControllerIT : CommonWageAppIT() {
             .bodyValue(payload)
             .exchange()
             .expectStatus().isCreated
-            .expectBody(ShiftSession::class.java)
+            .expectBody(TransportShiftSession::class.java)
             .returnResult()
             .responseBody!!
 
         assertEquals(company.id, response.companyId)
-        assertEquals(ShiftSession.Status.OPENED, response.status)
+        assertEquals(ShiftSessionStatus.OPENED, response.status)
 
         awaitVerifyRequestedStubTgBot(notificationEvent)
     }
@@ -407,11 +410,11 @@ class SessionControllerIT : CommonWageAppIT() {
             .bodyValue(payload)
             .exchange()
             .expectStatus().isCreated
-            .expectBody(ShiftSession::class.java)
+            .expectBody(TransportShiftSession::class.java)
             .returnResult()
             .responseBody!!
 
-        assertEquals(ShiftSession.Status.RECALCULATING, response.status)
+        assertEquals(ShiftSessionStatus.RECALCULATING, response.status)
     }
 
     @Test

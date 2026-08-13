@@ -7,8 +7,8 @@ import org.junit.jupiter.api.Test
 import org.springframework.http.ProblemDetail
 import org.turter.wageapp.config.CommonWageAppIT
 import org.turter.wageapp.config.withUser
-import org.turter.wageapp.domain.employee.CompanyEmployeesResponse
-import org.turter.wageapp.domain.employee.Employee
+import org.turter.wageapp.transport.model.CompanyEmployees
+import org.turter.wageapp.transport.model.Employee
 import org.turter.wageapp.utils.employee.EmployeePayloadDtoSupplier
 import java.util.*
 
@@ -138,7 +138,7 @@ class EmployeeControllerIT : CommonWageAppIT() {
             }
             .exchange()
             .expectStatus().isOk
-            .expectBodyList(CompanyEmployeesResponse::class.java)
+            .expectBodyList(CompanyEmployees::class.java)
             .returnResult()
             .responseBody!!
 
@@ -165,7 +165,7 @@ class EmployeeControllerIT : CommonWageAppIT() {
             }
             .exchange()
             .expectStatus().isOk
-            .expectBodyList(CompanyEmployeesResponse::class.java)
+            .expectBodyList(CompanyEmployees::class.java)
             .returnResult()
             .responseBody!!
 
@@ -185,7 +185,7 @@ class EmployeeControllerIT : CommonWageAppIT() {
             }
             .exchange()
             .expectStatus().isOk
-            .expectBodyList(CompanyEmployeesResponse::class.java)
+            .expectBodyList(CompanyEmployees::class.java)
             .returnResult()
             .responseBody!!
 
@@ -215,7 +215,7 @@ class EmployeeControllerIT : CommonWageAppIT() {
             .uri("/api/v1/employee/get/coworkers")
             .exchange()
             .expectStatus().isOk
-            .expectBodyList(CompanyEmployeesResponse::class.java)
+            .expectBodyList(CompanyEmployees::class.java)
             .returnResult()
             .responseBody!!
 
@@ -233,7 +233,7 @@ class EmployeeControllerIT : CommonWageAppIT() {
             .uri("/api/v1/employee/get/coworkers")
             .exchange()
             .expectStatus().isOk
-            .expectBodyList(CompanyEmployeesResponse::class.java)
+            .expectBodyList(CompanyEmployees::class.java)
             .returnResult()
             .responseBody!!
 
@@ -250,7 +250,7 @@ class EmployeeControllerIT : CommonWageAppIT() {
             .uri("/api/v1/employee/get/coworkers")
             .exchange()
             .expectStatus().isOk
-            .expectBodyList(CompanyEmployeesResponse::class.java)
+            .expectBodyList(CompanyEmployees::class.java)
             .returnResult()
             .responseBody!!
 

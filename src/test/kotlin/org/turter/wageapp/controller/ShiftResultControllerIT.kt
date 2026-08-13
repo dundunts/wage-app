@@ -8,7 +8,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.api.assertNull
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.core.ParameterizedTypeReference
 import org.springframework.http.HttpStatus
 import org.springframework.http.ProblemDetail
 import org.turter.wageapp.application.data.shift.*
@@ -16,7 +15,10 @@ import org.turter.wageapp.config.CommonWageAppIT
 import org.turter.wageapp.config.withUser
 import org.turter.wageapp.domain.salary.PeriodType
 import org.turter.wageapp.domain.shift.*
-import org.turter.wageapp.dto.RestPage
+import org.turter.wageapp.transport.model.CalculationSource as TransportCalculationSource
+import org.turter.wageapp.transport.model.SaveManualOverrideShiftResultResponse
+import org.turter.wageapp.transport.model.ShiftResultPage
+import org.turter.wageapp.transport.model.ShiftResultResponse
 import org.turter.wageapp.utils.result.PaymentEntityFactory
 import org.turter.wageapp.utils.result.PaymentPayloadDtoSupplier
 import org.turter.wageapp.utils.result.SaveShiftResultPayloadDtoSupplier
@@ -73,7 +75,7 @@ class ShiftResultControllerIT : CommonWageAppIT() {
             .uri("/api/v1/shift-result/{id}/get/detailed", shiftResult.id)
             .exchange()
             .expectStatus().isOk
-            .expectBody(ShiftResultExtendedResponse::class.java)
+            .expectBody(ShiftResultResponse::class.java)
             .returnResult()
             .responseBody!!
 
@@ -81,7 +83,7 @@ class ShiftResultControllerIT : CommonWageAppIT() {
 
         assertEquals(shiftResult.id, result.id)
         assertEquals(date, result.date)
-        assertEquals(CalculationSource.MANUAL_OVERRIDE, result.calculationSource)
+        assertEquals(TransportCalculationSource.MANUAL_OVERRIDE, result.calculationSource)
         assertEquals(1, result.payments.size)
         assertEquals(employee.id, result.payments.first().employee.id)
         assertEquals(null, response.session)
@@ -168,7 +170,7 @@ class ShiftResultControllerIT : CommonWageAppIT() {
             }
             .exchange()
             .expectStatus().isOk
-            .expectBody(object : ParameterizedTypeReference<RestPage<ShiftResultDetailed>>() {})
+            .expectBody(ShiftResultPage::class.java)
             .returnResult()
             .responseBody!!
 
@@ -237,7 +239,7 @@ class ShiftResultControllerIT : CommonWageAppIT() {
             }
             .exchange()
             .expectStatus().isOk
-            .expectBody(object : ParameterizedTypeReference<RestPage<ShiftResultDetailed>>() {})
+            .expectBody(ShiftResultPage::class.java)
             .returnResult()
             .responseBody!!
 
@@ -265,7 +267,7 @@ class ShiftResultControllerIT : CommonWageAppIT() {
             }
             .exchange()
             .expectStatus().isOk
-            .expectBody(object : ParameterizedTypeReference<RestPage<ShiftResultDetailed>>() {})
+            .expectBody(ShiftResultPage::class.java)
             .returnResult()
             .responseBody!!
 
@@ -312,12 +314,12 @@ class ShiftResultControllerIT : CommonWageAppIT() {
             }
             .exchange()
             .expectStatus().isOk
-            .expectBody(object : ParameterizedTypeReference<RestPage<ShiftResultDetailed>>() {})
+            .expectBody(ShiftResultPage::class.java)
             .returnResult()
             .responseBody!!
 
         assertEquals(0, response.number)
-        assertEquals(100, response.size)
+        assertEquals(100, response.propertySize)
     }
 
     @Test
@@ -340,7 +342,7 @@ class ShiftResultControllerIT : CommonWageAppIT() {
             }
             .exchange()
             .expectStatus().isOk
-            .expectBody(object : ParameterizedTypeReference<RestPage<ShiftResultDetailed>>() {})
+            .expectBody(ShiftResultPage::class.java)
             .returnResult()
             .responseBody!!
 
@@ -368,7 +370,7 @@ class ShiftResultControllerIT : CommonWageAppIT() {
             }
             .exchange()
             .expectStatus().isOk
-            .expectBody(object : ParameterizedTypeReference<RestPage<ShiftResultDetailed>>() {})
+            .expectBody(ShiftResultPage::class.java)
             .returnResult()
             .responseBody!!
 
@@ -416,7 +418,7 @@ class ShiftResultControllerIT : CommonWageAppIT() {
             .bodyValue(payload)
             .exchange()
             .expectStatus().isCreated
-            .expectBody(SaveShiftResultResponse::class.java)
+            .expectBody(SaveManualOverrideShiftResultResponse::class.java)
             .returnResult()
             .responseBody!!
 
@@ -452,7 +454,7 @@ class ShiftResultControllerIT : CommonWageAppIT() {
             .bodyValue(payload)
             .exchange()
             .expectStatus().isCreated
-            .expectBody(SaveShiftResultResponse::class.java)
+            .expectBody(SaveManualOverrideShiftResultResponse::class.java)
             .returnResult()
             .responseBody!!
 
@@ -492,7 +494,7 @@ class ShiftResultControllerIT : CommonWageAppIT() {
             .bodyValue(payload)
             .exchange()
             .expectStatus().isCreated
-            .expectBody(SaveShiftResultResponse::class.java)
+            .expectBody(SaveManualOverrideShiftResultResponse::class.java)
             .returnResult()
             .responseBody!!
 
