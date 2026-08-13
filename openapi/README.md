@@ -24,8 +24,10 @@ Run the complete contract verification through Gradle:
 `check` also depends on `openApiCheck`. Both the modular source and generated
 bundle are validated with all references resolved, Spectral applies the lint
 policy, operation identifiers and complete-baseline guarantees are tested, and
-a fresh bundle is compared byte-for-byte with the committed bundle. After an
-intentional source change, rebuild it with:
+a fresh bundle is compared byte-for-byte with the committed bundle. The same
+verification seam then generates Kotlin Spring API interfaces and transport DTOs,
+compiles the application against them, and runs the existing automated tests.
+After an intentional source change, rebuild the committed bundle with:
 
 ```shell
 ./gradlew openApiUpdateBundle
@@ -38,6 +40,19 @@ to reviewers but do not block coordinated backend and web changes.
 The service has no Springdoc dependency, Swagger UI, or runtime API documentation
 endpoint. The committed bundle is the only published documentation surface.
 
+## Generated server boundary
+
+`openApiGenerateTransport` generates interface-only Kotlin Spring sources from the
+canonical bundle into `build/generated/openapi`. The directory is ignored by Git,
+is cleared before generation, and is wired into Kotlin compilation. It
+contains only API interfaces in `org.turter.wageapp.transport.api` and transport
+DTOs in `org.turter.wageapp.transport.model`; domain models remain hand-written.
+
+The existing controllers continue to own request handling during this expand
+phase. API groups can migrate independently to generated interfaces and explicit
+transport/domain mappings in subsequent changes without changing current HTTP
+behavior.
+
 ## Pinned toolchain
 
 | Responsibility | Tool | Version |
@@ -46,6 +61,7 @@ endpoint. The committed bundle is the only published documentation surface.
 | Linting | Spectral CLI | 6.16.3 |
 | Bundling | Redocly CLI | 2.46.1 |
 | Compatibility diff | oasdiff container | 1.28.0 |
+| Kotlin Spring API and DTO generation | OpenAPI Generator | 7.17.0 |
 | CLI runtime | Node.js / npm | 22.14.0 / 10.9.2 |
 
 The Gradle Node plugin is pinned to 7.1.0 and downloads the declared Node.js and
