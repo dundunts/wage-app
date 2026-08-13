@@ -21,11 +21,12 @@ fun CompanyCreateOrUpdateRequest.toDomain() = CompanyPayload(
 )
 
 fun Page<DomainCompany>.toCompanyPage(): CompanyPage {
+    val requestedSize = size
     val transportContent = content.map { it.toTransport() }
     return CompanyPage(
         content = transportContent,
         number = number,
-        propertySize = size,
+        propertySize = requestedSize,
         totalElements = totalElements
     ).apply {
         put("content", transportContent)
@@ -33,7 +34,7 @@ fun Page<DomainCompany>.toCompanyPage(): CompanyPage {
         put("last", isLast)
         put("totalPages", totalPages)
         put("totalElements", totalElements)
-        put("size", size)
+        put("size", requestedSize)
         put("number", number)
         put("sort", sort)
         put("first", isFirst)
