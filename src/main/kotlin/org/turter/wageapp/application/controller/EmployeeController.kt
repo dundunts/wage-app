@@ -1,68 +1,55 @@
 package org.turter.wageapp.application.controller
 
-import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.*
-import org.turter.wageapp.domain.employee.CompanyEmployeesResponse
-import org.turter.wageapp.domain.employee.CreateEmployeePayload
-import org.turter.wageapp.domain.employee.Employee
-import org.turter.wageapp.domain.employee.UpdateEmployeePayload
+import org.springframework.web.bind.annotation.RestController
+import org.turter.wageapp.application.mapper.toDomain
+import org.turter.wageapp.application.mapper.toTransport
 import org.turter.wageapp.application.service.employee.EmployeeService
-import java.security.Principal
-import java.util.*
+import org.turter.wageapp.transport.api.EmployeeApi
+import org.turter.wageapp.transport.model.CompanyEmployees
+import org.turter.wageapp.transport.model.CreateEmployeeRequest
+import org.turter.wageapp.transport.model.Employee
+import org.turter.wageapp.transport.model.UpdateEmployeeRequest
+import java.util.UUID
 
 @RestController
-@RequestMapping("/api/v1/employee")
 class EmployeeController(
     private val service: EmployeeService
-) {
+) : EmployeeApi {
 
-    @GetMapping("/get/{id}")
-    suspend fun get(@PathVariable id: UUID): Employee =
-        service.getById(id)
+    override suspend fun getEmployee(id: UUID): ResponseEntity<Employee> =
+        ResponseEntity.ok(service.getById(id).toTransport())
 
-    @GetMapping("/get/all")
-    suspend fun getAll(): List<Employee> =
-        service.getAll()
+    override suspend fun getAllEmployees(): ResponseEntity<List<Employee>> =
+        ResponseEntity.ok(service.getAll().map { it.toTransport() })
 
-    @GetMapping("/get/by-companies")
-    suspend fun getByCompanies(
-        @RequestParam companyIds: List<UUID>
-    ): List<CompanyEmployeesResponse> =
-        service.getGroupedByCompanies(companyIds)
+    override suspend fun getEmployeesByCompanies(
+        companyIds: List<UUID>
+    ): ResponseEntity<List<CompanyEmployees>> =
+        ResponseEntity.ok(service.getGroupedByCompanies(companyIds).map { it.toTransport() })
 
-    @GetMapping("/get/coworkers")
-    suspend fun getCoworkers(
-        principal: Principal
-    ): List<CompanyEmployeesResponse> =
-        service.getCoworkersByUserId(principal.name)
+    override suspend fun getCoworkers(): ResponseEntity<List<CompanyEmployees>> =
+        ResponseEntity.ok(service.getCoworkersByUserId(currentUserId()).map { it.toTransport() })
 
-    @PostMapping("/create")
-    suspend fun create(
-        @Valid @RequestBody payload: CreateEmployeePayload
+    override suspend fun createEmployee(
+        createEmployeeRequest: CreateEmployeeRequest
     ): ResponseEntity<Employee> =
-        ResponseEntity.status(201).body(service.create(payload))
+        ResponseEntity.status(201).body(service.create(createEmployeeRequest.toDomain()).toTransport())
 
-    @PutMapping("/update/{id}")
-    suspend fun update(
-        @PathVariable id: UUID,
-        @Valid @RequestBody payload: UpdateEmployeePayload
+    override suspend fun updateEmployee(
+        id: UUID,
+        updateEmployeeRequest: UpdateEmployeeRequest
     ): ResponseEntity<Unit> {
-        service.update(id, payload)
+        service.update(id, updateEmployeeRequest.toDomain())
         return ResponseEntity.noContent().build()
     }
 
-    @PutMapping("/bind-user/{employeeId}")
-    suspend fun bindUser(
-        @PathVariable employeeId: UUID,
-        @RequestParam userId: String
-    ): ResponseEntity<Unit> {
+    override suspend fun bindEmployeeUser(employeeId: UUID, userId: String): ResponseEntity<Unit> {
         service.bindUser(employeeId, userId)
         return ResponseEntity.noContent().build()
     }
 
-    @DeleteMapping("/delete/{id}")
-    suspend fun delete(@PathVariable id: UUID): ResponseEntity<Unit> {
+    override suspend fun deleteEmployee(id: UUID): ResponseEntity<Unit> {
         service.delete(id)
         return ResponseEntity.noContent().build()
     }

@@ -291,6 +291,26 @@ class EmployeeControllerIT : CommonWageAppIT() {
     }
 
     @Test
+    @DisplayName("POST /employee/create — 400 если companyIds равен null")
+    fun shouldFailWhenCompanyIdsIsNull() {
+        val request = mapOf(
+            "companyIds" to null,
+            "firstName" to "Ivan",
+            "lastName" to "Ivanov",
+            "patronymic" to "Ivanovich",
+            "position" to "WAITER_ACTIVE",
+        )
+
+        client.withUser()
+            .post()
+            .uri("/api/v1/employee/create")
+            .bodyValue(request)
+            .exchange()
+            .expectStatus().isBadRequest
+            .expectBody(ProblemDetail::class.java)
+    }
+
+    @Test
     @DisplayName("PUT /employee/update — успешно обновляет сотрудника")
     fun shouldUpdateEmployee() {
         val employee = saveNewEmployee()

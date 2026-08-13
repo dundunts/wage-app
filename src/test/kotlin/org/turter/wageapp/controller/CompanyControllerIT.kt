@@ -109,6 +109,57 @@ class CompanyControllerIT() : CommonWageAppIT() {
     }
 
     @Test
+    @DisplayName("GET /company/get/page — preserves pagination, sorting, and serialized response fields")
+    fun shouldReturnCompaniesPage() {
+        companyRepository.saveAll(
+            listOf(
+                CompanyEntityFactory.create(title = "Company A"),
+                CompanyEntityFactory.create(title = "Company B"),
+            )
+        ).collectList().block()
+
+        client.withUser()
+            .get()
+            .uri { builder ->
+                builder.path("/api/v1/company/get/page")
+                    .queryParam("page", 0)
+                    .queryParam("size", 1)
+                    .queryParam("sort", "title,desc")
+                    .build()
+            }
+            .exchange()
+            .expectStatus().isOk
+            .expectHeader().contentType(MediaType.APPLICATION_JSON)
+            .expectBody()
+            .jsonPath("$.content.length()").isEqualTo(1)
+            .jsonPath("$.content[0].title").isEqualTo("Company B")
+            .jsonPath("$.number").isEqualTo(0)
+            .jsonPath("$.size").isEqualTo(1)
+            .jsonPath("$.totalElements").isEqualTo(2)
+            .jsonPath("$.totalPages").isEqualTo(2)
+            .jsonPath("$.numberOfElements").isEqualTo(1)
+            .jsonPath("$.first").isEqualTo(true)
+            .jsonPath("$.last").isEqualTo(false)
+            .jsonPath("$.empty").isEqualTo(false)
+    }
+
+    @Test
+    @DisplayName("GET /company/get/page — malformed pagination uses defaults")
+    fun shouldUseDefaultsForMalformedPagination() {
+        companyRepository.save(CompanyEntityFactory.create()).block()
+
+        client.withUser()
+            .get()
+            .uri("/api/v1/company/get/page?page=not-a-number&size=not-a-number")
+            .exchange()
+            .expectStatus().isOk
+            .expectBody()
+            .jsonPath("$.content.length()").isEqualTo(1)
+            .jsonPath("$.number").isEqualTo(0)
+            .jsonPath("$.size").isEqualTo(100)
+    }
+
+    @Test
     @DisplayName("POST /company/create — успешно создаёт компанию")
     fun shouldCreateCompany() {
         val payload = CompanyPayloadDtoSupplier.valid(

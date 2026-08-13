@@ -64,6 +64,20 @@ assert.deepEqual(Object.keys(document.paths["/api/v1/company/update/{id}"].put.r
 ]);
 assert.equal(document.components.parameters.Page.schema.default, 0);
 assert.equal(document.components.parameters.Size.schema.default, 100);
+assert.equal(document.components.parameters.CompanyPageIndex.schema.type, "string");
+assert.equal(document.components.parameters.CompanyPageIndex.schema.default, "0");
+assert.match(document.components.parameters.CompanyPageIndex.description, /malformed/);
+assert.equal(document.components.parameters.CompanyPageSize.schema.type, "string");
+assert.equal(document.components.parameters.CompanyPageSize.schema.default, "100");
+assert.match(document.components.parameters.CompanyPageSize.description, /malformed/);
+const companyPageParameters = document.paths["/api/v1/company/get/page"].get.parameters.map(
+  (parameter) => parameter.$ref,
+);
+assert.deepEqual(companyPageParameters, [
+  "#/components/parameters/CompanyPageIndex",
+  "#/components/parameters/CompanyPageSize",
+  "#/components/parameters/Sort",
+]);
 assert.equal(document.components.schemas.CompanyPage.additionalProperties, true);
 assert.deepEqual(document.components.schemas.CompanyPage.required, [
   "content",

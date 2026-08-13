@@ -284,21 +284,21 @@ CreateEmployeeRequest:
     firstName:
       type: string
       minLength: 1
-      pattern: '\S'
+      pattern: '.*\S.*'
       nullable: false
       description: The Employee's first name; it must contain a non-whitespace character.
       example: Ivan
     lastName:
       type: string
       minLength: 1
-      pattern: '\S'
+      pattern: '.*\S.*'
       nullable: false
       description: The Employee's family name; it must contain a non-whitespace character.
       example: Ivanov
     patronymic:
       type: string
       minLength: 1
-      pattern: '\S'
+      pattern: '.*\S.*'
       nullable: false
       description: The Employee's patronymic; it must contain a non-whitespace character.
       example: Ivanovich
@@ -345,21 +345,21 @@ UpdateEmployeeRequest:
     firstName:
       type: string
       minLength: 1
-      pattern: '\S'
+      pattern: '.*\S.*'
       nullable: false
       description: The Employee's first name; it must contain a non-whitespace character.
       example: Ivan
     lastName:
       type: string
       minLength: 1
-      pattern: '\S'
+      pattern: '.*\S.*'
       nullable: false
       description: The Employee's family name; it must contain a non-whitespace character.
       example: Ivanov
     patronymic:
       type: string
       minLength: 1
-      pattern: '\S'
+      pattern: '.*\S.*'
       nullable: false
       description: The Employee's patronymic; it must contain a non-whitespace character.
       example: Ivanovich

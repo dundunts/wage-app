@@ -1,56 +1,83 @@
 package org.turter.wageapp.application.controller
 
-import jakarta.validation.Valid
-import org.springframework.data.domain.Page
-import org.springframework.data.domain.Pageable
+import org.springframework.data.domain.PageRequest
+import org.springframework.data.domain.Sort
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.*
-import org.turter.wageapp.domain.company.Company
-import org.turter.wageapp.domain.company.CompanyPayload
-import org.turter.wageapp.domain.company.UserCompaniesResponse
+import org.springframework.web.bind.annotation.RestController
+import org.turter.wageapp.application.mapper.toCompanyPage
+import org.turter.wageapp.application.mapper.toDomain
+import org.turter.wageapp.application.mapper.toTransport
 import org.turter.wageapp.application.service.company.CompanyService
-import java.security.Principal
-import java.util.*
+import org.turter.wageapp.transport.api.CompanyApi
+import org.turter.wageapp.transport.model.Company
+import org.turter.wageapp.transport.model.CompanyCreateOrUpdateRequest
+import org.turter.wageapp.transport.model.CompanyPage
+import org.turter.wageapp.transport.model.UserCompaniesResponse
+import java.util.UUID
 
 @RestController
-@RequestMapping("/api/v1/company")
 class CompanyController(
     private val companyService: CompanyService
-) {
+) : CompanyApi {
 
-    @GetMapping("/get/{id}")
-    suspend fun get(@PathVariable id: UUID): ResponseEntity<Company> =
-        ResponseEntity.ok(companyService.get(id))
+    override suspend fun getCompany(id: UUID): ResponseEntity<Company> =
+        ResponseEntity.ok(companyService.get(id).toTransport())
 
-    @GetMapping("/get/for-user")
-    suspend fun getUserCompanies(principal: Principal): ResponseEntity<UserCompaniesResponse> =
+    override suspend fun getCompaniesForUser(): ResponseEntity<UserCompaniesResponse> =
         ResponseEntity.ok(
-            UserCompaniesResponse(companyService.getUserCompanies(principal.name))
+            UserCompaniesResponse(
+                companies = companyService.getUserCompanies(currentUserId()).map { it.toTransport() }
+            )
         )
 
-    @GetMapping("/get/page")
-    suspend fun getCompaniesPage(pageable: Pageable): ResponseEntity<Page<Company>> =
-        ResponseEntity.ok(companyService.getCompaniesPage(pageable))
+    override suspend fun getCompaniesPage(
+        page: String,
+        size: String,
+        sort: List<String>?
+    ): ResponseEntity<CompanyPage> {
+        val companies = companyService.getCompaniesPage(pageRequest(page, size, sort))
+        return ResponseEntity.ok(companies.toCompanyPage())
+    }
 
-    @PostMapping("/create")
-    suspend fun create(
-        @RequestBody @Valid payload: CompanyPayload
+    override suspend fun createCompany(
+        companyCreateOrUpdateRequest: CompanyCreateOrUpdateRequest
     ): ResponseEntity<Company> =
-        ResponseEntity.status(201).body(companyService.create(payload))
+        ResponseEntity.status(201).body(
+            companyService.create(companyCreateOrUpdateRequest.toDomain()).toTransport()
+        )
 
-    @PutMapping("/update/{id}")
-    suspend fun update(
-        @PathVariable id: UUID,
-        @RequestBody @Valid payload: CompanyPayload
+    override suspend fun updateCompany(
+        id: UUID,
+        companyCreateOrUpdateRequest: CompanyCreateOrUpdateRequest
     ): ResponseEntity<Unit> {
-        companyService.update(id, payload)
+        companyService.update(id, companyCreateOrUpdateRequest.toDomain())
         return ResponseEntity.noContent().build()
     }
 
-    @DeleteMapping("/delete/{id}")
-    suspend fun delete(@PathVariable id: UUID): ResponseEntity<Unit> {
+    override suspend fun deleteCompany(id: UUID): ResponseEntity<Unit> {
         companyService.delete(id)
         return ResponseEntity.noContent().build()
     }
 
+    private fun pageRequest(page: String, size: String, sort: List<String>?): PageRequest {
+        val pageNumber = CompanyPagination.normalizePage(page)
+        val pageSize = CompanyPagination.normalizeSize(size)
+        return PageRequest.of(pageNumber, pageSize, parseSort(sort))
+    }
+
+    private fun parseSort(criteria: List<String>?): Sort {
+        val tokens = criteria.orEmpty().flatMap { it.split(",") }.map(String::trim).filter(String::isNotEmpty)
+        val orders = buildList {
+            var index = 0
+            while (index < tokens.size) {
+                val property = tokens[index++]
+                val direction = tokens.getOrNull(index)
+                    ?.let(Sort.Direction::fromOptionalString)
+                    ?.orElse(null)
+                if (direction != null) index++
+                add(Sort.Order(direction ?: Sort.Direction.ASC, property))
+            }
+        }
+        return Sort.by(orders)
+    }
 }
