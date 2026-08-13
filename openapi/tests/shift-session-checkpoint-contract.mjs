@@ -74,13 +74,20 @@ assert.deepEqual(schemas.ShiftSessionStatus.enum, [
   "OPENED_DRAFT",
   "RECALCULATING_DRAFT",
 ]);
-assert.equal(schemas.ShiftSessionStart.format, "date-time");
+assert.equal(schemas.LocalDateTime.format, "local-date-time");
+assert.ok(schemas.LocalDateTime.pattern);
+assert.equal(schemas.ShiftSessionStart.allOf[0].$ref, "#/components/schemas/LocalDateTime");
 assert.equal(schemas.OpenShiftSessionRequest.properties.startWorkAt.$ref, "#/components/schemas/ShiftSessionStart");
 assert.deepEqual(schemas.OpenShiftSessionRequest.required, ["companyId", "startWorkAt"]);
 assert.deepEqual(schemas.OpenShiftSessionRecalculationRequest.required, ["closedSessionId"]);
 assert.deepEqual(schemas.UpdateShiftSessionStartRequest.required, ["sessionId", "startWorkTime"]);
 
-assert.deepEqual(schemas.Checkpoint.required, [
+assert.deepEqual(schemas.Checkpoint.oneOf, [
+  { $ref: "#/components/schemas/RegularCheckpoint" },
+  { $ref: "#/components/schemas/FinalCheckpoint" },
+]);
+assert.equal(schemas.Checkpoint.discriminator.propertyName, "type");
+assert.deepEqual(schemas.CheckpointFields.required, [
   "id",
   "tips",
   "revenue",
@@ -89,10 +96,13 @@ assert.deepEqual(schemas.Checkpoint.required, [
   "type",
   "metricRecords",
 ]);
-assert.equal(schemas.Checkpoint.properties.id.format, "uuid");
-assert.equal(schemas.Checkpoint.properties.dateTime.format, "date-time");
-assert.equal(schemas.Checkpoint.properties.revenue.format, "int32");
-assert.equal(schemas.Checkpoint.properties.tips.format, "int32");
+assert.equal(schemas.CheckpointFields.properties.id.format, "uuid");
+assert.equal(
+  schemas.CheckpointFields.properties.dateTime.allOf[0].$ref,
+  "#/components/schemas/LocalDateTime",
+);
+assert.equal(schemas.CheckpointFields.properties.revenue.format, "int32");
+assert.equal(schemas.CheckpointFields.properties.tips.format, "int32");
 assert.deepEqual(schemas.CheckpointType.enum, ["REGULAR", "FINAL"]);
 assert.ok(schemas.RegularCheckpoint.description.includes("Regular Checkpoint"));
 assert.ok(schemas.FinalCheckpoint.description.includes("Final Checkpoint"));
@@ -103,7 +113,7 @@ for (const requestName of ["CreateCheckpointRequest", "UpdateCheckpointRequest"]
   const request = schemas[requestName];
   assert.equal(request.properties.revenue.format, "int32");
   assert.equal(request.properties.tips.format, "int32");
-  assert.equal(request.properties.dateTime.format, "date-time");
+  assert.equal(request.properties.dateTime.allOf[0].$ref, "#/components/schemas/LocalDateTime");
   assert.equal(request.properties.employeeIds.uniqueItems, true);
   assert.equal(request.properties.employeeIds.items.format, "uuid");
   assert.equal(request.properties.fieldRecords.type, "array");

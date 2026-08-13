@@ -104,6 +104,8 @@ components:
       $ref: ./components/schemas.yaml#/ShiftSession
     ShiftSessionStatus:
       $ref: ./components/schemas.yaml#/ShiftSessionStatus
+    LocalDateTime:
+      $ref: ./components/schemas.yaml#/LocalDateTime
     ShiftSessionStart:
       $ref: ./components/schemas.yaml#/ShiftSessionStart
     OpenShiftSessionRequest:
@@ -114,6 +116,8 @@ components:
       $ref: ./components/schemas.yaml#/UpdateShiftSessionStartRequest
     Checkpoint:
       $ref: ./components/schemas.yaml#/Checkpoint
+    CheckpointFields:
+      $ref: ./components/schemas.yaml#/CheckpointFields
     RegularCheckpoint:
       $ref: ./components/schemas.yaml#/RegularCheckpoint
     FinalCheckpoint:

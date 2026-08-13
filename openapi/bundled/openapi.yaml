@@ -539,7 +539,7 @@ components:
           schema:
             $ref: '#/components/schemas/ProblemDetail'
     CheckpointResourceNotFound:
-      description: A referenced Checkpoint, Shift Session, or Company does not exist.
+      description: A referenced Checkpoint, Shift Session, or Company does not exist. Deleting an unknown Checkpoint remains successful; deletion returns this response only if an existing Checkpoint refers to a missing Shift Session or Company.
       content:
         application/problem+json:
           schema:
@@ -758,12 +758,17 @@ components:
         - RECALCULATING
         - OPENED_DRAFT
         - RECALCULATING_DRAFT
-    ShiftSessionStart:
+    LocalDateTime:
       type: string
-      format: date-time
+      format: local-date-time
+      pattern: ^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{1,9})?)?$
       nullable: false
-      description: The initial local date and time boundary of a Shift Session. It starts the first Shift Interval but is not a Checkpoint. The current API serializes this value without a UTC offset.
+      description: A local date and time serialized without a UTC offset.
       example: '2026-08-13T09:00:00'
+    ShiftSessionStart:
+      description: The initial local date and time boundary of a Shift Session. It starts the first Shift Interval but is not a Checkpoint. The current API serializes this value without a UTC offset.
+      allOf:
+        - $ref: '#/components/schemas/LocalDateTime'
     OpenShiftSessionRequest:
       type: object
       description: Values required to open a new Shift Session for a Company.
@@ -811,8 +816,18 @@ components:
           description: Replacement local start time; the Shift Session date is unchanged.
           example: '10:30:00'
     Checkpoint:
-      type: object
       description: A boundary that ends a Shift Interval and records the team together with the Company's accumulated Revenue and Restaurant Tips at that time. A Checkpoint's team accounts for the Shift Interval that the Checkpoint ends.
+      oneOf:
+        - $ref: '#/components/schemas/RegularCheckpoint'
+        - $ref: '#/components/schemas/FinalCheckpoint'
+      discriminator:
+        propertyName: type
+        mapping:
+          REGULAR: '#/components/schemas/RegularCheckpoint'
+          FINAL: '#/components/schemas/FinalCheckpoint'
+    CheckpointFields:
+      type: object
+      description: Fields shared by Regular and Final Checkpoints.
       additionalProperties: false
       required:
         - id
@@ -847,11 +862,9 @@ components:
           items:
             $ref: '#/components/schemas/CheckpointEmployee'
         dateTime:
-          type: string
-          format: date-time
-          nullable: false
           description: Local date and time of the boundary. The current API serializes this value without a UTC offset.
-          example: '2026-08-13T15:30:00'
+          allOf:
+            - $ref: '#/components/schemas/LocalDateTime'
         type:
           $ref: '#/components/schemas/CheckpointType'
         metricRecords:
@@ -863,21 +876,27 @@ components:
     RegularCheckpoint:
       description: A Regular Checkpoint is followed by another Shift Interval in the same Shift Session.
       allOf:
-        - $ref: '#/components/schemas/Checkpoint'
+        - $ref: '#/components/schemas/CheckpointFields'
         - type: object
+          required:
+            - type
           properties:
             type:
               type: string
+              nullable: false
               enum:
                 - REGULAR
     FinalCheckpoint:
       description: A Final Checkpoint is the last Checkpoint in a Shift Session. It has the same serialized shape and allocation rules as a Regular Checkpoint.
       allOf:
-        - $ref: '#/components/schemas/Checkpoint'
+        - $ref: '#/components/schemas/CheckpointFields'
         - type: object
+          required:
+            - type
           properties:
             type:
               type: string
+              nullable: false
               enum:
                 - FINAL
     CheckpointType:
@@ -1015,10 +1034,9 @@ components:
             format: uuid
             nullable: false
         dateTime:
-          type: string
-          format: date-time
-          nullable: false
           description: Local Checkpoint date and time without a UTC offset in the current API.
+          allOf:
+            - $ref: '#/components/schemas/LocalDateTime'
         type:
           $ref: '#/components/schemas/CheckpointType'
         fieldRecords:
@@ -1065,10 +1083,9 @@ components:
             format: uuid
             nullable: false
         dateTime:
-          type: string
-          format: date-time
-          nullable: false
           description: Replacement local Checkpoint date and time without a UTC offset in the current API.
+          allOf:
+            - $ref: '#/components/schemas/LocalDateTime'
         type:
           $ref: '#/components/schemas/CheckpointType'
         fieldRecords:
