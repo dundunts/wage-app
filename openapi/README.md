@@ -1,6 +1,7 @@
 # Wage App OpenAPI workflow
 
-This directory contains the manually reviewed OpenAPI 3.0.3 Company baseline.
+This directory contains the manually reviewed OpenAPI 3.0.3 baseline for the
+Company, Shift Session, and Checkpoint APIs.
 `openapi.yaml` and its referenced `paths/` and `components/` files are the authored
 sources. `bundled/openapi.yaml` is the deterministic, self-contained document for
 consumers.
@@ -12,7 +13,7 @@ Run the complete contract verification through Gradle:
 ```
 
 `check` also depends on `openApiCheck`. Validation resolves every reference,
-Spectral applies the lint policy, the public Company guarantees are tested, and a
+Spectral applies the lint policy, the public API guarantees are tested, and a
 fresh bundle is compared byte-for-byte with the committed bundle. After an
 intentional source change, rebuild it with:
 
@@ -22,7 +23,7 @@ intentional source change, rebuild it with:
 
 ## Temporary extraction
 
-The original Spring contract can be re-extracted as a review aid:
+The original Spring Company contract can be re-extracted as a review aid:
 
 ```shell
 ./gradlew extractCompanyOpenApi

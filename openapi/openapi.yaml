@@ -3,14 +3,19 @@ info:
   title: Wage App API
   version: 0.1.0
   description: >-
-    Draft baseline for the authenticated Company operations currently provided by
-    Wage App. This tracer-bullet contract is not yet the complete /api/v1 contract.
+    Draft baseline for the authenticated Company, Shift Session, and Checkpoint
+    operations currently provided by Wage App. This contract is not yet the
+    complete /api/v1 contract.
 servers:
   - url: /
     description: Current Wage App server
 tags:
   - name: Company
     description: Operations for a work location whose shifts and pay are accounted independently.
+  - name: Shift Session
+    description: Operations for a Company's team-based work accounting session.
+  - name: Checkpoint
+    description: Operations for boundaries that end Shift Intervals and record their teams and totals.
 security:
   - BearerAuth: []
 paths:
@@ -26,6 +31,26 @@ paths:
     $ref: ./paths/company.yaml#/UpdateCompany
   /api/v1/company/delete/{id}:
     $ref: ./paths/company.yaml#/DeleteCompany
+  /api/v1/session/get/opened:
+    $ref: ./paths/shift-session.yaml#/GetOpenedShiftSession
+  /api/v1/session/get/available/{sessionId}:
+    $ref: ./paths/shift-session.yaml#/GetAvailableShiftSession
+  /api/v1/session/get/available/all:
+    $ref: ./paths/shift-session.yaml#/GetAvailableShiftSessions
+  /api/v1/session/open:
+    $ref: ./paths/shift-session.yaml#/OpenShiftSession
+  /api/v1/session/recalculating:
+    $ref: ./paths/shift-session.yaml#/OpenShiftSessionRecalculation
+  /api/v1/session/{sessionId}/close:
+    $ref: ./paths/shift-session.yaml#/CloseShiftSession
+  /api/v1/session/update/time:
+    $ref: ./paths/shift-session.yaml#/UpdateShiftSessionStart
+  /api/v1/checkpoint/create:
+    $ref: ./paths/checkpoint.yaml#/CreateCheckpoint
+  /api/v1/checkpoint/update:
+    $ref: ./paths/checkpoint.yaml#/UpdateCheckpoint
+  /api/v1/checkpoint/{checkpointId}/delete:
+    $ref: ./paths/checkpoint.yaml#/DeleteCheckpoint
 components:
   securitySchemes:
     BearerAuth:
@@ -33,6 +58,12 @@ components:
   parameters:
     CompanyId:
       $ref: ./components/parameters.yaml#/CompanyId
+    ShiftSessionCompanyId:
+      $ref: ./components/parameters.yaml#/ShiftSessionCompanyId
+    ShiftSessionId:
+      $ref: ./components/parameters.yaml#/ShiftSessionId
+    CheckpointId:
+      $ref: ./components/parameters.yaml#/CheckpointId
     Page:
       $ref: ./components/parameters.yaml#/Page
     Size:
@@ -50,6 +81,14 @@ components:
       $ref: ./components/responses.yaml#/CompanyNotFound
     CompanyConflict:
       $ref: ./components/responses.yaml#/CompanyConflict
+    ShiftSessionResourceNotFound:
+      $ref: ./components/responses.yaml#/ShiftSessionResourceNotFound
+    ShiftSessionConflict:
+      $ref: ./components/responses.yaml#/ShiftSessionConflict
+    CheckpointResourceNotFound:
+      $ref: ./components/responses.yaml#/CheckpointResourceNotFound
+    CheckpointConflict:
+      $ref: ./components/responses.yaml#/CheckpointConflict
   schemas:
     Company:
       $ref: ./components/schemas.yaml#/Company
@@ -61,3 +100,35 @@ components:
       $ref: ./components/schemas.yaml#/CompanyPage
     ProblemDetail:
       $ref: ./components/schemas.yaml#/ProblemDetail
+    ShiftSession:
+      $ref: ./components/schemas.yaml#/ShiftSession
+    ShiftSessionStatus:
+      $ref: ./components/schemas.yaml#/ShiftSessionStatus
+    ShiftSessionStart:
+      $ref: ./components/schemas.yaml#/ShiftSessionStart
+    OpenShiftSessionRequest:
+      $ref: ./components/schemas.yaml#/OpenShiftSessionRequest
+    OpenShiftSessionRecalculationRequest:
+      $ref: ./components/schemas.yaml#/OpenShiftSessionRecalculationRequest
+    UpdateShiftSessionStartRequest:
+      $ref: ./components/schemas.yaml#/UpdateShiftSessionStartRequest
+    Checkpoint:
+      $ref: ./components/schemas.yaml#/Checkpoint
+    RegularCheckpoint:
+      $ref: ./components/schemas.yaml#/RegularCheckpoint
+    FinalCheckpoint:
+      $ref: ./components/schemas.yaml#/FinalCheckpoint
+    CheckpointType:
+      $ref: ./components/schemas.yaml#/CheckpointType
+    CheckpointEmployee:
+      $ref: ./components/schemas.yaml#/CheckpointEmployee
+    CheckpointMetricRecord:
+      $ref: ./components/schemas.yaml#/CheckpointMetricRecord
+    CheckpointMetricRecordRequest:
+      $ref: ./components/schemas.yaml#/CheckpointMetricRecordRequest
+    CheckpointMetricDestination:
+      $ref: ./components/schemas.yaml#/CheckpointMetricDestination
+    CreateCheckpointRequest:
+      $ref: ./components/schemas.yaml#/CreateCheckpointRequest
+    UpdateCheckpointRequest:
+      $ref: ./components/schemas.yaml#/UpdateCheckpointRequest

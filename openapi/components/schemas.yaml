@@ -159,3 +159,412 @@ ProblemDetail:
       nullable: false
       description: Request path associated with this occurrence when supplied by the server.
       example: /api/v1/company/get/5b367932-2e5d-4d89-aa07-17f65ff4af9c
+
+ShiftSession:
+  type: object
+  description: >-
+    One Company's work accounting session. Its `date` and `startWorkTime`
+    together represent the Shift Session Start; that start is not a Checkpoint.
+    Checkpoints are returned in ascending `dateTime` order.
+  additionalProperties: false
+  required:
+    - id
+    - companyId
+    - startWorkTime
+    - date
+    - status
+    - checkpoints
+  properties:
+    id:
+      type: string
+      format: uuid
+      nullable: false
+      description: The Shift Session's identifier.
+    companyId:
+      type: string
+      format: uuid
+      nullable: false
+      description: Identifier of the Company whose work is accounted.
+    startWorkTime:
+      type: string
+      format: time
+      nullable: false
+      description: Local time portion of the Shift Session Start.
+      example: "09:00:00"
+    date:
+      type: string
+      format: date
+      nullable: false
+      description: Local date portion of the Shift Session Start.
+      example: "2026-08-13"
+    status:
+      $ref: "#/ShiftSessionStatus"
+    checkpoints:
+      type: array
+      nullable: false
+      description: Checkpoints ordered by their local date and time, possibly empty.
+      items:
+        $ref: "#/Checkpoint"
+
+ShiftSessionStatus:
+  type: string
+  nullable: false
+  description: >-
+    Current lifecycle state. `OPENED` and `RECALCULATING` allow Checkpoint and
+    Shift Session Start changes. Their `_DRAFT` forms indicate that a Shift
+    Result Draft exists. `CLOSED` is eligible to be reopened for Recalculation.
+  enum:
+    - OPENED
+    - CLOSED
+    - RECALCULATING
+    - OPENED_DRAFT
+    - RECALCULATING_DRAFT
+
+ShiftSessionStart:
+  type: string
+  format: date-time
+  nullable: false
+  description: >-
+    The initial local date and time boundary of a Shift Session. It starts the
+    first Shift Interval but is not a Checkpoint. The current API serializes this
+    value without a UTC offset.
+  example: "2026-08-13T09:00:00"
+
+OpenShiftSessionRequest:
+  type: object
+  description: Values required to open a new Shift Session for a Company.
+  additionalProperties: false
+  required:
+    - companyId
+    - startWorkAt
+  properties:
+    companyId:
+      type: string
+      format: uuid
+      nullable: false
+      description: Identifier of the Company for the new Shift Session.
+    startWorkAt:
+      $ref: "#/ShiftSessionStart"
+
+OpenShiftSessionRecalculationRequest:
+  type: object
+  description: Selects the closed Shift Session to reopen for Recalculation.
+  additionalProperties: false
+  required:
+    - closedSessionId
+  properties:
+    closedSessionId:
+      type: string
+      format: uuid
+      nullable: false
+      description: Identifier of a Shift Session whose current status is `CLOSED`.
+
+UpdateShiftSessionStartRequest:
+  type: object
+  description: Updates the local time portion of an existing Shift Session Start.
+  additionalProperties: false
+  required:
+    - sessionId
+    - startWorkTime
+  properties:
+    sessionId:
+      type: string
+      format: uuid
+      nullable: false
+      description: Identifier of the Shift Session to update.
+    startWorkTime:
+      type: string
+      format: time
+      nullable: false
+      description: Replacement local start time; the Shift Session date is unchanged.
+      example: "10:30:00"
+
+Checkpoint:
+  type: object
+  description: >-
+    A boundary that ends a Shift Interval and records the team together with the
+    Company's accumulated Revenue and Restaurant Tips at that time. A Checkpoint's
+    team accounts for the Shift Interval that the Checkpoint ends.
+  additionalProperties: false
+  required:
+    - id
+    - tips
+    - revenue
+    - employees
+    - dateTime
+    - type
+    - metricRecords
+  properties:
+    id:
+      type: string
+      format: uuid
+      nullable: false
+      description: The Checkpoint's identifier.
+    tips:
+      type: integer
+      format: int32
+      nullable: false
+      description: Accumulated Restaurant Tips in whole Russian rubles.
+      example: 1200
+    revenue:
+      type: integer
+      format: int32
+      nullable: false
+      description: Accumulated Revenue in whole Russian rubles.
+      example: 18000
+    employees:
+      type: array
+      nullable: false
+      description: The Employee team credited with the Shift Interval ending here.
+      items:
+        $ref: "#/CheckpointEmployee"
+    dateTime:
+      type: string
+      format: date-time
+      nullable: false
+      description: >-
+        Local date and time of the boundary. The current API serializes this value
+        without a UTC offset.
+      example: "2026-08-13T15:30:00"
+    type:
+      $ref: "#/CheckpointType"
+    metricRecords:
+      type: array
+      nullable: false
+      description: Additional amounts assigned to Revenue or Restaurant Tips.
+      items:
+        $ref: "#/CheckpointMetricRecord"
+
+RegularCheckpoint:
+  description: A Regular Checkpoint is followed by another Shift Interval in the same Shift Session.
+  allOf:
+    - $ref: "#/Checkpoint"
+    - type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - REGULAR
+
+FinalCheckpoint:
+  description: >-
+    A Final Checkpoint is the last Checkpoint in a Shift Session. It has the same
+    serialized shape and allocation rules as a Regular Checkpoint.
+  allOf:
+    - $ref: "#/Checkpoint"
+    - type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - FINAL
+
+CheckpointType:
+  type: string
+  nullable: false
+  description: Whether this is a Regular Checkpoint or the Final Checkpoint.
+  enum:
+    - REGULAR
+    - FINAL
+
+CheckpointEmployee:
+  type: object
+  description: An Employee in the team recorded at a Checkpoint.
+  additionalProperties: false
+  required:
+    - id
+    - userId
+    - firstName
+    - lastName
+    - patronymic
+    - simpleName
+  properties:
+    id:
+      type: string
+      format: uuid
+      nullable: false
+      description: The Employee's identifier.
+    userId:
+      type: string
+      nullable: true
+      description: Linked authenticated User identifier, or null when none is linked.
+    firstName:
+      type: string
+      nullable: false
+      description: The Employee's first name.
+    lastName:
+      type: string
+      nullable: false
+      description: The Employee's last name.
+    patronymic:
+      type: string
+      nullable: false
+      description: The Employee's patronymic.
+    simpleName:
+      type: string
+      nullable: true
+      description: Optional short display name.
+
+CheckpointMetricRecord:
+  type: object
+  description: An additional recorded amount included in Checkpoint calculation inputs.
+  additionalProperties: false
+  required:
+    - id
+    - label
+    - destination
+    - value
+  properties:
+    id:
+      type: string
+      format: uuid
+      nullable: false
+      description: The metric record's identifier.
+    label:
+      type: string
+      nullable: false
+      description: Display label supplied for the recorded amount.
+    destination:
+      $ref: "#/CheckpointMetricDestination"
+    value:
+      type: integer
+      format: int32
+      nullable: false
+      description: Amount in whole Russian rubles.
+
+CheckpointMetricRecordRequest:
+  type: object
+  description: An additional amount to store with a Checkpoint.
+  additionalProperties: false
+  required:
+    - label
+    - destination
+    - value
+  properties:
+    label:
+      type: string
+      nullable: false
+      description: Display label for the recorded amount.
+    destination:
+      $ref: "#/CheckpointMetricDestination"
+    value:
+      type: integer
+      format: int32
+      nullable: false
+      description: Amount in whole Russian rubles.
+
+CheckpointMetricDestination:
+  type: string
+  nullable: false
+  description: Accumulated total to which a Checkpoint metric record belongs.
+  enum:
+    - REVENUE
+    - TIPS
+
+CreateCheckpointRequest:
+  type: object
+  description: >-
+    Complete serialized payload for creating a Checkpoint. The supplied team and
+    accumulated totals describe the Shift Interval that this boundary ends.
+  additionalProperties: false
+  required:
+    - sessionId
+    - revenue
+    - tips
+    - employeeIds
+    - dateTime
+    - type
+    - fieldRecords
+  properties:
+    sessionId:
+      type: string
+      format: uuid
+      nullable: false
+      description: Identifier of the Shift Session receiving the Checkpoint.
+    revenue:
+      type: integer
+      format: int32
+      nullable: false
+      description: Accumulated Revenue in whole Russian rubles.
+    tips:
+      type: integer
+      format: int32
+      nullable: false
+      description: Accumulated Restaurant Tips in whole Russian rubles.
+    employeeIds:
+      type: array
+      uniqueItems: true
+      nullable: false
+      description: Identifiers of the Employee team for the ended Shift Interval.
+      items:
+        type: string
+        format: uuid
+        nullable: false
+    dateTime:
+      type: string
+      format: date-time
+      nullable: false
+      description: >-
+        Local Checkpoint date and time without a UTC offset in the current API.
+    type:
+      $ref: "#/CheckpointType"
+    fieldRecords:
+      type: array
+      nullable: false
+      description: Additional amounts assigned to Revenue or Restaurant Tips.
+      items:
+        $ref: "#/CheckpointMetricRecordRequest"
+
+UpdateCheckpointRequest:
+  type: object
+  description: >-
+    Complete replacement payload for a Checkpoint, including its team, accumulated
+    Revenue, accumulated Restaurant Tips, type, time, and metric records.
+  additionalProperties: false
+  required:
+    - id
+    - revenue
+    - tips
+    - employeeIds
+    - dateTime
+    - type
+    - fieldRecords
+  properties:
+    id:
+      type: string
+      format: uuid
+      nullable: false
+      description: Identifier of the Checkpoint to replace.
+    revenue:
+      type: integer
+      format: int32
+      nullable: false
+      description: Replacement accumulated Revenue in whole Russian rubles.
+    tips:
+      type: integer
+      format: int32
+      nullable: false
+      description: Replacement accumulated Restaurant Tips in whole Russian rubles.
+    employeeIds:
+      type: array
+      uniqueItems: true
+      nullable: false
+      description: Replacement Employee team for the ended Shift Interval.
+      items:
+        type: string
+        format: uuid
+        nullable: false
+    dateTime:
+      type: string
+      format: date-time
+      nullable: false
+      description: >-
+        Replacement local Checkpoint date and time without a UTC offset in the current API.
+    type:
+      $ref: "#/CheckpointType"
+    fieldRecords:
+      type: array
+      nullable: false
+      description: Replacement additional Revenue and Restaurant Tips amounts.
+      items:
+        $ref: "#/CheckpointMetricRecordRequest"

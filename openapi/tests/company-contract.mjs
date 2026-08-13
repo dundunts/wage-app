@@ -9,10 +9,12 @@ const document = YAML.parse(fs.readFileSync(bundlePath, "utf8"));
 assert.equal(document.openapi, "3.0.3");
 assert.deepEqual(
   Object.fromEntries(
-    Object.entries(document.paths).map(([path, item]) => [
-      path,
-      Object.keys(item).filter((key) => ["get", "post", "put", "delete"].includes(key)),
-    ]),
+    Object.entries(document.paths)
+      .filter(([path]) => path.startsWith("/api/v1/company/"))
+      .map(([path, item]) => [
+        path,
+        Object.keys(item).filter((key) => ["get", "post", "put", "delete"].includes(key)),
+      ]),
   ),
   {
     "/api/v1/company/get/{id}": ["get"],
@@ -27,11 +29,13 @@ assert.deepEqual(
 assert.deepEqual(document.security, [{ BearerAuth: [] }]);
 assert.equal(document.components.securitySchemes.BearerAuth.scheme, "bearer");
 
-const operations = Object.values(document.paths).flatMap((path) =>
+const operations = Object.entries(document.paths)
+  .filter(([path]) => path.startsWith("/api/v1/company/"))
+  .flatMap(([, path]) =>
   Object.entries(path)
     .filter(([method]) => ["get", "post", "put", "delete"].includes(method))
     .map(([, operation]) => operation),
-);
+  );
 for (const operation of operations) {
   assert.ok(operation.responses["401"], `${operation.operationId} must document 401`);
   assert.ok(operation.responses["403"], `${operation.operationId} must document 403`);

@@ -8,6 +8,36 @@ CompanyId:
     format: uuid
     nullable: false
 
+ShiftSessionCompanyId:
+  name: companyId
+  in: query
+  required: true
+  description: Identifier of the Company whose Shift Sessions are requested.
+  schema:
+    type: string
+    format: uuid
+    nullable: false
+
+ShiftSessionId:
+  name: sessionId
+  in: path
+  required: true
+  description: The Shift Session's identifier.
+  schema:
+    type: string
+    format: uuid
+    nullable: false
+
+CheckpointId:
+  name: checkpointId
+  in: path
+  required: true
+  description: The Checkpoint's identifier.
+  schema:
+    type: string
+    format: uuid
+    nullable: false
+
 Page:
   name: page
   in: query

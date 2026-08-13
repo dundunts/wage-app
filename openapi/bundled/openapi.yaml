@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: Wage App API
   version: 0.1.0
-  description: Draft baseline for the authenticated Company operations currently provided by Wage App. This tracer-bullet contract is not yet the complete /api/v1 contract.
+  description: Draft baseline for the authenticated Company, Shift Session, and Checkpoint operations currently provided by Wage App. This contract is not yet the complete /api/v1 contract.
 servers:
   - url: /
     description: Current Wage App server
@@ -11,6 +11,10 @@ security:
 tags:
   - name: Company
     description: Operations for a work location whose shifts and pay are accounted independently.
+  - name: Shift Session
+    description: Operations for a Company's team-based work accounting session.
+  - name: Checkpoint
+    description: Operations for boundaries that end Shift Intervals and record their teams and totals.
 paths:
   /api/v1/company/get/{id}:
     get:
@@ -150,6 +154,277 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
+  /api/v1/session/get/opened:
+    get:
+      tags:
+        - Shift Session
+      operationId: getOpenedShiftSession
+      summary: Get a Company's opened Shift Session
+      description: Returns the Company's single Shift Session in `OPENED` or `OPENED_DRAFT` state. Multiple matching sessions are treated as a conflict rather than an arbitrary session being selected.
+      parameters:
+        - $ref: '#/components/parameters/ShiftSessionCompanyId'
+      responses:
+        '200':
+          description: The Company's opened Shift Session.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShiftSession'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/ShiftSessionResourceNotFound'
+        '409':
+          $ref: '#/components/responses/ShiftSessionConflict'
+  /api/v1/session/get/available/{sessionId}:
+    get:
+      tags:
+        - Shift Session
+      operationId: getAvailableShiftSession
+      summary: Get an available Shift Session
+      description: 'Returns a Shift Session only when it is available to the current workflow: `OPENED`, `OPENED_DRAFT`, `RECALCULATING`, or `RECALCULATING_DRAFT`.'
+      parameters:
+        - $ref: '#/components/parameters/ShiftSessionId'
+      responses:
+        '200':
+          description: The available Shift Session.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShiftSession'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/ShiftSessionResourceNotFound'
+        '409':
+          $ref: '#/components/responses/ShiftSessionConflict'
+  /api/v1/session/get/available/all:
+    get:
+      tags:
+        - Shift Session
+      operationId: getAvailableShiftSessions
+      summary: List a Company's available Shift Sessions
+      description: Returns every Shift Session in `OPENED`, `OPENED_DRAFT`, `RECALCULATING`, or `RECALCULATING_DRAFT` state. The collection is empty when none exist.
+      parameters:
+        - $ref: '#/components/parameters/ShiftSessionCompanyId'
+      responses:
+        '200':
+          description: Available Shift Sessions, possibly empty.
+          content:
+            application/json:
+              schema:
+                type: array
+                nullable: false
+                items:
+                  $ref: '#/components/schemas/ShiftSession'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/ShiftSessionResourceNotFound'
+        '409':
+          $ref: '#/components/responses/ShiftSessionConflict'
+  /api/v1/session/open:
+    post:
+      tags:
+        - Shift Session
+      operationId: openShiftSession
+      summary: Open a new Shift Session
+      description: Opens a Shift Session at the supplied local Shift Session Start. A Company cannot have another session in `OPENED` state. The start is the first time boundary and is not represented as a Checkpoint.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OpenShiftSessionRequest'
+      responses:
+        '201':
+          description: The Shift Session was opened.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShiftSession'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/ShiftSessionResourceNotFound'
+        '409':
+          $ref: '#/components/responses/ShiftSessionConflict'
+  /api/v1/session/recalculating:
+    post:
+      tags:
+        - Shift Session
+      operationId: openShiftSessionRecalculation
+      summary: Reopen a Shift Session for Recalculation
+      description: Changes a `CLOSED` Shift Session to `RECALCULATING` so its Checkpoints can be changed and its Shift Result calculated again. This reopens the existing Shift Session; it does not create a second session or copy its Checkpoints.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OpenShiftSessionRecalculationRequest'
+      responses:
+        '201':
+          description: The existing Shift Session was reopened for Recalculation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShiftSession'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/ShiftSessionResourceNotFound'
+        '409':
+          $ref: '#/components/responses/ShiftSessionConflict'
+  /api/v1/session/{sessionId}/close:
+    put:
+      tags:
+        - Shift Session
+      operationId: closeShiftSession
+      summary: Close a Shift Session
+      description: 'Sets the Shift Session state to `CLOSED`. The current operation is idempotent with respect to session state: already closed and recalculating sessions are also left closed successfully.'
+      parameters:
+        - $ref: '#/components/parameters/ShiftSessionId'
+      responses:
+        '204':
+          description: The Shift Session is closed. The response has no body.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/ShiftSessionResourceNotFound'
+        '409':
+          $ref: '#/components/responses/ShiftSessionConflict'
+  /api/v1/session/update/time:
+    put:
+      tags:
+        - Shift Session
+      operationId: updateShiftSessionStart
+      summary: Update a Shift Session Start time
+      description: Replaces only the local time portion of the Shift Session Start; the session date is unchanged. The current state must be `OPENED` or `RECALCULATING`, so the update is rejected while a Shift Result Draft exists or after closure.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateShiftSessionStartRequest'
+      responses:
+        '204':
+          description: The Shift Session Start time was updated. The response has no body.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/ShiftSessionResourceNotFound'
+        '409':
+          $ref: '#/components/responses/ShiftSessionConflict'
+  /api/v1/checkpoint/create:
+    post:
+      tags:
+        - Checkpoint
+      operationId: createCheckpoint
+      summary: Create a Checkpoint
+      description: Creates a boundary in an `OPENED` or `RECALCULATING` Shift Session. The Checkpoint records the Employee team, accumulated Revenue, and accumulated Restaurant Tips for the Shift Interval that it ends. `FINAL` uses the same payload and allocation rules as `REGULAR`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCheckpointRequest'
+      responses:
+        '201':
+          description: The Checkpoint was created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Checkpoint'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/CheckpointResourceNotFound'
+        '409':
+          $ref: '#/components/responses/CheckpointConflict'
+  /api/v1/checkpoint/update:
+    post:
+      tags:
+        - Checkpoint
+      operationId: updateCheckpoint
+      summary: Update a Checkpoint
+      description: Replaces a Checkpoint's boundary time, type, complete Employee team, accumulated Revenue, accumulated Restaurant Tips, and metric records. Its owning Shift Session must be in `OPENED` or `RECALCULATING` state.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCheckpointRequest'
+      responses:
+        '200':
+          description: The updated Checkpoint.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Checkpoint'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/CheckpointResourceNotFound'
+        '409':
+          $ref: '#/components/responses/CheckpointConflict'
+  /api/v1/checkpoint/{checkpointId}/delete:
+    delete:
+      tags:
+        - Checkpoint
+      operationId: deleteCheckpoint
+      summary: Delete a Checkpoint
+      description: Deletes a Checkpoint only while its Shift Session is `OPENED` or `RECALCULATING`. Deleting an absent Checkpoint is also successful.
+      parameters:
+        - $ref: '#/components/parameters/CheckpointId'
+      responses:
+        '204':
+          description: The Checkpoint is absent after the request. The response has no body.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/CheckpointResourceNotFound'
+        '409':
+          $ref: '#/components/responses/CheckpointConflict'
 components:
   securitySchemes:
     BearerAuth:
@@ -163,6 +438,33 @@ components:
       in: path
       required: true
       description: The Company's identifier.
+      schema:
+        type: string
+        format: uuid
+        nullable: false
+    ShiftSessionCompanyId:
+      name: companyId
+      in: query
+      required: true
+      description: Identifier of the Company whose Shift Sessions are requested.
+      schema:
+        type: string
+        format: uuid
+        nullable: false
+    ShiftSessionId:
+      name: sessionId
+      in: path
+      required: true
+      description: The Shift Session's identifier.
+      schema:
+        type: string
+        format: uuid
+        nullable: false
+    CheckpointId:
+      name: checkpointId
+      in: path
+      required: true
+      description: The Checkpoint's identifier.
       schema:
         type: string
         format: uuid
@@ -220,6 +522,30 @@ components:
             $ref: '#/components/schemas/ProblemDetail'
     CompanyConflict:
       description: Another Company already has the requested title.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+    ShiftSessionResourceNotFound:
+      description: A referenced Company or Shift Session does not exist, or no opened Shift Session exists.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+    ShiftSessionConflict:
+      description: The authenticated User is not associated with the Company, the Shift Session is not in a state allowed by the operation, or multiple opened sessions exist.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+    CheckpointResourceNotFound:
+      description: A referenced Checkpoint, Shift Session, or Company does not exist.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+    CheckpointConflict:
+      description: The authenticated User is not associated with the Company, or the Shift Session state does not allow its Checkpoints to be modified.
       content:
         application/problem+json:
           schema:
@@ -380,3 +706,374 @@ components:
           nullable: false
           description: Request path associated with this occurrence when supplied by the server.
           example: /api/v1/company/get/5b367932-2e5d-4d89-aa07-17f65ff4af9c
+    ShiftSession:
+      type: object
+      description: One Company's work accounting session. Its `date` and `startWorkTime` together represent the Shift Session Start; that start is not a Checkpoint. Checkpoints are returned in ascending `dateTime` order.
+      additionalProperties: false
+      required:
+        - id
+        - companyId
+        - startWorkTime
+        - date
+        - status
+        - checkpoints
+      properties:
+        id:
+          type: string
+          format: uuid
+          nullable: false
+          description: The Shift Session's identifier.
+        companyId:
+          type: string
+          format: uuid
+          nullable: false
+          description: Identifier of the Company whose work is accounted.
+        startWorkTime:
+          type: string
+          format: time
+          nullable: false
+          description: Local time portion of the Shift Session Start.
+          example: '09:00:00'
+        date:
+          type: string
+          format: date
+          nullable: false
+          description: Local date portion of the Shift Session Start.
+          example: '2026-08-13'
+        status:
+          $ref: '#/components/schemas/ShiftSessionStatus'
+        checkpoints:
+          type: array
+          nullable: false
+          description: Checkpoints ordered by their local date and time, possibly empty.
+          items:
+            $ref: '#/components/schemas/Checkpoint'
+    ShiftSessionStatus:
+      type: string
+      nullable: false
+      description: Current lifecycle state. `OPENED` and `RECALCULATING` allow Checkpoint and Shift Session Start changes. Their `_DRAFT` forms indicate that a Shift Result Draft exists. `CLOSED` is eligible to be reopened for Recalculation.
+      enum:
+        - OPENED
+        - CLOSED
+        - RECALCULATING
+        - OPENED_DRAFT
+        - RECALCULATING_DRAFT
+    ShiftSessionStart:
+      type: string
+      format: date-time
+      nullable: false
+      description: The initial local date and time boundary of a Shift Session. It starts the first Shift Interval but is not a Checkpoint. The current API serializes this value without a UTC offset.
+      example: '2026-08-13T09:00:00'
+    OpenShiftSessionRequest:
+      type: object
+      description: Values required to open a new Shift Session for a Company.
+      additionalProperties: false
+      required:
+        - companyId
+        - startWorkAt
+      properties:
+        companyId:
+          type: string
+          format: uuid
+          nullable: false
+          description: Identifier of the Company for the new Shift Session.
+        startWorkAt:
+          $ref: '#/components/schemas/ShiftSessionStart'
+    OpenShiftSessionRecalculationRequest:
+      type: object
+      description: Selects the closed Shift Session to reopen for Recalculation.
+      additionalProperties: false
+      required:
+        - closedSessionId
+      properties:
+        closedSessionId:
+          type: string
+          format: uuid
+          nullable: false
+          description: Identifier of a Shift Session whose current status is `CLOSED`.
+    UpdateShiftSessionStartRequest:
+      type: object
+      description: Updates the local time portion of an existing Shift Session Start.
+      additionalProperties: false
+      required:
+        - sessionId
+        - startWorkTime
+      properties:
+        sessionId:
+          type: string
+          format: uuid
+          nullable: false
+          description: Identifier of the Shift Session to update.
+        startWorkTime:
+          type: string
+          format: time
+          nullable: false
+          description: Replacement local start time; the Shift Session date is unchanged.
+          example: '10:30:00'
+    Checkpoint:
+      type: object
+      description: A boundary that ends a Shift Interval and records the team together with the Company's accumulated Revenue and Restaurant Tips at that time. A Checkpoint's team accounts for the Shift Interval that the Checkpoint ends.
+      additionalProperties: false
+      required:
+        - id
+        - tips
+        - revenue
+        - employees
+        - dateTime
+        - type
+        - metricRecords
+      properties:
+        id:
+          type: string
+          format: uuid
+          nullable: false
+          description: The Checkpoint's identifier.
+        tips:
+          type: integer
+          format: int32
+          nullable: false
+          description: Accumulated Restaurant Tips in whole Russian rubles.
+          example: 1200
+        revenue:
+          type: integer
+          format: int32
+          nullable: false
+          description: Accumulated Revenue in whole Russian rubles.
+          example: 18000
+        employees:
+          type: array
+          nullable: false
+          description: The Employee team credited with the Shift Interval ending here.
+          items:
+            $ref: '#/components/schemas/CheckpointEmployee'
+        dateTime:
+          type: string
+          format: date-time
+          nullable: false
+          description: Local date and time of the boundary. The current API serializes this value without a UTC offset.
+          example: '2026-08-13T15:30:00'
+        type:
+          $ref: '#/components/schemas/CheckpointType'
+        metricRecords:
+          type: array
+          nullable: false
+          description: Additional amounts assigned to Revenue or Restaurant Tips.
+          items:
+            $ref: '#/components/schemas/CheckpointMetricRecord'
+    RegularCheckpoint:
+      description: A Regular Checkpoint is followed by another Shift Interval in the same Shift Session.
+      allOf:
+        - $ref: '#/components/schemas/Checkpoint'
+        - type: object
+          properties:
+            type:
+              type: string
+              enum:
+                - REGULAR
+    FinalCheckpoint:
+      description: A Final Checkpoint is the last Checkpoint in a Shift Session. It has the same serialized shape and allocation rules as a Regular Checkpoint.
+      allOf:
+        - $ref: '#/components/schemas/Checkpoint'
+        - type: object
+          properties:
+            type:
+              type: string
+              enum:
+                - FINAL
+    CheckpointType:
+      type: string
+      nullable: false
+      description: Whether this is a Regular Checkpoint or the Final Checkpoint.
+      enum:
+        - REGULAR
+        - FINAL
+    CheckpointEmployee:
+      type: object
+      description: An Employee in the team recorded at a Checkpoint.
+      additionalProperties: false
+      required:
+        - id
+        - userId
+        - firstName
+        - lastName
+        - patronymic
+        - simpleName
+      properties:
+        id:
+          type: string
+          format: uuid
+          nullable: false
+          description: The Employee's identifier.
+        userId:
+          type: string
+          nullable: true
+          description: Linked authenticated User identifier, or null when none is linked.
+        firstName:
+          type: string
+          nullable: false
+          description: The Employee's first name.
+        lastName:
+          type: string
+          nullable: false
+          description: The Employee's last name.
+        patronymic:
+          type: string
+          nullable: false
+          description: The Employee's patronymic.
+        simpleName:
+          type: string
+          nullable: true
+          description: Optional short display name.
+    CheckpointMetricRecord:
+      type: object
+      description: An additional recorded amount included in Checkpoint calculation inputs.
+      additionalProperties: false
+      required:
+        - id
+        - label
+        - destination
+        - value
+      properties:
+        id:
+          type: string
+          format: uuid
+          nullable: false
+          description: The metric record's identifier.
+        label:
+          type: string
+          nullable: false
+          description: Display label supplied for the recorded amount.
+        destination:
+          $ref: '#/components/schemas/CheckpointMetricDestination'
+        value:
+          type: integer
+          format: int32
+          nullable: false
+          description: Amount in whole Russian rubles.
+    CheckpointMetricRecordRequest:
+      type: object
+      description: An additional amount to store with a Checkpoint.
+      additionalProperties: false
+      required:
+        - label
+        - destination
+        - value
+      properties:
+        label:
+          type: string
+          nullable: false
+          description: Display label for the recorded amount.
+        destination:
+          $ref: '#/components/schemas/CheckpointMetricDestination'
+        value:
+          type: integer
+          format: int32
+          nullable: false
+          description: Amount in whole Russian rubles.
+    CheckpointMetricDestination:
+      type: string
+      nullable: false
+      description: Accumulated total to which a Checkpoint metric record belongs.
+      enum:
+        - REVENUE
+        - TIPS
+    CreateCheckpointRequest:
+      type: object
+      description: Complete serialized payload for creating a Checkpoint. The supplied team and accumulated totals describe the Shift Interval that this boundary ends.
+      additionalProperties: false
+      required:
+        - sessionId
+        - revenue
+        - tips
+        - employeeIds
+        - dateTime
+        - type
+        - fieldRecords
+      properties:
+        sessionId:
+          type: string
+          format: uuid
+          nullable: false
+          description: Identifier of the Shift Session receiving the Checkpoint.
+        revenue:
+          type: integer
+          format: int32
+          nullable: false
+          description: Accumulated Revenue in whole Russian rubles.
+        tips:
+          type: integer
+          format: int32
+          nullable: false
+          description: Accumulated Restaurant Tips in whole Russian rubles.
+        employeeIds:
+          type: array
+          uniqueItems: true
+          nullable: false
+          description: Identifiers of the Employee team for the ended Shift Interval.
+          items:
+            type: string
+            format: uuid
+            nullable: false
+        dateTime:
+          type: string
+          format: date-time
+          nullable: false
+          description: Local Checkpoint date and time without a UTC offset in the current API.
+        type:
+          $ref: '#/components/schemas/CheckpointType'
+        fieldRecords:
+          type: array
+          nullable: false
+          description: Additional amounts assigned to Revenue or Restaurant Tips.
+          items:
+            $ref: '#/components/schemas/CheckpointMetricRecordRequest'
+    UpdateCheckpointRequest:
+      type: object
+      description: Complete replacement payload for a Checkpoint, including its team, accumulated Revenue, accumulated Restaurant Tips, type, time, and metric records.
+      additionalProperties: false
+      required:
+        - id
+        - revenue
+        - tips
+        - employeeIds
+        - dateTime
+        - type
+        - fieldRecords
+      properties:
+        id:
+          type: string
+          format: uuid
+          nullable: false
+          description: Identifier of the Checkpoint to replace.
+        revenue:
+          type: integer
+          format: int32
+          nullable: false
+          description: Replacement accumulated Revenue in whole Russian rubles.
+        tips:
+          type: integer
+          format: int32
+          nullable: false
+          description: Replacement accumulated Restaurant Tips in whole Russian rubles.
+        employeeIds:
+          type: array
+          uniqueItems: true
+          nullable: false
+          description: Replacement Employee team for the ended Shift Interval.
+          items:
+            type: string
+            format: uuid
+            nullable: false
+        dateTime:
+          type: string
+          format: date-time
+          nullable: false
+          description: Replacement local Checkpoint date and time without a UTC offset in the current API.
+        type:
+          $ref: '#/components/schemas/CheckpointType'
+        fieldRecords:
+          type: array
+          nullable: false
+          description: Replacement additional Revenue and Restaurant Tips amounts.
+          items:
+            $ref: '#/components/schemas/CheckpointMetricRecordRequest'
