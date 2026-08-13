@@ -59,6 +59,19 @@ class CompanyControllerIT() : CommonWageAppIT() {
     }
 
     @Test
+    @DisplayName("GET /company/get/{id} — возвращает ProblemDetail 400 для некорректного UUID")
+    fun shouldReturn400WhenCompanyIdIsInvalid() {
+        client.withUser()
+            .get()
+            .uri("/api/v1/company/get/not-a-uuid")
+            .exchange()
+            .expectStatus().isBadRequest
+            .expectHeader().contentType(MediaType.APPLICATION_PROBLEM_JSON)
+            .expectBody()
+            .jsonPath("$.status").isEqualTo(400)
+    }
+
+    @Test
     @DisplayName("GET /company/get/for-user — возвращает список компаний пользователя")
     fun shouldReturnUserCompanies() {
         val company1 = companyRepository.save(CompanyEntityFactory.create(title = "Company 1")).block()!!
@@ -149,6 +162,23 @@ class CompanyControllerIT() : CommonWageAppIT() {
             .bodyValue(payload)
             .exchange()
             .expectStatus().isBadRequest
+            .expectHeader().contentType(MediaType.APPLICATION_PROBLEM_JSON)
+            .expectBody()
+            .jsonPath("$.status").isEqualTo(400)
+    }
+
+    @Test
+    @DisplayName("POST /company/create — возвращает 400 при title длиннее 255 символов")
+    fun shouldReturn400WhenTitleIsTooLong() {
+        val payload = CompanyPayloadDtoSupplier.valid(title = "a".repeat(256))
+
+        client.withUser()
+            .post()
+            .uri("/api/v1/company/create")
+            .bodyValue(payload)
+            .exchange()
+            .expectStatus().isBadRequest
+            .expectHeader().contentType(MediaType.APPLICATION_PROBLEM_JSON)
             .expectBody()
             .jsonPath("$.status").isEqualTo(400)
     }

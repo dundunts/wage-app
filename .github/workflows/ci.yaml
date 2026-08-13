@@ -25,5 +25,5 @@ jobs:
         uses: gradle/actions/setup-gradle@4c125117fe7c5aed11272ec4213f602f012f89f2 # v5
       - name: Verify release contract
         run: bash tests/release-contract.sh
-      - name: Test once and build
-        run: bash gradlew test bootJar --no-daemon
+      - name: Check once and build
+        run: bash gradlew check bootJar --no-daemon

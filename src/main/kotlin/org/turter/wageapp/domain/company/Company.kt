@@ -3,6 +3,7 @@ package org.turter.wageapp.domain.company
 import jakarta.validation.constraints.NotEmpty
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Pattern
+import jakarta.validation.constraints.Size
 import java.util.*
 
 //Data
@@ -20,6 +21,7 @@ data class UserCompaniesResponse(
 // Create, Update
 data class CompanyPayload(
     @field:NotEmpty(message = "Title is required")
+    @field:Size(max = 255, message = "Title must not exceed 255 characters")
     val title: String,
     @field:NotNull(message = "Employee wage coefficient from revenue is required")
     val employeeWageCoefficientFromRevenue: Int,

@@ -50,3 +50,11 @@ notification:
     bot:
       url: ${TELEGRAM_BOT_URL:http://localhost:8096}
       timeout: 10s
+
+# API documentation is unavailable in normal application profiles. The temporary
+# extraction test opts in through application-openapi-docs.yaml.
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
