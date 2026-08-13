@@ -49,3 +49,4 @@ notification:
   telegram:
     bot:
       url: ${TELEGRAM_BOT_URL:http://localhost:8096}
+      timeout: 10s

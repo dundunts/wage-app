@@ -1,18 +1,18 @@
 package org.turter.wageapp.messaging.client
 
+import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.reactor.awaitSingleOrNull
-import org.slf4j.LoggerFactory
 import org.springframework.web.reactive.function.client.WebClient
-import org.springframework.web.reactive.function.client.WebClientResponseException
 import org.turter.wageapp.domain.notification.NotificationEvent
+import java.time.Duration
 
 class TelegramNotificationClient(
-    private val webClient: WebClient
+    private val webClient: WebClient,
+    private val timeout: Duration
 ) {
-    private val log = LoggerFactory.getLogger(TelegramNotificationClient::class.java)
 
     suspend fun notify(event: NotificationEvent) {
-        try {
+        withTimeout(timeout.toMillis()) {
             webClient
                 .post()
                 .uri("/api/notifications")
@@ -20,8 +20,6 @@ class TelegramNotificationClient(
                 .retrieve()
                 .toBodilessEntity()
                 .awaitSingleOrNull()
-        } catch (e: WebClientResponseException) {
-            log.error("Catch exception while sending notification", e)
         }
     }
 }

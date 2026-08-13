@@ -32,7 +32,8 @@ class TelegramNotificationClientConfig {
             defaultWebClientBuilder
                 .baseUrl(props.url)
                 .filter(filter)
-                .build()
+                .build(),
+            props.timeout
         )
     }
 
