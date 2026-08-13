@@ -1,10 +1,19 @@
 # Wage App OpenAPI workflow
 
-This directory contains the manually reviewed OpenAPI 3.0.3 baseline for the
-Company, Employee, Shift Session, Checkpoint, Shift Result Draft, Shift Result, and Payroll APIs.
+This directory contains the canonical, manually reviewed OpenAPI 3.0.3 contract
+for all 34 inbound `/api/v1` Company, Employee, Shift Session, Checkpoint,
+Shift Result Draft, Shift Result, and Payroll operations. The outbound Telegram
+notification API is intentionally not part of this service-owned contract.
 `openapi.yaml` and its referenced `paths/` and `components/` files are the authored
 sources. `bundled/openapi.yaml` is the deterministic, self-contained document for
-consumers.
+consumers and can be read directly from `main`:
+
+```text
+https://raw.githubusercontent.com/dundunts/wage-app/main/openapi/bundled/openapi.yaml
+```
+
+All subsequent HTTP API changes must begin in the authored OpenAPI sources and
+update the implementation and behavioral tests in the same pull request.
 
 Run the complete contract verification through Gradle:
 
@@ -12,38 +21,31 @@ Run the complete contract verification through Gradle:
 ./gradlew openApiCheck
 ```
 
-`check` also depends on `openApiCheck`. Validation resolves every reference,
-Spectral applies the lint policy, the public API guarantees are tested, and a
-fresh bundle is compared byte-for-byte with the committed bundle. After an
+`check` also depends on `openApiCheck`. Both the modular source and generated
+bundle are validated with all references resolved, Spectral applies the lint
+policy, operation identifiers and complete-baseline guarantees are tested, and
+a fresh bundle is compared byte-for-byte with the committed bundle. After an
 intentional source change, rebuild it with:
 
 ```shell
 ./gradlew openApiUpdateBundle
 ```
 
-## Temporary extraction
+Pull requests also publish an informational oasdiff changelog against the exact
+base commit in the GitHub Actions job summary. Incompatible findings are visible
+to reviewers but do not block coordinated backend and web changes.
 
-The original Spring Company contract can be re-extracted as a review aid:
-
-```shell
-./gradlew extractCompanyOpenApi
-```
-
-The result is written to `build/openapi/extracted-company.json`. Springdoc is a
-test-only dependency, and the endpoint is enabled only by the `openapi-docs` test
-profile. The Swagger UI dependency is not present and the UI remains disabled.
-The extracted file is a starting point only; the modular sources are manually
-reviewed against validation, security, exception handling, pagination, and
-controller integration tests.
+The service has no Springdoc dependency, Swagger UI, or runtime API documentation
+endpoint. The committed bundle is the only published documentation surface.
 
 ## Pinned toolchain
 
 | Responsibility | Tool | Version |
 | --- | --- | --- |
-| Extraction | springdoc-openapi WebFlux API | 2.8.14 |
 | Validation | swagger-parser | 12.1.0 |
 | Linting | Spectral CLI | 6.16.3 |
 | Bundling | Redocly CLI | 2.46.1 |
+| Compatibility diff | oasdiff container | 1.28.0 |
 | CLI runtime | Node.js / npm | 22.14.0 / 10.9.2 |
 
 The Gradle Node plugin is pinned to 7.1.0 and downloads the declared Node.js and

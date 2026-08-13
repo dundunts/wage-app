@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: Wage App API
   version: 0.1.0
-  description: Draft baseline for the authenticated Company, Employee, Shift Session, Checkpoint, Shift Result Draft, Shift Result, and Payroll operations currently provided by Wage App. This contract is not yet the complete /api/v1 contract.
+  description: Complete canonical contract for all authenticated /api/v1 Company, Employee, Shift Session, Checkpoint, Shift Result Draft, Shift Result, and Payroll operations currently provided by Wage App.
 servers:
   - url: /
     description: Current Wage App server

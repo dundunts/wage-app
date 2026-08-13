@@ -1,0 +1,45 @@
+name: OpenAPI compatibility
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  api-compatibility:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out complete source history
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+      - name: Compare the published contract with the pull-request base
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build/openapi
+          git show "$BASE_SHA:openapi/bundled/openapi.yaml" > build/openapi/base.yaml
+          docker run --rm \
+            --volume "$PWD:/specs:ro" \
+            --workdir /specs \
+            tufin/oasdiff:v1.28.0@sha256:86830f988eaafcf589acb2794ee5ab78e3300ded071d6517bf085469300cbf36 \
+            changelog \
+            build/openapi/base.yaml \
+            openapi/bundled/openapi.yaml \
+            --format markdown > build/openapi/compatibility.md
+      - name: Publish the informational API compatibility diff
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "## OpenAPI compatibility diff"
+            echo
+            if [[ -s build/openapi/compatibility.md ]]; then
+              cat build/openapi/compatibility.md
+            else
+              echo "No consumer-visible API changes were found."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"

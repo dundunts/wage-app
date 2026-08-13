@@ -123,3 +123,9 @@ with an agent or committing it:
 ```shell
 ./scripts/setup-backend-release-promoter.sh
 ```
+
+## API contract
+
+The canonical OpenAPI 3.0.3 sources and client-ready self-contained bundle are
+documented in [`openapi/README.md`](openapi/README.md). API changes begin in the
+OpenAPI sources and update implementation and tests in the same pull request.
