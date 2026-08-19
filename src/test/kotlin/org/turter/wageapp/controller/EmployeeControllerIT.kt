@@ -1,9 +1,11 @@
 package org.turter.wageapp.controller
 
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import org.springframework.http.MediaType
 import org.springframework.http.ProblemDetail
 import org.turter.wageapp.config.CommonWageAppIT
 import org.turter.wageapp.config.withUser
@@ -277,6 +279,28 @@ class EmployeeControllerIT : CommonWageAppIT() {
     }
 
     @Test
+    @DisplayName("POST /employee/create — 404 ProblemDetail для несуществующей компании без частичной записи")
+    fun createShouldReturn404WhenCompanyDoesNotExist() {
+        val missingCompanyId = UUID.randomUUID()
+        val request = EmployeePayloadDtoSupplier.validForCreate(companyIds = listOf(missingCompanyId))
+
+        client.withUser()
+            .post()
+            .uri("/api/v1/employee/create")
+            .bodyValue(request)
+            .exchange()
+            .expectStatus().isNotFound
+            .expectHeader().contentType(MediaType.APPLICATION_PROBLEM_JSON)
+            .expectBody()
+            .jsonPath("$.title").isEqualTo("Not Found")
+            .jsonPath("$.status").isEqualTo(404)
+            .jsonPath("$.detail").isEqualTo("Companies not found: [$missingCompanyId]")
+
+        assertEquals(0, employeeRepository.count().block())
+        assertEquals(0, employeeCompanyRepository.count().block())
+    }
+
+    @Test
     @DisplayName("POST /employee/create — 400 если имя пустое")
     fun shouldFailWhenFirstNameBlank() {
         val request = EmployeePayloadDtoSupplier.validForCreate(firstName = "")
@@ -341,6 +365,39 @@ class EmployeeControllerIT : CommonWageAppIT() {
             .exchange()
             .expectStatus().isNotFound
             .expectBody(ProblemDetail::class.java)
+    }
+
+    @Test
+    @DisplayName("PUT /employee/update — 404 ProblemDetail для несуществующей компании с откатом изменений")
+    fun updateShouldReturn404WhenCompanyDoesNotExist() {
+        val originalCompany = saveNewCompany()
+        val employee = saveNewEmployee(firstName = "Original")
+        saveNewBind(employee.id!!, originalCompany.id!!)
+        val missingCompanyId = UUID.randomUUID()
+        val request = EmployeePayloadDtoSupplier.validForUpdate(
+            companyIds = listOf(missingCompanyId),
+            firstName = "Changed",
+        )
+
+        client.withUser()
+            .put()
+            .uri("/api/v1/employee/update/{id}", employee.id)
+            .bodyValue(request)
+            .exchange()
+            .expectStatus().isNotFound
+            .expectHeader().contentType(MediaType.APPLICATION_PROBLEM_JSON)
+            .expectBody()
+            .jsonPath("$.title").isEqualTo("Not Found")
+            .jsonPath("$.status").isEqualTo(404)
+            .jsonPath("$.detail").isEqualTo("Companies not found: [$missingCompanyId]")
+
+        val persistedEmployee = employeeRepository.findById(employee.id!!).block()!!
+        val persistedCompanyIds = employeeCompanyRepository.findAllByEmployeeId(employee.id!!)
+            .mapNotNull { it.companyId }
+            .collectList()
+            .block()!!
+        assertEquals("Original", persistedEmployee.firstName)
+        assertEquals(listOf(originalCompany.id), persistedCompanyIds)
     }
 
     @Test
@@ -411,6 +468,48 @@ class EmployeeControllerIT : CommonWageAppIT() {
             .exchange()
             .expectStatus().isEqualTo(409)
             .expectBody(ProblemDetail::class.java)
+    }
+
+    @Test
+    @DisplayName("PUT /employee/bind-user — конкурентная привязка даёт один 204 и один 409")
+    fun concurrentBindShouldReturnConflictForOneEmployee() {
+        val firstEmployee = saveNewEmployee(firstName = "First")
+        val secondEmployee = saveNewEmployee(firstName = "Second")
+        val userId = "concurrent-user"
+
+        val responses = runConcurrently(
+            {
+                client.withUser().put()
+                    .uri { builder ->
+                        builder.path("/api/v1/employee/bind-user/{id}")
+                            .queryParam("userId", userId)
+                            .build(firstEmployee.id)
+                    }
+                    .exchange().expectBody().returnResult()
+            },
+            {
+                client.withUser().put()
+                    .uri { builder ->
+                        builder.path("/api/v1/employee/bind-user/{id}")
+                            .queryParam("userId", userId)
+                            .build(secondEmployee.id)
+                    }
+                    .exchange().expectBody().returnResult()
+            },
+        )
+
+        assertEquals(listOf(204, 409), responses.map { it.status.value() }.sorted())
+        val conflict = responses.single { it.status.value() == 409 }
+        val conflictBody = requireNotNull(conflict.responseBody).decodeToString()
+        assertEquals(MediaType.APPLICATION_PROBLEM_JSON, conflict.responseHeaders.contentType)
+        assertTrue(conflictBody.contains("\"title\":\"Conflict\""))
+        assertTrue(conflictBody.contains("\"status\":409"))
+        assertTrue(conflictBody.contains("User '$userId' is already bound to another Employee"))
+        val boundEmployees = employeeRepository.findAll()
+            .filter { it.userId == userId }
+            .collectList()
+            .block()!!
+        assertEquals(1, boundEmployees.size)
     }
 
     @Test

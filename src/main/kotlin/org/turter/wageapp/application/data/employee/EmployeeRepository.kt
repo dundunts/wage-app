@@ -8,8 +8,6 @@ import reactor.core.publisher.Mono
 import java.util.*
 
 interface EmployeeRepository : R2dbcRepository<EmployeeDbEntity, UUID>, EmployeeCustomRepository {
-    fun existsByUserId(userId: String): Mono<Boolean>
-
     fun findByUserId(userId: String): Mono<EmployeeDbEntity>
 }
 

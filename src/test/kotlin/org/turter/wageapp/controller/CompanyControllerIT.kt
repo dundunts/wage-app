@@ -1,5 +1,7 @@
 package org.turter.wageapp.controller
 
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -198,8 +200,38 @@ class CompanyControllerIT() : CommonWageAppIT() {
             .bodyValue(payload)
             .exchange()
             .expectStatus().isEqualTo(409)
+            .expectHeader().contentType(MediaType.APPLICATION_PROBLEM_JSON)
             .expectBody()
+            .jsonPath("$.title").isEqualTo("Conflict")
             .jsonPath("$.status").isEqualTo(409)
+            .jsonPath("$.detail").isEqualTo("Company with title 'Duplicate title' already exists")
+    }
+
+    @Test
+    @DisplayName("POST /company/create — конкурентное создание одинакового title даёт один 201 и один 409")
+    fun concurrentCreateShouldReturnConflictForDuplicateTitle() {
+        val title = "Concurrent title"
+        val payload = CompanyPayloadDtoSupplier.valid(title = title)
+
+        val responses = runConcurrently(
+            {
+                client.withUser().post().uri("/api/v1/company/create").bodyValue(payload)
+                    .exchange().expectBody().returnResult()
+            },
+            {
+                client.withUser().post().uri("/api/v1/company/create").bodyValue(payload)
+                    .exchange().expectBody().returnResult()
+            },
+        )
+
+        assertEquals(listOf(201, 409), responses.map { it.status.value() }.sorted())
+        val conflict = responses.single { it.status.value() == 409 }
+        val conflictBody = requireNotNull(conflict.responseBody).decodeToString()
+        assertEquals(MediaType.APPLICATION_PROBLEM_JSON, conflict.responseHeaders.contentType)
+        assertTrue(conflictBody.contains("\"title\":\"Conflict\""))
+        assertTrue(conflictBody.contains("\"status\":409"))
+        assertTrue(conflictBody.contains("Company with title '$title' already exists"))
+        assertEquals(1, companyRepository.count().block())
     }
 
     @Test

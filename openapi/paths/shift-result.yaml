@@ -98,7 +98,7 @@ SaveManualOverrideShiftResult:
       "403":
         $ref: ../components/responses.yaml#/Forbidden
       "404":
-        $ref: ../components/responses.yaml#/CompanyNotFound
+        $ref: ../components/responses.yaml#/ShiftResultResourceNotFound
       "409":
         $ref: ../components/responses.yaml#/ShiftResultConflict
 

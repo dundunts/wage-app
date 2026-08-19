@@ -124,6 +124,10 @@ CreateEmployee:
         $ref: ../components/responses.yaml#/Unauthorized
       "403":
         $ref: ../components/responses.yaml#/Forbidden
+      "404":
+        $ref: ../components/responses.yaml#/EmployeeNotFound
+      "409":
+        $ref: ../components/responses.yaml#/UserBindingConflict
 
 UpdateEmployee:
   put:

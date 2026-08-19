@@ -279,6 +279,10 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/EmployeeNotFound'
+        '409':
+          $ref: '#/components/responses/UserBindingConflict'
   /api/v1/employee/update/{id}:
     put:
       tags:
@@ -777,7 +781,7 @@ paths:
         '403':
           $ref: '#/components/responses/Forbidden'
         '404':
-          $ref: '#/components/responses/CompanyNotFound'
+          $ref: '#/components/responses/ShiftResultResourceNotFound'
         '409':
           $ref: '#/components/responses/ShiftResultConflict'
   /api/v1/shift-result/{resultId}/delete:
@@ -1171,7 +1175,7 @@ components:
           schema:
             $ref: '#/components/schemas/ProblemDetail'
     EmployeeNotFound:
-      description: The requested Employee does not exist.
+      description: The requested Employee or a referenced Company does not exist.
       content:
         application/problem+json:
           schema:
@@ -1195,7 +1199,7 @@ components:
           schema:
             $ref: '#/components/schemas/ProblemDetail'
     CheckpointResourceNotFound:
-      description: A referenced Checkpoint, Shift Session, or Company does not exist. Deleting an unknown Checkpoint remains successful; deletion returns this response only if an existing Checkpoint refers to a missing Shift Session or Company.
+      description: A referenced Checkpoint, Shift Session, Company, or Employee does not exist. Deleting an unknown Checkpoint remains successful; deletion returns this response only if an existing Checkpoint refers to a missing Shift Session or Company.
       content:
         application/problem+json:
           schema:
@@ -1213,13 +1217,13 @@ components:
           schema:
             $ref: '#/components/schemas/ProblemDetail'
     ShiftResultResourceNotFound:
-      description: A referenced Shift Result or Company does not exist.
+      description: A referenced Shift Result, Company, or Employee does not exist.
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/ProblemDetail'
     ShiftResultDraftConflict:
-      description: The Shift Session state does not allow the operation, or the authenticated User is not associated with the Shift Session's Company.
+      description: The Shift Session state does not allow the operation, or the authenticated User is not associated with the Shift Session's Company, or an existing Shift Result already occupies the Company's date.
       content:
         application/problem+json:
           schema:

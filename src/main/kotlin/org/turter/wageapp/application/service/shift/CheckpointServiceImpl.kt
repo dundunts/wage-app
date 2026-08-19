@@ -8,6 +8,9 @@ import org.turter.wageapp.application.data.company.CompanyRepository
 import org.turter.wageapp.application.data.employee.EmployeeRepository
 import org.turter.wageapp.application.data.shift.*
 import org.turter.wageapp.application.mapper.CheckpointMapper
+import org.turter.wageapp.application.service.ReferenceValidator
+import org.turter.wageapp.application.service.mapInvalidReference
+import org.turter.wageapp.application.service.missingReferencesDetail
 import org.turter.wageapp.domain.notification.NotificationEventPublisher
 import org.turter.wageapp.domain.shared.EntityNotFoundException
 import org.turter.wageapp.domain.shift.Checkpoint
@@ -26,7 +29,8 @@ class CheckpointServiceImpl(
     private val employeeRepository: EmployeeRepository,
     private val companyRepository: CompanyRepository,
     private val checkpointMapper: CheckpointMapper,
-    private val notificationEventPublisher: NotificationEventPublisher
+    private val notificationEventPublisher: NotificationEventPublisher,
+    private val referenceValidator: ReferenceValidator
 ) : CheckpointService {
 
     @Transactional
@@ -37,6 +41,7 @@ class CheckpointServiceImpl(
         validateUserCompanyBind(userId, session.companyId, companyRepository)
 
         session.validateSessionIsAvailableModifying()
+        referenceValidator.requireEmployees(payload.employeeIds)
 
         val checkpoint = saveCheckpoint(
             checkpointMapper.toNewCheckpointDbEntity(payload, session.id!!),
@@ -66,6 +71,7 @@ class CheckpointServiceImpl(
         validateUserCompanyBind(userId, session.companyId, companyRepository)
 
         session.validateSessionIsAvailableModifying()
+        referenceValidator.requireEmployees(payload.employeeIds)
 
         removeEmployeeBindsAndMetricsForCheckpoint(checkpointFromDb.id!!)
 
@@ -130,9 +136,18 @@ class CheckpointServiceImpl(
         checkpointId: UUID,
         payload: ShiftCheckpointPayload
     ): Pair<List<CheckpointEmployeeDbEntity>, List<CheckpointMetricRecordDbEntity>> {
-        val employeeBinds = checkpointEmployeeRepository.saveAll(
-            checkpointMapper.toNewCheckpointEmployeeDbEntityList(checkpointId, payload.employeeIds.toList())
-        ).collectList().awaitSingle()
+        val employeeBinds = mapInvalidReference(
+            exception = { e ->
+                EntityNotFoundException(
+                    missingReferencesDetail("Referenced Employees", payload.employeeIds),
+                    e
+                )
+            }
+        ) {
+            checkpointEmployeeRepository.saveAll(
+                checkpointMapper.toNewCheckpointEmployeeDbEntityList(checkpointId, payload.employeeIds.toList())
+            ).collectList().awaitSingle()
+        }
 
         val metricRecords = metricRecordRepository.saveAll(
             checkpointMapper.toNewCheckpointMetricRecordList(payload.fieldRecords, checkpointId)
