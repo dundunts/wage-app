@@ -48,6 +48,11 @@ ruby -ryaml -e '
     File.read(File.join(root, ".github/workflows/ci.yaml")).include?("bash ./gradlew check bootJar") &&
     release_yaml.include?("bash ./gradlew test")
 
+  dockerfile = File.read(File.join(root, "Dockerfile"))
+  abort "release image build must produce bootJar without running the verification lifecycle" unless
+    dockerfile.include?("RUN gradle :bootJar --no-daemon") &&
+    !dockerfile.match?(/RUN gradle :build\b/)
+
   app = File.read(File.join(root, "src/main/resources/application.yaml"))
   abort "Liquibase must use runtime database credentials" unless
     app.include?("user: ${POSTGRES_USER:user}") && app.include?("password: ${POSTGRES_PASSWORD:password}")

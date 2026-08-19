@@ -5,8 +5,8 @@ WORKDIR /workspace
 # Копируем весь проект (т.к. модуль зависит от корня)
 COPY . .
 
-# Собираем конкретный модуль
-RUN gradle :build -x test --no-daemon
+# Собираем runtime-артефакт; проверки выполняются CI до сборки образа.
+RUN gradle :bootJar --no-daemon
 
 # ---------- Runtime stage ----------
 FROM eclipse-temurin:21-jre-jammy
