@@ -18,10 +18,10 @@ import org.turter.wageapp.domain.shift.SaveShiftResultResponse
 import org.turter.wageapp.domain.shift.ShiftResultConflictException
 import org.turter.wageapp.domain.shift.ShiftResultDetailed
 import org.turter.wageapp.application.mapper.ShiftResultMapper
+import org.turter.wageapp.application.service.ReferenceKind
 import org.turter.wageapp.application.service.ReferenceValidator
 import org.turter.wageapp.application.service.mapDuplicateKey
-import org.turter.wageapp.application.service.mapInvalidReference
-import org.turter.wageapp.application.service.missingReferencesDetail
+import org.turter.wageapp.application.service.mapForeignKeyViolation
 import org.turter.wageapp.application.service.shift.ShiftResultService
 import org.turter.wageapp.application.service.shift.shiftResultConflictDetail
 import org.turter.wageapp.application.service.shift.validateUserCompanyBind
@@ -136,14 +136,7 @@ class ShiftResultServiceImpl(
             ).awaitSingle()
         }
 
-        mapInvalidReference(
-            exception = { e ->
-                EntityNotFoundException(
-                    missingReferencesDetail("Referenced Employees", paymentEmployeeIds),
-                    e
-                )
-            }
-        ) {
+        mapForeignKeyViolation(ReferenceKind.EMPLOYEE, paymentEmployeeIds) {
             paymentRepository.saveAll(
                 payload.payments.map { paymentPayload ->
                     shiftResultMapper.toNewPaymentDbEntityFromPayload(paymentPayload, savedResult.id!!)

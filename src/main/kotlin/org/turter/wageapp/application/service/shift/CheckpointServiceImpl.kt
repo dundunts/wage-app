@@ -8,9 +8,9 @@ import org.turter.wageapp.application.data.company.CompanyRepository
 import org.turter.wageapp.application.data.employee.EmployeeRepository
 import org.turter.wageapp.application.data.shift.*
 import org.turter.wageapp.application.mapper.CheckpointMapper
+import org.turter.wageapp.application.service.ReferenceKind
 import org.turter.wageapp.application.service.ReferenceValidator
-import org.turter.wageapp.application.service.mapInvalidReference
-import org.turter.wageapp.application.service.missingReferencesDetail
+import org.turter.wageapp.application.service.mapForeignKeyViolation
 import org.turter.wageapp.domain.notification.NotificationEventPublisher
 import org.turter.wageapp.domain.shared.EntityNotFoundException
 import org.turter.wageapp.domain.shift.Checkpoint
@@ -136,14 +136,7 @@ class CheckpointServiceImpl(
         checkpointId: UUID,
         payload: ShiftCheckpointPayload
     ): Pair<List<CheckpointEmployeeDbEntity>, List<CheckpointMetricRecordDbEntity>> {
-        val employeeBinds = mapInvalidReference(
-            exception = { e ->
-                EntityNotFoundException(
-                    missingReferencesDetail("Referenced Employees", payload.employeeIds),
-                    e
-                )
-            }
-        ) {
+        val employeeBinds = mapForeignKeyViolation(ReferenceKind.EMPLOYEE, payload.employeeIds) {
             checkpointEmployeeRepository.saveAll(
                 checkpointMapper.toNewCheckpointEmployeeDbEntityList(checkpointId, payload.employeeIds.toList())
             ).collectList().awaitSingle()

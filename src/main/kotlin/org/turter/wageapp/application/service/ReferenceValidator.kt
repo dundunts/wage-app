@@ -23,7 +23,7 @@ class ReferenceValidator(
             .awaitSingle()
             .toSet()
 
-        requireReferences("Companies", requestedIds - existingIds)
+        requireReferences(ReferenceKind.COMPANY, requestedIds - existingIds)
     }
 
     suspend fun requireEmployees(employeeIds: Collection<UUID>) {
@@ -36,15 +36,23 @@ class ReferenceValidator(
             .awaitSingle()
             .toSet()
 
-        requireReferences("Employees", requestedIds - existingIds)
+        requireReferences(ReferenceKind.EMPLOYEE, requestedIds - existingIds)
     }
 
-    private fun requireReferences(entityName: String, missingIds: Set<UUID>) {
+    private fun requireReferences(referenceKind: ReferenceKind, missingIds: Set<UUID>) {
         if (missingIds.isNotEmpty()) {
-            throw EntityNotFoundException(missingReferencesDetail(entityName, missingIds))
+            throw EntityNotFoundException(missingReferencesDetail(referenceKind, missingIds))
         }
     }
 }
 
-fun missingReferencesDetail(entityName: String, ids: Collection<UUID>): String =
-    "$entityName not found: ${ids.sortedBy(UUID::toString)}"
+enum class ReferenceKind(val pluralName: String) {
+    COMPANY("Companies"),
+    EMPLOYEE("Employees")
+}
+
+fun missingReferencesDetail(referenceKind: ReferenceKind, ids: Collection<UUID>): String =
+    "${referenceKind.pluralName} not found: ${ids.sortedBy(UUID::toString)}"
+
+fun concurrentReferenceFailureDetail(referenceKind: ReferenceKind, ids: Collection<UUID>): String =
+    "One or more referenced ${referenceKind.pluralName} no longer exist: ${ids.sortedBy(UUID::toString)}"

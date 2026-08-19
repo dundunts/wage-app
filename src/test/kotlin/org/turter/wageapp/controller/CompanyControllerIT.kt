@@ -1,10 +1,10 @@
 package org.turter.wageapp.controller
 
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.turter.wageapp.config.CommonWageAppIT
 import org.turter.wageapp.config.USER_ID
@@ -226,11 +226,11 @@ class CompanyControllerIT() : CommonWageAppIT() {
 
         assertEquals(listOf(201, 409), responses.map { it.status.value() }.sorted())
         val conflict = responses.single { it.status.value() == 409 }
-        val conflictBody = requireNotNull(conflict.responseBody).decodeToString()
-        assertEquals(MediaType.APPLICATION_PROBLEM_JSON, conflict.responseHeaders.contentType)
-        assertTrue(conflictBody.contains("\"title\":\"Conflict\""))
-        assertTrue(conflictBody.contains("\"status\":409"))
-        assertTrue(conflictBody.contains("Company with title '$title' already exists"))
+        assertProblemDetail(
+            conflict,
+            HttpStatus.CONFLICT,
+            "Company with title '$title' already exists",
+        )
         assertEquals(1, companyRepository.count().block())
     }
 
@@ -342,8 +342,13 @@ class CompanyControllerIT() : CommonWageAppIT() {
             .bodyValue(payload)
             .exchange()
             .expectStatus().isEqualTo(409)
+            .expectHeader().contentType(MediaType.APPLICATION_PROBLEM_JSON)
             .expectBody()
+            .jsonPath("$.title").isEqualTo("Conflict")
             .jsonPath("$.status").isEqualTo(409)
+            .jsonPath("$.detail").isEqualTo("Company with title 'Company A' already exists")
+
+        assertEquals("Company B", companyRepository.findById(second.id!!).block()!!.title)
     }
 
     @Test

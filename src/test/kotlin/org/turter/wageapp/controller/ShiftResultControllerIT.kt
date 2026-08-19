@@ -601,11 +601,11 @@ class ShiftResultControllerIT : CommonWageAppIT() {
 
         assertEquals(listOf(201, 409), responses.map { it.status.value() }.sorted())
         val conflict = responses.single { it.status.value() == 409 }
-        val conflictBody = requireNotNull(conflict.responseBody).decodeToString()
-        assertEquals(MediaType.APPLICATION_PROBLEM_JSON, conflict.responseHeaders.contentType)
-        assertTrue(conflictBody.contains("\"title\":\"Conflict\""))
-        assertTrue(conflictBody.contains("\"status\":409"))
-        assertTrue(conflictBody.contains("Shift Result already exists for Company ${company.id} on $date"))
+        assertProblemDetail(
+            conflict,
+            HttpStatus.CONFLICT,
+            "Shift Result already exists for Company ${company.id} on $date",
+        )
         assertEquals(1, shiftResultRepository.count().block())
         assertEquals(1, paymentRepository.count().block())
     }

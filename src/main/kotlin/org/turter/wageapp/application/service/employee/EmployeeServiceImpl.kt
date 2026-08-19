@@ -10,9 +10,9 @@ import org.turter.wageapp.application.data.employee.entity.EmployeeCompanyDbEnti
 import org.turter.wageapp.application.data.employee.entity.EmployeeDbEntity
 import org.turter.wageapp.application.data.employee.entity.EmployeeWithCompanyRow
 import org.turter.wageapp.application.service.ReferenceValidator
+import org.turter.wageapp.application.service.ReferenceKind
+import org.turter.wageapp.application.service.mapForeignKeyViolation
 import org.turter.wageapp.application.service.mapDuplicateKey
-import org.turter.wageapp.application.service.mapInvalidReference
-import org.turter.wageapp.application.service.missingReferencesDetail
 import org.turter.wageapp.domain.employee.CompanyEmployeeInfo
 import org.turter.wageapp.domain.employee.CompanyEmployeesResponse
 import org.turter.wageapp.domain.employee.CreateEmployeePayload
@@ -68,14 +68,7 @@ class EmployeeServiceImpl(
 
         val saved = employeeRepository.save(mapper.toNewEmployeeDbEntity(payload)).awaitSingle()
 
-        mapInvalidReference(
-            exception = { e ->
-                EntityNotFoundException(
-                    missingReferencesDetail("Referenced Companies", payload.companyIds),
-                    e
-                )
-            }
-        ) {
+        mapForeignKeyViolation(ReferenceKind.COMPANY, payload.companyIds) {
             employeeCompanyRepository.saveAll(
                 payload.companyIds.map {
                     EmployeeCompanyDbEntity().apply { employeeId = saved.id; companyId = it }
@@ -117,18 +110,13 @@ class EmployeeServiceImpl(
             if (newCompaniesSet.contains(it.companyId)) newCompaniesSet.remove(it.companyId)
         }
 
-        mapInvalidReference(
-            exception = { e ->
-                EntityNotFoundException(
-                    missingReferencesDetail("Referenced Companies", payload.companyIds),
-                    e
-                )
-            }
-        ) {
+        mapForeignKeyViolation(ReferenceKind.COMPANY, payload.companyIds) {
             employeeCompanyRepository.saveAll(
                 newCompaniesSet.map { EmployeeCompanyDbEntity(id, it) }
             ).collectList().awaitSingle()
         }
+
+        referenceValidator.requireCompanies(payload.companyIds)
 
         return mapper.toEmployee(entity, payload.companyIds)
     }

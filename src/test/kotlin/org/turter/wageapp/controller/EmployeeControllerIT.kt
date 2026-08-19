@@ -1,10 +1,10 @@
 package org.turter.wageapp.controller
 
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ProblemDetail
 import org.turter.wageapp.config.CommonWageAppIT
@@ -405,7 +405,10 @@ class EmployeeControllerIT : CommonWageAppIT() {
     fun updateShouldReturn409WhenUserAlreadyBound() {
         saveNewEmployee(userId = "user-123")
         val employee = saveNewEmployee()
-        val request = EmployeePayloadDtoSupplier.validForUpdate(userId = "user-123")
+        val request = EmployeePayloadDtoSupplier.validForUpdate(
+            userId = "user-123",
+            firstName = "Changed",
+        )
 
         client.withUser()
             .put()
@@ -413,7 +416,15 @@ class EmployeeControllerIT : CommonWageAppIT() {
             .bodyValue(request)
             .exchange()
             .expectStatus().isEqualTo(409)
-            .expectBody(ProblemDetail::class.java)
+            .expectHeader().contentType(MediaType.APPLICATION_PROBLEM_JSON)
+            .expectBody()
+            .jsonPath("$.title").isEqualTo("Conflict")
+            .jsonPath("$.status").isEqualTo(409)
+            .jsonPath("$.detail").isEqualTo("User 'user-123' is already bound to another Employee")
+
+        val persistedEmployee = employeeRepository.findById(employee.id!!).block()!!
+        assertEquals(null, persistedEmployee.userId)
+        assertEquals("first_name", persistedEmployee.firstName)
     }
 
     @Test
@@ -500,11 +511,11 @@ class EmployeeControllerIT : CommonWageAppIT() {
 
         assertEquals(listOf(204, 409), responses.map { it.status.value() }.sorted())
         val conflict = responses.single { it.status.value() == 409 }
-        val conflictBody = requireNotNull(conflict.responseBody).decodeToString()
-        assertEquals(MediaType.APPLICATION_PROBLEM_JSON, conflict.responseHeaders.contentType)
-        assertTrue(conflictBody.contains("\"title\":\"Conflict\""))
-        assertTrue(conflictBody.contains("\"status\":409"))
-        assertTrue(conflictBody.contains("User '$userId' is already bound to another Employee"))
+        assertProblemDetail(
+            conflict,
+            HttpStatus.CONFLICT,
+            "User '$userId' is already bound to another Employee",
+        )
         val boundEmployees = employeeRepository.findAll()
             .filter { it.userId == userId }
             .collectList()
