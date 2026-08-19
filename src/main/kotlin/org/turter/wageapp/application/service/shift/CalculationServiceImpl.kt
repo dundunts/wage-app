@@ -1,6 +1,5 @@
 package org.turter.wageapp.application.service.shift
 
-import io.r2dbc.spi.R2dbcDataIntegrityViolationException
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
 import org.springframework.dao.DuplicateKeyException
@@ -13,6 +12,7 @@ import org.turter.wageapp.application.data.shift.*
 import org.turter.wageapp.application.mapper.CheckpointMapper
 import org.turter.wageapp.application.mapper.DraftMapper
 import org.turter.wageapp.application.mapper.ShiftResultMapper
+import org.turter.wageapp.application.service.mapDuplicateKey
 import org.turter.wageapp.domain.calculator.CoefficientFromRevenue
 import org.turter.wageapp.domain.calculator.PaymentDraftCalculator
 import org.turter.wageapp.domain.notification.NotificationEventPublisher
@@ -79,9 +79,17 @@ class CalculationServiceImpl(
 
         val shiftResultFromDraft = ShiftResultFromDraft(draft.convertToShiftResultDraft(), session.companyId)
 
-        val savedShiftResult =
+        val savedShiftResult = mapDuplicateKey(
+            exception = { e ->
+                ShiftResultConflictException(
+                    shiftResultConflictDetail(shiftResultFromDraft.companyId, shiftResultFromDraft.date),
+                    e
+                )
+            }
+        ) {
             shiftResultRepository.save(shiftResultMapper.toNewShiftResultDbEntityFromDraft(shiftResultFromDraft))
                 .awaitSingle()
+        }
 
         paymentRepository.saveAll(
             shiftResultFromDraft.payments.map { payment ->

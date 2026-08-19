@@ -13,13 +13,18 @@ import com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo
 import com.github.tomakehurst.wiremock.client.WireMock.verify
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.test.annotation.DirtiesContext
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
+import org.springframework.test.web.reactive.server.EntityExchangeResult
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.junit.jupiter.Container
@@ -39,6 +44,9 @@ import org.wiremock.spring.ConfigureWireMock
 import org.wiremock.spring.EnableWireMock
 import org.wiremock.spring.InjectWireMock
 import java.util.UUID
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import kotlin.time.Duration
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
@@ -219,5 +227,38 @@ open class CommonWageAppIT {
         )
 
         return employeeCompanyRepository.save(bind).block()!!
+    }
+
+    protected fun <T> runConcurrently(vararg actions: () -> T): List<T> {
+        val ready = CountDownLatch(actions.size)
+        val start = CountDownLatch(1)
+        val futures = actions.map { action ->
+            CompletableFuture.supplyAsync {
+                ready.countDown()
+                check(start.await(10, TimeUnit.SECONDS)) { "Timed out waiting to start concurrent test actions" }
+                action()
+            }
+        }
+
+        try {
+            check(ready.await(10, TimeUnit.SECONDS)) { "Timed out preparing concurrent test actions" }
+            start.countDown()
+            return futures.map { it.get(30, TimeUnit.SECONDS) }
+        } finally {
+            start.countDown()
+        }
+    }
+
+    protected fun assertProblemDetail(
+        result: EntityExchangeResult<ByteArray>,
+        status: HttpStatus,
+        detail: String
+    ) {
+        val responseBody = requireNotNull(result.responseBody).decodeToString()
+        assertEquals(status.value(), result.status.value())
+        assertEquals(MediaType.APPLICATION_PROBLEM_JSON, result.responseHeaders.contentType)
+        assertTrue(responseBody.contains("\"title\":\"${status.reasonPhrase}\""))
+        assertTrue(responseBody.contains("\"status\":${status.value()}"))
+        assertTrue(responseBody.contains(detail))
     }
 }

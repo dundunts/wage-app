@@ -33,7 +33,7 @@ ShiftSessionResourceNotFound:
         $ref: ./schemas.yaml#/ProblemDetail
 
 EmployeeNotFound:
-  description: The requested Employee does not exist.
+  description: The requested Employee or a referenced Company does not exist.
   content:
     application/problem+json:
       schema:
@@ -50,9 +50,10 @@ ShiftSessionConflict:
 
 CheckpointResourceNotFound:
   description: >-
-    A referenced Checkpoint, Shift Session, or Company does not exist. Deleting an
-    unknown Checkpoint remains successful; deletion returns this response only if
-    an existing Checkpoint refers to a missing Shift Session or Company.
+    A referenced Checkpoint, Shift Session, Company, or Employee does not exist.
+    Deleting an unknown Checkpoint remains successful; deletion returns this
+    response only if an existing Checkpoint refers to a missing Shift Session or
+    Company.
   content:
     application/problem+json:
       schema:
@@ -82,7 +83,7 @@ ShiftResultDraftResourceNotFound:
         $ref: ./schemas.yaml#/ProblemDetail
 
 ShiftResultResourceNotFound:
-  description: A referenced Shift Result or Company does not exist.
+  description: A referenced Shift Result, Company, or Employee does not exist.
   content:
     application/problem+json:
       schema:
@@ -91,7 +92,8 @@ ShiftResultResourceNotFound:
 ShiftResultDraftConflict:
   description: >-
     The Shift Session state does not allow the operation, or the authenticated User
-    is not associated with the Shift Session's Company.
+    is not associated with the Shift Session's Company, or an existing Shift Result
+    already occupies the Company's date.
   content:
     application/problem+json:
       schema:

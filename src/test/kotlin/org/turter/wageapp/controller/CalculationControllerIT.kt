@@ -6,6 +6,7 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.http.ProblemDetail
 import org.turter.wageapp.application.data.shift.*
 import org.turter.wageapp.config.CommonWageAppIT
@@ -17,7 +18,9 @@ import org.turter.wageapp.utils.checkpoint.CheckpointEmployeeEntityFactory
 import org.turter.wageapp.utils.checkpoint.CheckpointEntityFactory
 import org.turter.wageapp.utils.draft.PaymentDraftEntityFactory
 import org.turter.wageapp.utils.draft.ShiftResultDraftEntityFactory
+import org.turter.wageapp.utils.result.ShiftResultEntityFactory
 import org.turter.wageapp.utils.session.ShiftSessionEntityFactory
+import java.time.LocalDate
 import java.util.*
 
 class CalculationControllerIT : CommonWageAppIT() {
@@ -428,6 +431,47 @@ class CalculationControllerIT : CommonWageAppIT() {
 
         // Уведомление отправлено
         awaitVerifyRequestedStubTgBot(company.id!!)
+    }
+
+    @Test
+    @DisplayName("Подтверждение перерасчёта возвращает 409, когда результат Company/date уже существует")
+    fun confirmRecalculationReturns409WhenResultAlreadyExists() {
+        val (employee, company) = saveNewUserEmployeeAndCompany()
+        val date = LocalDate.of(2025, 1, 10)
+        val session = shiftSessionRepository.save(
+            ShiftSessionEntityFactory.create(
+                companyId = company.id!!,
+                status = ShiftSession.Status.RECALCULATING_DRAFT,
+                date = date,
+            )
+        ).block()!!
+        val draft = shiftResultDraftRepository.save(
+            ShiftResultDraftEntityFactory.create(sessionId = session.id!!, date = date)
+        ).block()!!
+        draft.addAndSavePayment(employee.id!!)
+        val existingResult = shiftResultRepository.save(
+            ShiftResultEntityFactory.create(companyId = company.id!!, date = date)
+        ).block()!!
+
+        client.withUser()
+            .post()
+            .uri("/api/v1/calculation/draft/{id}/confirm", draft.id)
+            .exchange()
+            .expectStatus().isEqualTo(HttpStatus.CONFLICT)
+            .expectHeader().contentType(MediaType.APPLICATION_PROBLEM_JSON)
+            .expectBody()
+            .jsonPath("$.title").isEqualTo("Conflict")
+            .jsonPath("$.status").isEqualTo(409)
+            .jsonPath("$.detail")
+            .isEqualTo("Shift Result already exists for Company ${company.id} on $date")
+
+        assertNotNull(shiftResultRepository.findById(existingResult.id!!).block())
+        assertNotNull(shiftResultDraftRepository.findById(draft.id!!).block())
+        assertEquals(
+            ShiftSession.Status.RECALCULATING_DRAFT,
+            shiftSessionRepository.findById(session.id!!).block()!!.status,
+        )
+        assertEquals(1, shiftResultRepository.count().block())
     }
 
     @Test

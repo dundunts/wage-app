@@ -9,6 +9,10 @@ import org.turter.wageapp.application.data.employee.EmployeeRepository
 import org.turter.wageapp.application.data.employee.entity.EmployeeCompanyDbEntity
 import org.turter.wageapp.application.data.employee.entity.EmployeeDbEntity
 import org.turter.wageapp.application.data.employee.entity.EmployeeWithCompanyRow
+import org.turter.wageapp.application.service.ReferenceValidator
+import org.turter.wageapp.application.service.ReferenceKind
+import org.turter.wageapp.application.service.mapForeignKeyViolation
+import org.turter.wageapp.application.service.mapDuplicateKey
 import org.turter.wageapp.domain.employee.CompanyEmployeeInfo
 import org.turter.wageapp.domain.employee.CompanyEmployeesResponse
 import org.turter.wageapp.domain.employee.CreateEmployeePayload
@@ -23,7 +27,8 @@ import java.util.*
 class EmployeeServiceImpl(
     private val employeeRepository: EmployeeRepository,
     private val employeeCompanyRepository: EmployeeCompanyRepository,
-    private val mapper: EmployeeMapper
+    private val mapper: EmployeeMapper,
+    private val referenceValidator: ReferenceValidator
 ) : EmployeeService {
 
     override suspend fun getById(id: UUID): Employee {
@@ -59,13 +64,17 @@ class EmployeeServiceImpl(
 
     @Transactional
     override suspend fun create(payload: CreateEmployeePayload): Employee {
+        referenceValidator.requireCompanies(payload.companyIds)
+
         val saved = employeeRepository.save(mapper.toNewEmployeeDbEntity(payload)).awaitSingle()
 
-        employeeCompanyRepository.saveAll(
-            payload.companyIds.map {
-                EmployeeCompanyDbEntity().apply { employeeId = saved.id; companyId = it }
-            }
-        ).collectList().awaitSingle()
+        mapForeignKeyViolation(ReferenceKind.COMPANY, payload.companyIds) {
+            employeeCompanyRepository.saveAll(
+                payload.companyIds.map {
+                    EmployeeCompanyDbEntity().apply { employeeId = saved.id; companyId = it }
+                }
+            ).collectList().awaitSingle()
+        }
 
         return mapper.toEmployee(saved, payload.companyIds)
     }
@@ -75,12 +84,19 @@ class EmployeeServiceImpl(
         val entity = employeeRepository.findById(id).awaitSingleOrNull()
             ?: throw EntityNotFoundException("Employee $id not found")
 
-        payload.userId?.let { userId ->
-            verifyUserId(userId, entity)
-        }
+        referenceValidator.requireCompanies(payload.companyIds)
 
         mapper.mergeToEmployeeDbEntity(payload, entity)
-        employeeRepository.save(entity).awaitSingle()
+        mapDuplicateKey(
+            exception = { e ->
+                NotUniqueValueException(
+                    "User '${payload.userId}' is already bound to another Employee",
+                    e
+                )
+            }
+        ) {
+            employeeRepository.save(entity).awaitSingle()
+        }
 
         val currentCompanies = employeeCompanyRepository.findAllByEmployeeId(id).collectList().awaitSingle()
 
@@ -94,9 +110,13 @@ class EmployeeServiceImpl(
             if (newCompaniesSet.contains(it.companyId)) newCompaniesSet.remove(it.companyId)
         }
 
-        employeeCompanyRepository.saveAll(
-            newCompaniesSet.map { EmployeeCompanyDbEntity(id, it) }
-        ).collectList().awaitSingle()
+        mapForeignKeyViolation(ReferenceKind.COMPANY, payload.companyIds) {
+            employeeCompanyRepository.saveAll(
+                newCompaniesSet.map { EmployeeCompanyDbEntity(id, it) }
+            ).collectList().awaitSingle()
+        }
+
+        referenceValidator.requireCompanies(payload.companyIds)
 
         return mapper.toEmployee(entity, payload.companyIds)
     }
@@ -109,15 +129,17 @@ class EmployeeServiceImpl(
         val entity = employeeRepository.findById(employeeId).awaitSingleOrNull()
             ?: throw EntityNotFoundException("Employee $employeeId not found")
 
-        verifyUserId(userId, entity)
-
         entity.userId = userId
-        employeeRepository.save(entity).awaitSingle()
-    }
-
-    private suspend fun verifyUserId(userId: String, entity: EmployeeDbEntity) {
-        if (userId != entity.userId && employeeRepository.existsByUserId(userId).awaitSingle())
-            throw NotUniqueValueException("Employee with userId [$userId] already exists")
+        mapDuplicateKey(
+            exception = { e ->
+                NotUniqueValueException(
+                    "User '$userId' is already bound to another Employee",
+                    e
+                )
+            }
+        ) {
+            employeeRepository.save(entity).awaitSingle()
+        }
     }
 
     private fun List<EmployeeWithCompanyRow>.toCompanyEmployeeResponse(): List<CompanyEmployeesResponse> =

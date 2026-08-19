@@ -18,7 +18,12 @@ import org.turter.wageapp.domain.shift.SaveShiftResultResponse
 import org.turter.wageapp.domain.shift.ShiftResultConflictException
 import org.turter.wageapp.domain.shift.ShiftResultDetailed
 import org.turter.wageapp.application.mapper.ShiftResultMapper
+import org.turter.wageapp.application.service.ReferenceKind
+import org.turter.wageapp.application.service.ReferenceValidator
+import org.turter.wageapp.application.service.mapDuplicateKey
+import org.turter.wageapp.application.service.mapForeignKeyViolation
 import org.turter.wageapp.application.service.shift.ShiftResultService
+import org.turter.wageapp.application.service.shift.shiftResultConflictDetail
 import org.turter.wageapp.application.service.shift.validateUserCompanyBind
 import java.util.*
 
@@ -29,7 +34,8 @@ class ShiftResultServiceImpl(
     private val paymentRepository: PaymentRepository,
     private val employeeRepository: EmployeeRepository,
     private val companyRepository: CompanyRepository,
-    private val shiftResultMapper: ShiftResultMapper
+    private val shiftResultMapper: ShiftResultMapper,
+    private val referenceValidator: ReferenceValidator
 ) : ShiftResultService {
 
     override suspend fun getDetailed(
@@ -97,14 +103,15 @@ class ShiftResultServiceImpl(
             "Payments contains duplicates employee IDs"
         )
 
+        val paymentEmployeeIds = payload.payments.map { it.employeeId }
+        referenceValidator.requireEmployees(paymentEmployeeIds)
+
         val existingByCompanyAndDate = shiftResultRepository
             .findByCompanyIdAndDate(payload.companyId, payload.date)
             .awaitSingleOrNull()
 
         if (existingByCompanyAndDate != null && !payload.overwrite) {
-            throw ShiftResultConflictException(
-                "Shift result already exists for date {${payload.date}} and company ID {${payload.companyId}}"
-            )
+            throw ShiftResultConflictException(shiftResultConflictDetail(payload.companyId, payload.date))
         }
 
         payload.replacementId?.let { replacementId ->
@@ -119,15 +126,23 @@ class ShiftResultServiceImpl(
             shiftResultRepository.delete(resultDbEntity).awaitSingleOrNull()
         }
 
-        val savedResult = shiftResultRepository.save(
-            shiftResultMapper.toNewShiftResultDbEntityFromPayload(payload)
-        ).awaitSingle()
-
-        paymentRepository.saveAll(
-            payload.payments.map { paymentPayload ->
-                shiftResultMapper.toNewPaymentDbEntityFromPayload(paymentPayload, savedResult.id!!)
+        val savedResult = mapDuplicateKey(
+            exception = { e ->
+                ShiftResultConflictException(shiftResultConflictDetail(payload.companyId, payload.date), e)
             }
-        ).collectList().awaitSingle()
+        ) {
+            shiftResultRepository.save(
+                shiftResultMapper.toNewShiftResultDbEntityFromPayload(payload)
+            ).awaitSingle()
+        }
+
+        mapForeignKeyViolation(ReferenceKind.EMPLOYEE, paymentEmployeeIds) {
+            paymentRepository.saveAll(
+                payload.payments.map { paymentPayload ->
+                    shiftResultMapper.toNewPaymentDbEntityFromPayload(paymentPayload, savedResult.id!!)
+                }
+            ).collectList().awaitSingle()
+        }
 
         return SaveShiftResultResponse(savedResult.id!!)
     }
@@ -150,4 +165,5 @@ class ShiftResultServiceImpl(
         val seenIds = mutableSetOf<UUID>()
         return payloads.any { !seenIds.add(it.employeeId) }
     }
+
 }

@@ -7,8 +7,8 @@ import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import org.turter.wageapp.application.data.company.CompanyDbEntity
 import org.turter.wageapp.application.data.company.CompanyRepository
+import org.turter.wageapp.application.service.mapDuplicateKey
 import org.turter.wageapp.domain.company.Company
 import org.turter.wageapp.domain.company.CompanyPayload
 import org.turter.wageapp.domain.shared.EntityNotFoundException
@@ -42,11 +42,15 @@ class CompanyServiceImpl(
 
     @Transactional
     override suspend fun create(payload: CompanyPayload): Company {
-        validateCompanyTitle(payload.title)
-
-        val saved = companyRepository.save(
-            mapper.toNewCompanyDbEntity(payload)
-        ).awaitSingle()
+        val saved = mapDuplicateKey(
+            exception = { e ->
+                NotUniqueValueException("Company with title '${payload.title}' already exists", e)
+            }
+        ) {
+            companyRepository.save(
+                mapper.toNewCompanyDbEntity(payload)
+            ).awaitSingle()
+        }
 
         return mapper.toCompanyDto(saved)
     }
@@ -56,11 +60,15 @@ class CompanyServiceImpl(
         val saved = companyRepository.findById(id).awaitSingleOrNull()
             ?: throw EntityNotFoundException("Company $id not found")
 
-        validateCompanyTitle(saved, payload.title)
-
-        val updated = companyRepository.save(
-            mapper.mergeToCompanyDbEntity(payload, saved)
-        ).awaitSingle()
+        val updated = mapDuplicateKey(
+            exception = { e ->
+                NotUniqueValueException("Company with title '${payload.title}' already exists", e)
+            }
+        ) {
+            companyRepository.save(
+                mapper.mergeToCompanyDbEntity(payload, saved)
+            ).awaitSingle()
+        }
 
         return mapper.toCompanyDto(updated)
     }
@@ -69,15 +77,4 @@ class CompanyServiceImpl(
         companyRepository.deleteById(id).awaitSingleOrNull()
     }
 
-    private suspend fun validateCompanyTitle(company: CompanyDbEntity, newTitle: String) {
-        if (company.title == newTitle) return;
-
-        validateCompanyTitle(newTitle)
-    }
-
-    private suspend fun validateCompanyTitle(newTitle: String) {
-        if (companyRepository.existsByTitle(newTitle).awaitSingle()) {
-            throw NotUniqueValueException("Company with title '${newTitle}' already exists")
-        }
-    }
 }

@@ -7,7 +7,7 @@ class WrongCompanyIdException(message: String) : ConflictDataException(message)
 
 class ShiftSessionNotDraftException(message: String) : ConflictDataException(message)
 
-class ShiftResultConflictException(message: String) : ConflictDataException(message)
+class ShiftResultConflictException(message: String, cause: Throwable? = null) : ConflictDataException(message, cause)
 
 class ShiftSessionClosedException(message: String) : ConflictDataException(message)
 

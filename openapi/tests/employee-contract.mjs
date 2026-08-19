@@ -64,6 +64,8 @@ assert.deepEqual(responseStatuses("/api/v1/employee/create", "post"), [
   "400",
   "401",
   "403",
+  "404",
+  "409",
 ]);
 assert.deepEqual(responseStatuses("/api/v1/employee/update/{id}", "put"), [
   "204",
@@ -81,6 +83,18 @@ assert.deepEqual(responseStatuses("/api/v1/employee/bind-user/{employeeId}", "pu
   "404",
   "409",
 ]);
+assert.match(
+  resolveLocalReference(
+    document.paths["/api/v1/employee/create"].post.responses["404"],
+  ).description,
+  /Company/,
+);
+assert.match(
+  resolveLocalReference(
+    document.paths["/api/v1/employee/update/{id}"].put.responses["404"],
+  ).description,
+  /Company/,
+);
 
 const schemas = document.components.schemas;
 assert.deepEqual(schemas.Position.enum, ["MANAGER", "WAITER_ACTIVE", "WAITER_INACTIVE"]);

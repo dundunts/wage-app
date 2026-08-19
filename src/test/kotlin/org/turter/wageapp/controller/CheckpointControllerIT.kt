@@ -5,6 +5,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.http.MediaType
 import org.springframework.http.ProblemDetail
 import org.turter.wageapp.application.data.shift.CheckpointEmployeeRepository
 import org.turter.wageapp.application.data.shift.CheckpointMetricRecordRepository
@@ -232,6 +233,38 @@ class CheckpointControllerIT : CommonWageAppIT() {
     }
 
     @Test
+    @DisplayName("POST /checkpoint/create — 404 ProblemDetail для несуществующего сотрудника без частичной записи")
+    fun createShouldReturn404WhenEmployeeDoesNotExist() {
+        val (_, company) = saveNewUserEmployeeAndCompany()
+        val session = shiftSessionRepository.save(
+            ShiftSessionEntityFactory.create(
+                companyId = company.id!!,
+                status = ShiftSession.Status.OPENED,
+            )
+        ).block()!!
+        val missingEmployeeId = UUID.randomUUID()
+        val payload = CreateRegularCheckpointPayloadSupplier.valid(
+            sessionId = session.id!!,
+            employeeIds = setOf(missingEmployeeId),
+        )
+
+        client.withUser()
+            .post()
+            .uri("/api/v1/checkpoint/create")
+            .bodyValue(payload)
+            .exchange()
+            .expectStatus().isNotFound
+            .expectHeader().contentType(MediaType.APPLICATION_PROBLEM_JSON)
+            .expectBody()
+            .jsonPath("$.title").isEqualTo("Not Found")
+            .jsonPath("$.status").isEqualTo(404)
+            .jsonPath("$.detail").isEqualTo("Employees not found: [$missingEmployeeId]")
+
+        assertEquals(0, checkpointRepository.count().block())
+        assertEquals(0, checkpointEmployeeRepository.count().block())
+    }
+
+    @Test
     @DisplayName("POST /checkpoint/create — ошибка если пользователь не имеет доступа к компании сессии")
     fun shouldFailWhenUserHasNoAccessToCompany() {
         val company = saveNewCompany()
@@ -419,6 +452,59 @@ class CheckpointControllerIT : CommonWageAppIT() {
             .exchange()
             .expectStatus().isNotFound
             .expectBody(ProblemDetail::class.java)
+    }
+
+    @Test
+    @DisplayName("POST /checkpoint/update — 404 ProblemDetail для несуществующего сотрудника с откатом изменений")
+    fun updateShouldReturn404WhenEmployeeDoesNotExist() {
+        val (employee, company) = saveNewUserEmployeeAndCompany()
+        val session = shiftSessionRepository.save(
+            ShiftSessionEntityFactory.create(
+                companyId = company.id!!,
+                status = ShiftSession.Status.OPENED,
+            )
+        ).block()!!
+        val checkpoint = checkpointRepository.save(
+            CheckpointEntityFactory.create(
+                shiftSessionId = session.id!!,
+                tips = 100,
+                revenue = 1_000,
+            )
+        ).block()!!
+        checkpointEmployeeRepository.save(
+            CheckpointEmployeeEntityFactory.create(
+                checkpointId = checkpoint.id!!,
+                employeeId = employee.id!!,
+            )
+        ).block()!!
+        val missingEmployeeId = UUID.randomUUID()
+        val payload = CheckpointDtoSupplier.update(
+            id = checkpoint.id!!,
+            employeeIds = setOf(missingEmployeeId),
+            tips = 200,
+            revenue = 2_000,
+        )
+
+        client.withUser()
+            .post()
+            .uri("/api/v1/checkpoint/update")
+            .bodyValue(payload)
+            .exchange()
+            .expectStatus().isNotFound
+            .expectHeader().contentType(MediaType.APPLICATION_PROBLEM_JSON)
+            .expectBody()
+            .jsonPath("$.title").isEqualTo("Not Found")
+            .jsonPath("$.status").isEqualTo(404)
+            .jsonPath("$.detail").isEqualTo("Employees not found: [$missingEmployeeId]")
+
+        val persistedCheckpoint = checkpointRepository.findById(checkpoint.id!!).block()!!
+        val persistedEmployeeIds = checkpointEmployeeRepository.findAllByCheckpointId(checkpoint.id!!)
+            .mapNotNull { it.employeeId }
+            .collectList()
+            .block()!!
+        assertEquals(100, persistedCheckpoint.tips)
+        assertEquals(1_000, persistedCheckpoint.revenue)
+        assertEquals(listOf(employee.id), persistedEmployeeIds)
     }
 
     @Test

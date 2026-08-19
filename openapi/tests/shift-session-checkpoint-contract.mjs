@@ -53,6 +53,14 @@ for (const operation of operations) {
   );
 }
 assert.equal(operations.length, Object.keys(expectedResponses).length);
+for (const operationId of ["createCheckpoint", "updateCheckpoint"]) {
+  const checkpointOperation = operations.find(
+    (operation) => operation.operationId === operationId,
+  );
+  const responseReference = checkpointOperation.responses["404"].$ref;
+  const responseName = responseReference.split("/").at(-1);
+  assert.match(document.components.responses[responseName].description, /Employee/);
+}
 
 const schemas = document.components.schemas;
 assert.deepEqual(schemas.ShiftSession.required, [

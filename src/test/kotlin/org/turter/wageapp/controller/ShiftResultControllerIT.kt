@@ -9,6 +9,7 @@ import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.api.assertNull
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.http.ProblemDetail
 import org.turter.wageapp.application.data.shift.*
 import org.turter.wageapp.config.CommonWageAppIT
@@ -430,6 +431,37 @@ class ShiftResultControllerIT : CommonWageAppIT() {
     }
 
     @Test
+    @DisplayName("Сохранение Manual Override возвращает 404 для несуществующего сотрудника и сохраняет старый результат")
+    fun saveResult_returns404_whenEmployeeDoesNotExist() {
+        val (employee, company) = saveNewUserEmployeeAndCompany()
+        val date = LocalDate.of(2025, 1, 10)
+        val existing = saveShiftResult(company.id!!, date)
+        savePayment(existing.id!!, employee.id!!)
+        val missingEmployeeId = UUID.randomUUID()
+        val payload = SaveShiftResultPayloadDtoSupplier.default(
+            companyId = company.id!!,
+            date = date,
+            overwrite = true,
+            payments = listOf(PaymentPayloadDtoSupplier.default(missingEmployeeId)),
+        )
+
+        client.withUser()
+            .post()
+            .uri("/api/v1/shift-result/save")
+            .bodyValue(payload)
+            .exchange()
+            .expectStatus().isNotFound
+            .expectHeader().contentType(MediaType.APPLICATION_PROBLEM_JSON)
+            .expectBody()
+            .jsonPath("$.title").isEqualTo("Not Found")
+            .jsonPath("$.status").isEqualTo(404)
+            .jsonPath("$.detail").isEqualTo("Employees not found: [$missingEmployeeId]")
+
+        assertNotNull(shiftResultRepository.findById(existing.id!!).block())
+        assertEquals(1, paymentRepository.findAllByShiftResultId(existing.id!!).count().block())
+    }
+
+    @Test
     @DisplayName("Перезапись существующего результата смены при overwrite = true")
     fun saveResult_overwritesExistingResult_whenOverwriteTrue() {
         val (employee, company) = saveNewUserEmployeeAndCompany()
@@ -537,7 +569,45 @@ class ShiftResultControllerIT : CommonWageAppIT() {
             .bodyValue(payload)
             .exchange()
             .expectStatus().isEqualTo(HttpStatus.CONFLICT)
-            .expectBody(ProblemDetail::class.java)
+            .expectHeader().contentType(MediaType.APPLICATION_PROBLEM_JSON)
+            .expectBody()
+            .jsonPath("$.title").isEqualTo("Conflict")
+            .jsonPath("$.status").isEqualTo(409)
+            .jsonPath("$.detail")
+            .isEqualTo("Shift Result already exists for Company ${company.id} on $date")
+    }
+
+    @Test
+    @DisplayName("Конкурентное сохранение одинаковых Company и date даёт один 201 и один 409")
+    fun concurrentSaveReturnsConflictForDuplicateCompanyAndDate() {
+        val (employee, company) = saveNewUserEmployeeAndCompany()
+        val date = LocalDate.of(2025, 1, 10)
+        val payload = SaveShiftResultPayloadDtoSupplier.default(
+            companyId = company.id!!,
+            date = date,
+            payments = listOf(PaymentPayloadDtoSupplier.default(employee.id!!)),
+        )
+
+        val responses = runConcurrently(
+            {
+                client.withUser().post().uri("/api/v1/shift-result/save").bodyValue(payload)
+                    .exchange().expectBody().returnResult()
+            },
+            {
+                client.withUser().post().uri("/api/v1/shift-result/save").bodyValue(payload)
+                    .exchange().expectBody().returnResult()
+            },
+        )
+
+        assertEquals(listOf(201, 409), responses.map { it.status.value() }.sorted())
+        val conflict = responses.single { it.status.value() == 409 }
+        assertProblemDetail(
+            conflict,
+            HttpStatus.CONFLICT,
+            "Shift Result already exists for Company ${company.id} on $date",
+        )
+        assertEquals(1, shiftResultRepository.count().block())
+        assertEquals(1, paymentRepository.count().block())
     }
 
     @Test

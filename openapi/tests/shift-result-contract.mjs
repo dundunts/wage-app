@@ -66,6 +66,18 @@ assert.match(
   operation("/api/v1/shift-result/save", "post").description,
   /Manual Override/is,
 );
+const responseComponent = (path, method, status) => {
+  const responseReference = operation(path, method).responses[status].$ref;
+  return document.components.responses[responseReference.split("/").at(-1)];
+};
+assert.match(
+  responseComponent("/api/v1/calculation/draft/{id}/confirm", "post", "409").description,
+  /existing Shift Result/,
+);
+assert.match(
+  responseComponent("/api/v1/shift-result/save", "post", "404").description,
+  /Employee/,
+);
 
 const schemas = document.components.schemas;
 const requiredSchemas = [

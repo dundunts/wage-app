@@ -8,6 +8,7 @@ import org.turter.wageapp.domain.shift.ShiftSession
 import org.turter.wageapp.domain.shift.ShiftSessionClosedException
 import org.turter.wageapp.domain.shift.ShiftSessionNotDraftException
 import org.turter.wageapp.domain.shift.WrongCompanyIdException
+import java.time.LocalDate
 import java.util.UUID
 
 suspend fun validateUserCompanyBind(userId: String, companyId: UUID, repo: CompanyRepository) {
@@ -34,3 +35,6 @@ fun ShiftSessionDbEntity.validateSessionIsAvailableToConfirm() {
         else -> throw ShiftSessionNotDraftException("Session with id {$id} is unable to confirm")
     }
 }
+
+fun shiftResultConflictDetail(companyId: UUID, date: LocalDate): String =
+    "Shift Result already exists for Company $companyId on $date"
