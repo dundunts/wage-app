@@ -29,6 +29,7 @@ const expectedOperations = {
   "/api/v1/session/recalculating": "post",
   "/api/v1/session/{sessionId}/close": "put",
   "/api/v1/session/update/time": "put",
+  "/api/v1/session/{sessionId}/qr-tips": "get",
   "/api/v1/checkpoint/create": "post",
   "/api/v1/checkpoint/update": "post",
   "/api/v1/checkpoint/{checkpointId}/delete": "delete",
@@ -52,7 +53,7 @@ const actualOperations = Object.fromEntries(
   ),
 );
 assert.deepEqual(actualOperations, expectedOperations);
-assert.equal(Object.keys(actualOperations).length, 34);
+assert.equal(Object.keys(actualOperations).length, 35);
 assert.ok(Object.keys(actualOperations).every((path) => path.startsWith("/api/v1/")));
 assert.ok(Object.keys(actualOperations).every((path) => !path.toLowerCase().includes("telegram")));
 
@@ -84,7 +85,7 @@ const resolveLocalReference = (value) => {
     .reduce((current, segment) => current[segment], document);
 };
 for (const operation of operations) {
-  for (const status of ["400", "404", "409"]) {
+  for (const status of ["400", "404", "409", "502", "504"]) {
     if (!operation.responses[status]) continue;
     const response = resolveLocalReference(operation.responses[status]);
     const problemMediaType = response.content?.["application/problem+json"];

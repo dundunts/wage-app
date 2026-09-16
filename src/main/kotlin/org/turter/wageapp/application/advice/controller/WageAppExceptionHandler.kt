@@ -11,9 +11,16 @@ import org.turter.wageapp.domain.shared.ConflictDataException
 import org.turter.wageapp.domain.shared.EntityNotFoundException
 import org.turter.wageapp.domain.shared.NotConsistenceDataException
 import org.turter.wageapp.domain.shared.NotUniqueValueException
+import org.turter.wageapp.tips.TipsBotException
 
 @ControllerAdvice
 class WageAppExceptionHandler {
+
+    @ExceptionHandler(TipsBotException::class)
+    suspend fun handleTipsBotException(e: TipsBotException): ResponseEntity<ProblemDetail> {
+        val status = if (e.timedOut) HttpStatus.GATEWAY_TIMEOUT else HttpStatus.BAD_GATEWAY
+        return ResponseEntity.status(status).body(ProblemDetail.forStatusAndDetail(status, e.message!!))
+    }
 
     @ExceptionHandler(ServerWebInputException::class)
     suspend fun handleServerWebInputException(e: ServerWebInputException): ResponseEntity<ProblemDetail> {

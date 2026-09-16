@@ -1,9 +1,9 @@
 # Wage App OpenAPI workflow
 
 This directory contains the canonical, manually reviewed OpenAPI 3.0.3 contract
-for all 34 inbound `/api/v1` Company, Employee, Shift Session, Checkpoint,
+for all 35 inbound `/api/v1` Company, Employee, Shift Session, Checkpoint,
 Shift Result Draft, Shift Result, and Payroll operations. The outbound Telegram
-notification API is intentionally not part of this service-owned contract.
+notification and tips bot gRPC APIs are not part of this service-owned contract.
 `openapi.yaml` and its referenced `paths/` and `components/` files are the authored
 sources. `bundled/openapi.yaml` is the deterministic, self-contained document for
 consumers and can be read directly from `main`:

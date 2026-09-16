@@ -1,3 +1,7 @@
+tips:
+  bot:
+    base-url: localhost:1
+
 spring:
   liquibase:
     default-schema: wage_app

@@ -23,6 +23,7 @@ assert.deepEqual(methodsByPath, {
   "/api/v1/session/recalculating": ["post"],
   "/api/v1/session/{sessionId}/close": ["put"],
   "/api/v1/session/update/time": ["put"],
+  "/api/v1/session/{sessionId}/qr-tips": ["get"],
   "/api/v1/checkpoint/create": ["post"],
   "/api/v1/checkpoint/update": ["post"],
   "/api/v1/checkpoint/{checkpointId}/delete": ["delete"],
@@ -36,6 +37,7 @@ const expectedResponses = {
   openShiftSessionRecalculation: ["201", "400", "401", "403", "404", "409"],
   closeShiftSession: ["204", "400", "401", "403", "404", "409"],
   updateShiftSessionStart: ["204", "400", "401", "403", "404", "409"],
+  getShiftSessionQrTips: ["200", "400", "401", "403", "404", "409", "502", "504"],
   createCheckpoint: ["201", "400", "401", "403", "404", "409"],
   updateCheckpoint: ["200", "400", "401", "403", "404", "409"],
   deleteCheckpoint: ["204", "400", "401", "403", "404", "409"],
@@ -63,6 +65,13 @@ for (const operationId of ["createCheckpoint", "updateCheckpoint"]) {
 }
 
 const schemas = document.components.schemas;
+const qrTips = document.paths["/api/v1/session/{sessionId}/qr-tips"].get;
+assert.equal(qrTips.parameters[0].$ref, "#/components/parameters/ShiftSessionId");
+assert.equal(qrTips.responses["200"].content["application/json"].schema.$ref, "#/components/schemas/ShiftSessionQrTips");
+assert.deepEqual(schemas.ShiftSessionQrTips.required, ["tips"]);
+assert.equal(schemas.ShiftSessionQrTips.properties.tips.format, "int64");
+assert.equal(schemas.ShiftSessionQrTips.properties.tips.nullable, false);
+assert.match(schemas.ShiftSessionQrTips.properties.tips.description, /whole Russian rubles/);
 assert.deepEqual(schemas.ShiftSession.required, [
   "id",
   "companyId",

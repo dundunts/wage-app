@@ -95,6 +95,7 @@ class GeneratedTransportBoundaryTest {
                 "getOwnPayroll",
                 "getShiftResult",
                 "getShiftResultsPage",
+                "getShiftSessionQrTips",
                 "getStaffPayroll",
                 "openShiftSession",
                 "openShiftSessionRecalculation",
@@ -106,7 +107,7 @@ class GeneratedTransportBoundaryTest {
             ),
             operations.mapTo(mutableSetOf()) { it.name },
         )
-        assertEquals(34, operations.size)
+        assertEquals(35, operations.size)
     }
 
     @Test

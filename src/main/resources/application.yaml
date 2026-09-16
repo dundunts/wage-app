@@ -50,3 +50,9 @@ notification:
     bot:
       url: ${TELEGRAM_BOT_URL:http://localhost:8096}
       timeout: 10s
+
+tips:
+  bot:
+    base-url: ${TIPS_BOT_BASE_URL}
+    timeout: 3s
+    retries: 2

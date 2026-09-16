@@ -39,7 +39,7 @@ Backend-сервис для **расчёта заработной платы с�
 - wage-app-web - web-клиент
 - wage-app-tg-bot - сервис отправки нотификаций Telegram
 
-Межсервисное взаимодействие реализовано через REST.
+Уведомления отправляются через REST; электронные чаевые запрашиваются у tips bot через gRPC.
 
 Для аутентификации и авторизации используется Keycloak.
 
@@ -129,3 +129,42 @@ with an agent or committing it:
 The canonical OpenAPI 3.0.3 sources and client-ready self-contained bundle are
 documented in [`openapi/README.md`](openapi/README.md). API changes begin in the
 OpenAPI sources and update implementation and tests in the same pull request.
+
+## Electronic tips (QR tips)
+
+`GET /api/v1/session/{sessionId}/qr-tips` returns `{"tips":123}` in whole
+Russian rubles. `sessionId` is a required UUID. The authenticated User must
+belong to the session's Company; the existing session API access rules apply.
+
+The request uses the Company's UUID, the session's date and start work time
+in `Europe/Moscow`, and a fixed duration of 86400 seconds for every session
+status. Both boundaries are included by tips bot. Kopecks are discarded from
+the aggregated total (`tips / 100`); no Checkpoints or Payments are changed.
+A successful empty total returns zero.
+
+### Runtime configuration
+
+Set **`TIPS_BOT_BASE_URL`** to the tips bot gRPC `host:port`, for example
+`tips-bot:50051` (replace with the actual reachable address). It has no default;
+missing or invalid configuration prevents startup. The connection uses plaintext
+gRPC without authentication, matching the tips bot server contract. The server
+does not need to be reachable for backend startup.
+
+Each RPC attempt has a three-second deadline. `UNAVAILABLE` and
+`DEADLINE_EXCEEDED` are retried twice after the first attempt, with 100 ms and
+200 ms delays: up to three attempts and about 9.3 seconds total RPC time.
+The final deadline failure returns HTTP 504; other RPC failures return HTTP 502.
+Both use `application/problem+json`, without exposing upstream error details.
+
+Before deploying this backend version, configure `TIPS_BOT_BASE_URL` in the
+deployment environment and allow network access to the bot's gRPC port.
+For GitOps, the backend chart/production values in `wage-app-infr` must supply
+that variable before the image is promoted. The Compose service passes it
+through and requires it to be set as well. Existing API/data ports, database
+schema, and health probes are unchanged.
+
+The provider-owned proto is vendored in `src/main/proto/tips/v1/tips.proto`;
+only Java generation options are added. Gradle generates the protobuf messages
+and gRPC stubs under `build/generated`, using the
+[gRPC Java build integration](https://github.com/grpc/grpc-java/tree/v1.81.0#download).
+Generated sources are not committed.

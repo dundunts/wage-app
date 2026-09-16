@@ -1,3 +1,48 @@
+GetShiftSessionQrTips:
+  get:
+    tags:
+      - Shift Session
+    operationId: getShiftSessionQrTips
+    summary: Get a Shift Session's Electronic Tips in whole rubles
+    description: >-
+      Reads Electronic Tips from tips bot for any Shift Session status. The
+      period starts at the session's date and startWorkTime in Europe/Moscow
+      and lasts exactly 24 hours (86400 seconds), with both boundaries included.
+      The period does not depend on the current time, closure, or Checkpoints.
+      The Company's UUID is passed to tips bot unchanged. The total in kopecks
+      is divided by 100, discarding fractional rubles. An empty total is zero.
+      Requires the authenticated User to be associated with the session's
+      Company and does not modify Checkpoints or Payments. Each gRPC attempt
+      has a 3-second timeout; temporary unavailability and deadline errors are
+      retried up to twice. The final failure determines the HTTP error status.
+    parameters:
+      - $ref: ../components/parameters.yaml#/ShiftSessionId
+    responses:
+      "200":
+        description: Electronic Tips in whole Russian rubles, possibly zero.
+        content:
+          application/json:
+            schema:
+              $ref: ../components/schemas.yaml#/ShiftSessionQrTips
+      "400":
+        $ref: ../components/responses.yaml#/BadRequest
+      "401":
+        $ref: ../components/responses.yaml#/Unauthorized
+      "403":
+        $ref: ../components/responses.yaml#/Forbidden
+      "404":
+        $ref: ../components/responses.yaml#/ShiftSessionResourceNotFound
+      "409":
+        description: The authenticated User is not associated with the session's Company.
+        content:
+          application/problem+json:
+            schema:
+              $ref: ../components/schemas.yaml#/ProblemDetail
+      "502":
+        $ref: ../components/responses.yaml#/TipsBotBadGateway
+      "504":
+        $ref: ../components/responses.yaml#/TipsBotTimeout
+
 GetOpenedShiftSession:
   get:
     tags:

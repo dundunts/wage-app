@@ -1,3 +1,17 @@
+TipsBotBadGateway:
+  description: The tips bot request failed. Temporary unavailability is retried up to twice.
+  content:
+    application/problem+json:
+      schema:
+        $ref: ./schemas.yaml#/ProblemDetail
+
+TipsBotTimeout:
+  description: The final tips bot attempt exceeded its 3-second deadline after up to two retries.
+  content:
+    application/problem+json:
+      schema:
+        $ref: ./schemas.yaml#/ProblemDetail
+
 BadRequest:
   description: The path, query parameters, or request body are invalid.
   content:

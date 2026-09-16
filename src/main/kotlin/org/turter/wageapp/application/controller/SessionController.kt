@@ -5,10 +5,12 @@ import org.springframework.web.bind.annotation.RestController
 import org.turter.wageapp.application.mapper.ShiftResultTransportMapper
 import org.turter.wageapp.application.mapper.ShiftSessionCheckpointRequestMapper
 import org.turter.wageapp.application.service.shift.SessionService
+import org.turter.wageapp.application.service.shift.SessionQrTipsService
 import org.turter.wageapp.transport.api.ShiftSessionApi
 import org.turter.wageapp.transport.model.OpenShiftSessionRecalculationRequest
 import org.turter.wageapp.transport.model.OpenShiftSessionRequest
 import org.turter.wageapp.transport.model.ShiftSession
+import org.turter.wageapp.transport.model.ShiftSessionQrTips
 import org.turter.wageapp.transport.model.UpdateShiftSessionStartRequest
 import java.util.UUID
 
@@ -17,7 +19,11 @@ class SessionController(
     private val sessionService: SessionService,
     private val requestMapper: ShiftSessionCheckpointRequestMapper,
     private val responseMapper: ShiftResultTransportMapper,
+    private val qrTipsService: SessionQrTipsService,
 ) : ShiftSessionApi {
+
+    override suspend fun getShiftSessionQrTips(sessionId: UUID): ResponseEntity<ShiftSessionQrTips> =
+        ResponseEntity.ok(ShiftSessionQrTips(qrTipsService.getTipsInRubles(sessionId, currentUserId())))
 
     override suspend fun getOpenedShiftSession(
         companyId: UUID,

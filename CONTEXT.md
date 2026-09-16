@@ -5,7 +5,7 @@ Wage App accounts for work shifts and employee pay independently for each work l
 ## Language
 
 **Company**:
-A work location for which shift sessions and payroll are accounted independently.
+A work location for which shift sessions and payroll are accounted independently. Companies use Moscow local time for shift accounting.
 _Avoid_: Legal entity, restaurant
 
 **Employee**:
@@ -51,6 +51,9 @@ The Company's accumulated restaurant revenue at a point in a Shift Session.
 **Restaurant Tips**:
 The Company's accumulated tips and service-payment pool at a point in a Shift Session.
 _Avoid_: Employee tips
+
+**Electronic Tips**:
+The Company's tips received electronically during the 24 hours beginning at the Shift Session Start. They are expressed in whole Russian rubles with fractional rubles discarded.
 
 **Employee Tips**:
 The part of Restaurant Tips allocated to one Employee.
