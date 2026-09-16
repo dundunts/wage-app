@@ -69,6 +69,8 @@ paths:
     $ref: ./paths/shift-session.yaml#/CloseShiftSession
   /api/v1/session/update/time:
     $ref: ./paths/shift-session.yaml#/UpdateShiftSessionStart
+  /api/v1/session/{sessionId}/qr-tips:
+    $ref: ./paths/shift-session.yaml#/GetShiftSessionQrTips
   /api/v1/checkpoint/create:
     $ref: ./paths/checkpoint.yaml#/CreateCheckpoint
   /api/v1/checkpoint/update:
@@ -157,6 +159,10 @@ components:
       $ref: ./components/responses.yaml#/ShiftSessionResourceNotFound
     ShiftSessionConflict:
       $ref: ./components/responses.yaml#/ShiftSessionConflict
+    TipsBotBadGateway:
+      $ref: ./components/responses.yaml#/TipsBotBadGateway
+    TipsBotTimeout:
+      $ref: ./components/responses.yaml#/TipsBotTimeout
     CheckpointResourceNotFound:
       $ref: ./components/responses.yaml#/CheckpointResourceNotFound
     CheckpointConflict:
@@ -198,6 +204,8 @@ components:
       $ref: ./components/schemas.yaml#/ProblemDetail
     ShiftSession:
       $ref: ./components/schemas.yaml#/ShiftSession
+    ShiftSessionQrTips:
+      $ref: ./components/schemas.yaml#/ShiftSessionQrTips
     ShiftSessionStatus:
       $ref: ./components/schemas.yaml#/ShiftSessionStatus
     LocalDateTime:

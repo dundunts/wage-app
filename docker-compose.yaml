@@ -57,6 +57,7 @@ services:
       KEYCLOAK_URL: ${KEYCLOAK_URL}
       KEYCLOAK_REALM: ${KEYCLOAK_REALM}
       TELEGRAM_BOT_URL: ${TELEGRAM_BOT_URL}
+      TIPS_BOT_BASE_URL: ${TIPS_BOT_BASE_URL:?Set TIPS_BOT_BASE_URL to the tips bot gRPC host:port}
     ports:
       - 8085:8085
     depends_on:

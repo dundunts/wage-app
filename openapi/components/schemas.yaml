@@ -412,6 +412,18 @@ ProblemDetail:
       description: Request path associated with this occurrence when supplied by the server.
       example: /api/v1/company/get/5b367932-2e5d-4d89-aa07-17f65ff4af9c
 
+ShiftSessionQrTips:
+  type: object
+  description: A Company's Electronic Tips for the 24 hours starting at Shift Session Start.
+  required: [tips]
+  properties:
+    tips:
+      type: integer
+      format: int64
+      nullable: false
+      description: Total in whole Russian rubles; kopecks are discarded after aggregation.
+      example: 123
+
 ShiftSession:
   type: object
   description: >-

@@ -1,4 +1,5 @@
 import com.github.gradle.node.npm.task.NpmTask
+import com.google.protobuf.gradle.id
 import org.openapitools.generator.gradle.plugin.tasks.GenerateTask
 
 plugins {
@@ -9,6 +10,7 @@ plugins {
     id("io.spring.dependency-management") version "1.1.7"
     id("com.github.node-gradle.node") version "7.1.0"
     id("org.openapi.generator") version "7.17.0"
+    id("com.google.protobuf") version "0.9.5"
 }
 
 node {
@@ -33,9 +35,13 @@ repositories {
     mavenCentral()
 }
 
+val grpcVersion = "1.81.0"
+val protobufVersion = "3.25.8"
+
 dependencyManagement {
     imports {
         mavenBom("org.springframework.boot:spring-boot-dependencies:3.5.7")
+        mavenBom("io.grpc:grpc-bom:$grpcVersion")
     }
 }
 
@@ -61,6 +67,13 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactive")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-guava")
+
+    // Tips bot gRPC client
+    implementation("io.grpc:grpc-protobuf")
+    implementation("io.grpc:grpc-stub")
+    implementation("com.google.protobuf:protobuf-java:$protobufVersion")
+    runtimeOnly("io.grpc:grpc-netty-shaded")
 
     // validation
     implementation("org.springframework.boot:spring-boot-starter-validation")
@@ -96,6 +109,7 @@ dependencies {
     testImplementation("org.springframework.security:spring-security-test")
     testImplementation("io.projectreactor:reactor-test")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test")
+    testImplementation("io.grpc:grpc-inprocess")
 
     testImplementation(platform("org.testcontainers:testcontainers-bom:1.20.3"))
     testImplementation("org.testcontainers:junit-jupiter")
@@ -106,6 +120,24 @@ dependencies {
     testImplementation("org.wiremock:wiremock-standalone:3.13.2")
     testImplementation("org.wiremock.integrations:wiremock-spring-boot:3.10.0")
 
+}
+
+protobuf {
+    protoc {
+        artifact = "com.google.protobuf:protoc:$protobufVersion"
+    }
+    plugins {
+        id("grpc") {
+            artifact = "io.grpc:protoc-gen-grpc-java:$grpcVersion"
+        }
+    }
+    generateProtoTasks {
+        all().configureEach {
+            plugins {
+                id("grpc")
+            }
+        }
+    }
 }
 
 kotlin {
@@ -132,6 +164,7 @@ kotlin.sourceSets.main {
 }
 
 val openApiGenerateTransport by tasks.registering(GenerateTask::class) {
+    mustRunAfter("openApiUpdateBundle")
     group = "openapi"
     description = "Generates Kotlin Spring API interfaces and transport DTOs from the canonical bundle."
     generatorName.set("kotlin-spring")

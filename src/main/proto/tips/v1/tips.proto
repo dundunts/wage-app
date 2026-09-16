@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package tips.v1;
+
+import "google/protobuf/duration.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/dundunts/tips_bot/gen/proto/tips/v1;tips_v1";
+option java_package = "org.turter.wageapp.tips.proto";
+option java_multiple_files = true;
+
+service TipsService {
+  rpc GetTipsByDuration(GetTipsByDurationRequest) returns (GetTipsByDurationResponse);
+}
+
+message GetTipsByDurationRequest {
+  string company_id = 1;
+  google.protobuf.Timestamp start_time = 2;
+  google.protobuf.Duration duration = 3;
+}
+
+message GetTipsByDurationResponse {
+  // Total tips in kopecks.
+  int64 tips = 1;
+}

@@ -541,6 +541,40 @@ paths:
           $ref: '#/components/responses/ShiftSessionResourceNotFound'
         '409':
           $ref: '#/components/responses/ShiftSessionConflict'
+  /api/v1/session/{sessionId}/qr-tips:
+    get:
+      tags:
+        - Shift Session
+      operationId: getShiftSessionQrTips
+      summary: Get a Shift Session's Electronic Tips in whole rubles
+      description: Reads Electronic Tips from tips bot for any Shift Session status. The period starts at the session's date and startWorkTime in Europe/Moscow and lasts exactly 24 hours (86400 seconds), with both boundaries included. The period does not depend on the current time, closure, or Checkpoints. The Company's UUID is passed to tips bot unchanged. The total in kopecks is divided by 100, discarding fractional rubles. An empty total is zero. Requires the authenticated User to be associated with the session's Company and does not modify Checkpoints or Payments. Each gRPC attempt has a 3-second timeout; temporary unavailability and deadline errors are retried up to twice. The final failure determines the HTTP error status.
+      parameters:
+        - $ref: '#/components/parameters/ShiftSessionId'
+      responses:
+        '200':
+          description: Electronic Tips in whole Russian rubles, possibly zero.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShiftSessionQrTips'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/ShiftSessionResourceNotFound'
+        '409':
+          description: The authenticated User is not associated with the session's Company.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '502':
+          $ref: '#/components/responses/TipsBotBadGateway'
+        '504':
+          $ref: '#/components/responses/TipsBotTimeout'
   /api/v1/checkpoint/create:
     post:
       tags:
@@ -1198,6 +1232,18 @@ components:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/ProblemDetail'
+    TipsBotBadGateway:
+      description: The tips bot request failed. Temporary unavailability is retried up to twice.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+    TipsBotTimeout:
+      description: The final tips bot attempt exceeded its 3-second deadline after up to two retries.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
     CheckpointResourceNotFound:
       description: A referenced Checkpoint, Shift Session, Company, or Employee does not exist. Deleting an unknown Checkpoint remains successful; deletion returns this response only if an existing Checkpoint refers to a missing Shift Session or Company.
       content:
@@ -1680,6 +1726,18 @@ components:
           description: Checkpoints ordered by their local date and time, possibly empty.
           items:
             $ref: '#/components/schemas/Checkpoint'
+    ShiftSessionQrTips:
+      type: object
+      description: A Company's Electronic Tips for the 24 hours starting at Shift Session Start.
+      required:
+        - tips
+      properties:
+        tips:
+          type: integer
+          format: int64
+          nullable: false
+          description: Total in whole Russian rubles; kopecks are discarded after aggregation.
+          example: 123
     ShiftSessionStatus:
       type: string
       nullable: false
